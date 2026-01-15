@@ -1,20 +1,53 @@
-\documentclass[12pt]{article}
+\documentclass[12pt, titlepage]{article}
+\pdfinfoomitdate=1
+\pdftrailerid{}
 
+\usepackage{fullpage}
+\usepackage[round]{natbib}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tabularx}
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{hyperref}
-\usepackage{tabularx}
-\usepackage{booktabs}
-\usepackage[margin=1in]{geometry}
 
-\title{Endpoints Specification (Swagger/OpenAPI)}
-\author{Zifan Si}
-\date{January 14, 2026}
+\hypersetup{
+    colorlinks,
+    citecolor=blue,
+    filecolor=black,
+    linkcolor=red,
+    urlcolor=blue
+}
+
+\input{../../Comments}
+\input{../../Common}
 
 \begin{document}
+
+\title{Endpoints Specification (Swagger/OpenAPI)}
+\author{\authname}
+\date{January 14, 2026}
+
 \maketitle
+
+\pagenumbering{roman}
+
+\section{Revision History}
+
+\begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
+  \toprule {\bf Date} & {\bf Version} & {\bf Notes}   \\
+  \midrule
+  Jan. 14, 2026       & Rev 0         & Initial Draft \\
+  \bottomrule
+\end{tabularx}
+
+~\newpage
+
 \tableofcontents
+
 \newpage
+
+\pagenumbering{arabic}
 
 \section{REST API Communication Protocol (OpenAPI)}
 This project provides an HTTP REST API for controlling and monitoring the
