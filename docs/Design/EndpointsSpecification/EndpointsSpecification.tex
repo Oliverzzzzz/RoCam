@@ -17,10 +17,11 @@
 \newpage
 
 \section{REST API Communication Protocol (OpenAPI)}
-This project provides an HTTP REST API for controlling and monitoring the gimbal
-system. The API contract is documented using an OpenAPI specification and is
-viewable in Swagger Editor (\url{https://editor.swagger.io/}). The API is used
-by the front-end/controller to issue commands and query current system state.
+This project provides an HTTP REST API for controlling and monitoring the
+gimbal system. The API contract is documented using an OpenAPI specification
+and is viewable in Swagger Editor (\url{https://editor.swagger.io/}). The API
+is used by the front-end/controller to issue commands and query current system
+state.
 
 \subsection{Transport and Data Format}
 \begin{itemize}
@@ -42,8 +43,8 @@ The REST API follows a \textbf{request-response} model:
 \begin{enumerate}
   \item The client initiates requests to the back-end service.
   \item The server responds with an HTTP status code and a JSON response body.
-  \item Action endpoints (e.g., arm/disarm) may return an empty response body and
-        rely on the HTTP status code to indicate success.
+  \item Action endpoints (e.g., arm/disarm) may return an empty response body and rely
+        on the HTTP status code to indicate success.
 \end{enumerate}
 
 \subsection{Endpoint Reference}
@@ -53,13 +54,13 @@ Table~\ref{tab:rest-endpoints} summarizes the endpoints.
   \centering
   \begin{tabularx}{\textwidth}{l l X}
     \toprule
-    \textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
+    \textbf{Method} & \textbf{Path}                  & \textbf{Purpose}                                       \\
     \midrule
-    POST & \texttt{/api/status} & Get current system status. \\
-    POST & \texttt{/api/manual\_move} & Move the gimbal in a direction (relative control). \\
-    POST & \texttt{/api/manual\_move\_to} & Move the gimbal to absolute angles (pan/tilt targets). \\
-    POST & \texttt{/api/arm} & Arm tracking (enable tracking loop). \\
-    POST & \texttt{/api/disarm} & Disarm tracking (disable tracking loop). \\
+    POST            & \texttt{/api/status}           & Get current system status.                             \\
+    POST            & \texttt{/api/manual\_move}     & Move the gimbal in a direction (relative control).     \\
+    POST            & \texttt{/api/manual\_move\_to} & Move the gimbal to absolute angles (pan/tilt targets). \\
+    POST            & \texttt{/api/arm}              & Arm tracking (enable tracking loop).                   \\
+    POST            & \texttt{/api/disarm}           & Disarm tracking (disable tracking loop).               \\
     \bottomrule
   \end{tabularx}
   \caption{REST API endpoints (Swagger/OpenAPI documented).}
@@ -103,8 +104,8 @@ Request body for \texttt{POST /api/manual\_move\_to}.
 \end{itemize}
 
 \subsubsection{EmptyResponse}
-Used for action endpoints (e.g., \texttt{/api/arm}, \texttt{/api/disarm}) where a
-success status code indicates completion and no response fields are required.
+Used for action endpoints (e.g., \texttt{/api/arm}, \texttt{/api/disarm}) where
+a success status code indicates completion and no response fields are required.
 
 \subsection{Example Request/Response Flows}
 \paragraph{Get Status}
@@ -134,6 +135,5 @@ Content-Type: application/json
 POST /api/arm
 POST /api/disarm
 \end{verbatim}
-
 
 \end{document}
