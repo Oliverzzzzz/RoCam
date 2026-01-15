@@ -1,18 +1,19 @@
+# Makefile
+# From https://danielkaes.wordpress.com/2009/03/14/compiling-latex-documents-using-makefiles/
+
+PROJECT=EndpointsSpecification
 TEX=pdflatex
 BIBTEX=bibtex
-
-DOC ?= EndpointsSpecification
+BUILDTEX=$(TEX) $(PROJECT).tex
 
 all:
-	$(TEX) $(DOC).tex
-	-$(BIBTEX) $(DOC)
-	$(TEX) $(DOC).tex
-	$(TEX) $(DOC).tex
+	$(BUILDTEX)
+	$(BIBTEX) $(PROJECT)
+	$(BUILDTEX)
+	$(BUILDTEX)
 
 clean-all:
 	rm -f *.dvi *.log *.bak *.aux *.bbl *.blg *.idx *.ps *.eps *.pdf *.toc *.out *~
 
 clean:
 	rm -f *.log *.bak *.aux *.bbl *.blg *.idx *.toc *.out *~
-
-.PHONY: all clean clean-all
