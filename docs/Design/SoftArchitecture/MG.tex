@@ -625,8 +625,60 @@ because they use modules from the lower levels.
 
 \section{User Interfaces}
 
-\wss{Design of user interface for software and hardware.  Attach an appendix if
-  needed. Drawings, Sketches, Figma}
+The system provides a single-page web interface for the operator. This web UI is
+the only entry point for interacting with the system, including live preview,
+state switching, manual gimbal control, and recording management.
+
+\subsection{Main Control Page}
+
+Figure~\ref{fig:ui_overview} shows the main \textit{Control} page. The left panel
+displays the live camera feed for situational awareness. The right panel displays
+the current system state (e.g., \textit{Disarmed} or \textit{Armed}) and real-time
+gimbal pose telemetry, including \textit{Tilt} and \textit{Pan} angles. The top-right
+corner includes \textit{Fullscreen} for better field visibility and an \textit{Emergency Stop}
+control for safety-critical shutdown.
+
+% ---- Image 1: overview screenshot ----
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../../Images/rocam_ui_overview.png}
+  \caption{RoCam web interface overview (Control page).}
+  \label{fig:ui_overview}
+\end{figure}
+
+\subsection{Disarmed Mode: Manual Gimbal Control}
+
+In \textit{Disarmed} mode, the operator can manually control the gimbal using the
+on-screen directional pad (up/down/left/right). This mode is used for setup and
+calibration (e.g., aiming at the expected launch area before liftoff) and as a
+fallback when manual intervention is required. Manual control commands are sent
+to the backend through the API Gateway, which relays them to the gimbal control
+logic running on the Jetson. The UI continuously updates the displayed gimbal
+angles so the emphasizes to the operator the immediate effect of each command.
+
+% ---- Image 2: disarmed/manual control screenshot ----
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../../Images/rocam_ui_disarmed.png}
+  \caption{Disarmed mode with manual gimbal controls and real-time tilt/pan feedback.}
+  \label{fig:ui_disarmed}
+\end{figure}
+
+\subsection{Armed Mode: Automatic Tracking}
+
+In \textit{Armed} mode, the system runs the rocket detection and tracking pipeline.
+The Computer Vision and Tracking modules estimate the target location in the frame
+and compute the gimbal control commands to keep the rocket centered. The operator
+monitors the live preview and can transition to \textit{Disarmed} mode to take manual
+control if needed.
+
+\subsection{Recordings}
+
+The UI also provides a \textit{Recordings} section for managing recorded videos (and
+associated logs/metadata). The operator can start/stop recordings during operation
+and later list, download, or delete recordings through the Recording Management
+functions exposed by the backend API.
+
 
 \section{Design of Communication Protocols}
 
