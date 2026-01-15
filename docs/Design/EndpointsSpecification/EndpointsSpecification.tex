@@ -1,0 +1,139 @@
+\documentclass[12pt]{article}
+
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[margin=1in]{geometry}
+
+\title{Endpoints Specification (Swagger/OpenAPI)}
+\author{Zifan Si}
+\date{January 14, 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{REST API Communication Protocol (OpenAPI)}
+This project provides an HTTP REST API for controlling and monitoring the gimbal
+system. The API contract is documented using an OpenAPI specification and is
+viewable in Swagger Editor (\url{https://editor.swagger.io/}). The API is used
+by the front-end/controller to issue commands and query current system state.
+
+\subsection{Transport and Data Format}
+\begin{itemize}
+  \item \textbf{Transport:} HTTP
+  \item \textbf{Style:} REST-style endpoints under \texttt{/api/*}
+  \item \textbf{Content Type:} \texttt{application/json}
+  \item \textbf{Encoding:} JSON request/response bodies
+\end{itemize}
+
+\subsection{Servers / Deployment Targets}
+Swagger UI provides local server presets for development:
+\begin{itemize}
+  \item \textbf{Frontend development default:} \texttt{http://localhost:5000}
+  \item \textbf{Flask default (port 80):} \texttt{http://localhost}
+\end{itemize}
+
+\subsection{Communication Model}
+The REST API follows a \textbf{request-response} model:
+\begin{enumerate}
+  \item The client initiates requests to the back-end service.
+  \item The server responds with an HTTP status code and a JSON response body.
+  \item Action endpoints (e.g., arm/disarm) may return an empty response body and
+        rely on the HTTP status code to indicate success.
+\end{enumerate}
+
+\subsection{Endpoint Reference}
+Table~\ref{tab:rest-endpoints} summarizes the endpoints.
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{l l X}
+    \toprule
+    \textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
+    \midrule
+    POST & \texttt{/api/status} & Get current system status. \\
+    POST & \texttt{/api/manual\_move} & Move the gimbal in a direction (relative control). \\
+    POST & \texttt{/api/manual\_move\_to} & Move the gimbal to absolute angles (pan/tilt targets). \\
+    POST & \texttt{/api/arm} & Arm tracking (enable tracking loop). \\
+    POST & \texttt{/api/disarm} & Disarm tracking (disable tracking loop). \\
+    \bottomrule
+  \end{tabularx}
+  \caption{REST API endpoints (Swagger/OpenAPI documented).}
+  \label{tab:rest-endpoints}
+\end{table}
+
+\subsection{Schemas (JSON Data Types)}
+Swagger UI defines the following schemas.
+
+\subsubsection{StatusResponse}
+Returned by \texttt{POST /api/status}.
+\begin{itemize}
+  \item \texttt{armed} (required): tracking armed state
+  \item \texttt{tilt} (required): current tilt angle
+  \item \texttt{pan} (required): current pan angle
+  \item \texttt{preview} (required): preview-related state
+  \item \texttt{bbox} (nullable): optional bounding box of detected target
+\end{itemize}
+
+\subsubsection{BoundingBox (nullable)}
+\begin{itemize}
+  \item \texttt{pts\_s} (required): points/coordinate representation
+  \item \texttt{conf} (required): confidence score
+  \item \texttt{left} (required): left coordinate
+  \item \texttt{top} (required): top coordinate
+  \item \texttt{width} (required): width
+  \item \texttt{height} (required): height
+\end{itemize}
+
+\subsubsection{ManualMoveRequest}
+Request body for \texttt{POST /api/manual\_move}.
+\begin{itemize}
+  \item \texttt{direction} (required): direction command (e.g., up/down/left/right)
+\end{itemize}
+
+\subsubsection{ManualMoveToRequest}
+Request body for \texttt{POST /api/manual\_move\_to}.
+\begin{itemize}
+  \item \texttt{tilt} (required): target tilt angle
+  \item \texttt{pan} (required): target pan angle
+\end{itemize}
+
+\subsubsection{EmptyResponse}
+Used for action endpoints (e.g., \texttt{/api/arm}, \texttt{/api/disarm}) where a
+success status code indicates completion and no response fields are required.
+
+\subsection{Example Request/Response Flows}
+\paragraph{Get Status}
+\begin{verbatim}
+POST /api/status
+Content-Type: application/json
+\end{verbatim}
+
+\paragraph{Manual Move (Directional)}
+\begin{verbatim}
+POST /api/manual_move
+Content-Type: application/json
+
+{"direction":"left"}
+\end{verbatim}
+
+\paragraph{Manual Move (Absolute Angles)}
+\begin{verbatim}
+POST /api/manual_move_to
+Content-Type: application/json
+
+{"tilt":10.0,"pan":-5.0}
+\end{verbatim}
+
+\paragraph{Arm / Disarm Tracking}
+\begin{verbatim}
+POST /api/arm
+POST /api/disarm
+\end{verbatim}
+
+
+\end{document}
