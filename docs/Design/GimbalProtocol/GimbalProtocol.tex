@@ -2,39 +2,23 @@
 \pdfinfoomitdate=1
 \pdftrailerid{}
 
-\usepackage{amsmath, mathtools}
-
-\usepackage[round]{natbib}
-\usepackage{amsfonts}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{colortbl}
-\usepackage{xr}
-\usepackage{hyperref}
-\usepackage{longtable}
-\usepackage{xfrac}
-\usepackage{tabularx}
-\usepackage{float}
-\usepackage{siunitx}
-\usepackage{booktabs}
-\usepackage{multirow}
-\usepackage[section]{placeins}
-\usepackage{caption}
 \usepackage{fullpage}
+\usepackage[round]{natbib}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
 \usepackage{bytefield}
 
 \hypersetup{
-bookmarks=true,     % show bookmarks bar?
-colorlinks=true,       % false: boxed links; true: colored links
-linkcolor=red,          % color of internal links (change box color with linkbordercolor)
-citecolor=blue,      % color of links to bibliography
-filecolor=magenta,  % color of file links
-urlcolor=cyan          % color of external links
+    colorlinks,
+    citecolor=blue,
+    filecolor=black,
+    linkcolor=red,
+    urlcolor=blue
 }
-
-\usepackage{array}
-
-\externaldocument{../../SRS/SRS}
 
 \input{../../Comments}
 \input{../../Common}
@@ -42,9 +26,7 @@ urlcolor=cyan          % color of external links
 \begin{document}
 
 \title{Gimbal Protocol Specification for \progname{}}
-
 \author{\authname}
-
 \date{January 12, 2026}
 
 \maketitle
