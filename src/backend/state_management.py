@@ -1,7 +1,7 @@
 import logging
 
-from cv import CVPipeline
-from cv_process.ipc import BoundingBox
+from cv import VideoPipeline
+from cv_process.ipc import BoundingBox, CVData
 from gimbal import GimbalSerial
 from preview import MjpegFrameReceiver
 import base64
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InternalBoundingBox:
     bbox: BoundingBox
+    pts_s: float
     received_time: float
 
 class BoundingBoxCollection:
@@ -23,18 +24,20 @@ class BoundingBoxCollection:
     def __init__(self):
         self._internal_bboxes = []
 
-    def received_bbox(self, bbox: BoundingBox):
+    def received_data(self, data: CVData):
+        if not data.bounding_box:
+            return
         now = time.time()
 
         if self._internal_bboxes:
-            last_bbox = self._internal_bboxes[-1].bbox
-            if bbox.pts_s == last_bbox.pts_s:
-                if bbox.conf > last_bbox.conf:
-                    self._internal_bboxes[-1].bbox = bbox
+            last_bbox = self._internal_bboxes[-1]
+            if data.pts_s == last_bbox.pts_s:
+                if data.bounding_box.conf > last_bbox.bbox.conf:
+                    self._internal_bboxes[-1].bbox = data.bounding_box
             else:
-                self._internal_bboxes.append(InternalBoundingBox(bbox=bbox, received_time=now))
+                self._internal_bboxes.append(InternalBoundingBox(bbox=data.bounding_box, received_time=now, pts_s=data.pts_s))
         else:
-            self._internal_bboxes.append(InternalBoundingBox(bbox=bbox, received_time=now))
+            self._internal_bboxes.append(InternalBoundingBox(bbox=data.bounding_box, received_time=now, pts_s=data.pts_s))
 
         if len(self._internal_bboxes) > 10:
             self._internal_bboxes.pop(0)
@@ -64,14 +67,14 @@ class StateManagement:
         self._tracking = Tracking(gimbal=self._gimbal, width=1080, height=1920, k_p=0.003)
 
         self._preview_receiver = MjpegFrameReceiver()
-        self._cv_pipeline = CVPipeline(lambda v: self._on_detection(v))
         self._bboxes = BoundingBoxCollection()
+        self._cv_pipeline = VideoPipeline(lambda v: self._on_detection(v))
 
-    def _on_detection(self, bbox: BoundingBox):
-        self._bboxes.received_bbox(bbox)
+    def _on_detection(self, data: CVData):
+        self._bboxes.received_data(data)
 
-        if self._armed:
-            self._tracking.on_detection(bbox.center())
+        if self._armed and data.bounding_box:
+            self._tracking.on_detection(data.bounding_box.center())
 
     def arm(self):
         self._armed = True

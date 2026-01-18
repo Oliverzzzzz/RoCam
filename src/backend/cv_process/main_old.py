@@ -1,48 +1,43 @@
 import os
-
-os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
+os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "/tmp"
 
 import gi
 
-from ipc import create_rocam_ipc_client, BoundingBox, CVData
+from ipc import create_rocam_ipc_client, BoundingBox
 
 gi.require_version('Gst', '1.0')
 from gi.repository import GLib, Gst
 import time
 import pyds
+import sys
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("cv_process")
 
 WIDTH = 1920
 HEIGHT = 1080
-SOCKET_PATH = '/tmp/rocam-video'
+CAMERA = "/dev/video0"
 ipc_client = None
+osd = None
 
 def bus_call(bus, message, loop):
     global pipeline
-    global ipc_client
-
     t = message.type
     if t == Gst.MessageType.EOS:
-        logger.info("End-of-stream\n")
+        sys.stdout.write("End-of-stream\n")
         loop.quit()
     elif t == Gst.MessageType.STATE_CHANGED:
         old, new, pending = message.parse_state_changed()
         if message.src == pipeline and new == Gst.State.PLAYING:
-            logger.info("Pipeline is now PLAYING")
+            print("Pipeline is now PLAYING")
             Gst.debug_bin_to_dot_file(pipeline, Gst.DebugGraphDetails.ALL, "pipeline")
-            logger.info("Trying to connect to IPC server...")
-            ipc_client = create_rocam_ipc_client()
-            logger.info("Connected to IPC server.")
     elif t == Gst.MessageType.WARNING:
         err, debug = message.parse_warning()
-        logger.warning("%s: %s\n" % (err, debug))
+        sys.stderr.write("Warning: %s: %s\n" % (err, debug))
     elif t == Gst.MessageType.ERROR:
         err, debug = message.parse_error()
-        logger.error("%s: %s\n" % (err, debug))
+        sys.stderr.write("Error: %s: %s\n" % (err, debug))
         loop.quit()
     return True
 
@@ -53,7 +48,9 @@ _fps_time_list = [0.0]
 def inference_stop_probe(pad, info, u_data):
     global _fps_last_time
     global _fps_time_list
+    global osd
     global ipc_client
+    global glshader
 
     gst_buffer = info.get_buffer()
     if not gst_buffer:
@@ -66,9 +63,10 @@ def inference_stop_probe(pad, info, u_data):
     avg_fps = len(_fps_time_list) / (now - _fps_time_list[0])
     _fps_last_time = now
     _fps_time_list.append(now)
-    logger.info(f"FPS: {avg_fps}")
     if len(_fps_time_list) > 60:
         _fps_time_list.pop(0)
+
+    osd.set_property("text", f"FPS: {avg_fps:.1f}")
 
     # Retrieve batch metadata from the gst_buffer
     # Note that pyds.gst_buffer_get_nvds_batch_meta() expects the
@@ -98,6 +96,7 @@ def inference_stop_probe(pad, info, u_data):
             bbox = obj_meta.detector_bbox_info.org_bbox_coords
             if not bounding_box or obj_meta.confidence > bounding_box.conf:
                 bounding_box = BoundingBox(
+                    pts_s=pts_s,
                     conf=obj_meta.confidence,
                     left=bbox.left / WIDTH,
                     top=bbox.top / HEIGHT,
@@ -114,50 +113,77 @@ def inference_stop_probe(pad, info, u_data):
         except StopIteration:
             break
 
-    if ipc_client:
-        if bounding_box and bounding_box.conf > 0.2:
-            ipc_client.send(CVData(
-                pts_s=pts_s,
-                fps=avg_fps,
-                bounding_box=bounding_box.get_rotate_90_deg(),
-            ))
-        else:
-            ipc_client.send(CVData(
-                pts_s=pts_s,
-                fps=avg_fps,
-                bounding_box=None,
-            ))
+    if bounding_box and bounding_box.conf > 0.2:
+        ipc_client.send(bounding_box)
+        cx = bounding_box.left + bounding_box.width / 2.0
+        cy = bounding_box.top + bounding_box.height / 2.0
+
+        tx = 0.5 - cx
+        ty = 0.5 - cy
+        s = max(bounding_box.width * WIDTH, bounding_box.height * HEIGHT)
+        glshader.set_property('uniforms',
+                              Gst.Structure.new_from_string(f"uniforms, tx=(float){tx}, ty=(float){ty}, scale=(float){1080 / s * 0.5}"))
 
     return Gst.PadProbeReturn.OK
 
 
 def main():
-    global pipeline
+    global pipeline, osd, glshader
+    global ipc_client
+
+    logger.info("Trying to connect to IPC server...")
+    ipc_client = create_rocam_ipc_client()
+    logger.info("Connected to IPC server.")
 
     Gst.init(None)
 
     pipeline_desc = f"""
-        nvarguscamerasrc sensor-id=0 !
-        video/x-raw(memory:NVMM),width=(int){WIDTH},height=(int){HEIGHT},framerate=(fraction)120/1,format=(string)NV12 !
-        videorate !
-        video/x-raw(memory:NVMM),width=(int){WIDTH},height=(int){HEIGHT},framerate=(fraction)60/1,format=(string)NV12 !
+        nvv4l2camerasrc device={CAMERA} cap-buffers=2 !
+        video/x-raw(memory:NVMM),framerate=60/1,width={WIDTH},height={HEIGHT} !
         tee name=t
 
         t. !
         nvvideoconvert !
-        mux.sink_0 nvstreammux name=mux width=1920 height=1080 live-source=1 batch-size=1 !
+        mux.sink_0 nvstreammux name=mux width={WIDTH} height={HEIGHT} live-source=1 batch-size=1 !
         nvinfer name=infer config-file-path=pgie_config.txt !
-        fakesink sync=false
-        
-        t. !
-        queue max-size-buffers=1 leaky=1 !
         nvvideoconvert !
         video/x-raw,format=RGBA !
-        shmsink wait-for-connection=1 socket-path={SOCKET_PATH} shm-size=20000000 buffer-time=50000000
+        queue leaky=1 max-size-buffers=1 !
+        glupload !
+        glshader name=shader !
+        gldownload !
+        video/x-raw !
+        textoverlay name=osd valignment=top halignment=left font-desc="Sans, 12" draw-outline=0 draw-shadow=0 color=0xFFFF0000 !
+        nvvideoconvert !
+        nvdrmvideosink name=drm-sink sync=false set-mode=1
+
+        t. !
+        queue leaky=1 !
+        nvvideoconvert !
+        nvjpegenc quality=70 !
+        queue !
+        avimux !
+        filesink location=recording.avi
+
+        t. !
+        queue leaky=1 !
+        nvvideoconvert dest-crop=0:0:{int(WIDTH/4)}:{int(HEIGHT/4)} !
+        video/x-raw(memory:NVMM),width={int(WIDTH/4)},height={int(HEIGHT/4)} !
+        videorate !
+        video/x-raw(memory:NVMM),framerate=30/1 !
+        nvjpegenc quality=70 !
+        multipartmux boundary=spionisto !
+        tcpclientsink port=5001
     """
 
+    # convert avi -> mp4: ffmpeg -i recording.avi -vf "transpose=1" -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 21 -an output.mp4
     pipeline = Gst.parse_launch(pipeline_desc)
 
+    glshader = pipeline.get_by_name("shader")
+    glshader.set_property('fragment', open("../shader.frag").read())
+    glshader.set_property('uniforms', Gst.Structure.new_from_string("uniforms, tx=(float)0.0, ty=(float)0.0, scale=(float)1.0"))
+
+    # create an event loop and feed gstreamer bus mesages to it
     loop = GLib.MainLoop()
     bus = pipeline.get_bus()
     bus.add_signal_watch()
@@ -167,9 +193,10 @@ def main():
     infer_source_pad = infer.get_static_pad("src")
     infer_source_pad.add_probe(Gst.PadProbeType.BUFFER, inference_stop_probe, 0)
 
-    logger.info("Starting pipeline")
-    pipeline.set_state(Gst.State.PLAYING)
+    osd = pipeline.get_by_name("osd")
 
+    print("Starting pipeline \n")
+    pipeline.set_state(Gst.State.PLAYING)
     try:
         loop.run()
     except:
