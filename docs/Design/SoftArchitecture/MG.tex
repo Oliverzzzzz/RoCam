@@ -193,8 +193,10 @@ decisions will be changed.
 \section{Module Hierarchy} \label{SecMH}
 
 This section provides an overview of the module design. Modules are organized
-in a hierarchy decomposed by secrets. The modules listed below are the modules
-that will be implemented.
+in a hierarchy decomposed by secrets. The modules listed below represent the
+complete module hierarchy. Container modules (\mref{mJetson}, \mref{mControl},
+and \mref{mUI}) will not actually be implemented since they are not leaf
+modules.
 
 \begin{description}
   \item [\refstepcounter{mnum} \mthemnum \label{mJetson}:] Jetson Module
@@ -335,7 +337,7 @@ system state.
   \item[Services:] Allows the Control Process Module (\mref{mControl}) to access
         service provided by the CV Process Module (\mref{mCV})
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{Live Video Process Management Module (\mref{mVideoManagement})}
@@ -349,7 +351,7 @@ system state.
   \item[Services:] Allows the Control Process Module (\mref{mControl}) to access
         service provided by the Live Video Process Module (\mref{mVideo})
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{Transcode Process Management Module (\mref{mTranscodeManagement})}
@@ -363,7 +365,7 @@ system state.
   \item[Services:] Allows the Control Process Module (\mref{mControl}) to access
         service provided by the Transcode Process Module (\mref{mTranscode})
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{Tracking Module (\mref{mTrack})}
@@ -373,7 +375,7 @@ system state.
   \item[Services:] Calculates the angle of the gimbal required to keep the rocket in
         the frame.
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{Gimbal Abstraction Module (\mref{mGimbal})}
@@ -386,7 +388,7 @@ system state.
           \item Measure the current angle of the gimbal
         \end{itemize}
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{Serial Abstraction Module (\mref{mSerial})}
@@ -414,7 +416,7 @@ system state.
   \item[Secrets:] How to track all the recordings and logs
   \item[Services:] Track all the files that store recordings and logs
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{State Management Module (\mref{mState})}
@@ -431,7 +433,7 @@ system state.
           \item Aggregate data for the API Gateway
         \end{itemize}
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{API Gateway Module (\mref{mAPI})}
@@ -440,7 +442,7 @@ system state.
   \item[Secrets:] The API endpoints and their corresponding logic.
   \item[Services:] Provides the API endpoints for the UI.
   \item[Implemented By:] \progname
-  \item[Type of Module:] Class
+  \item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{UI Module (\mref{mUI})}
