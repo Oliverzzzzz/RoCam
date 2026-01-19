@@ -192,63 +192,39 @@ decisions will be changed.
 
 \section{Module Hierarchy} \label{SecMH}
 
-This section provides an overview of the module design. Modules are summarized
-in a hierarchy decomposed by secrets in Table \ref{TblMH}. The modules listed
-below, which are leaves in the hierarchy tree, are the modules that will
-actually be implemented.
+This section provides an overview of the module design. Modules are organized
+in a hierarchy decomposed by secrets. The modules listed below are the modules
+that will be implemented.
 
 \begin{description}
   \item [\refstepcounter{mnum} \mthemnum \label{mJetson}:] Jetson Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mCV}:] CV Process Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mVideo}:] Live Video Process Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mTranscode}:] Transcode Process Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mStream}:] Video Stream Abstraction Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mControl}:] Control Process Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mCVManagement}:] CV Process Management Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mVideoManagement}:] Live Video Process Management Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mTranscodeManagement}:] Transcode Process Management Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mTrack}:] Tracking Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mGimbal}:] Gimbal Abstraction Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mSerial}:] Serial Abstraction Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mStatus}:] System Status Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mRecord}:] Recording Database Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mState}:] State Management Module
+        \begin{description}
+          \item [\refstepcounter{mnum} \mthemnum \label{mCV}:] CV Process Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mVideo}:] Live Video Process Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mTranscode}:] Transcode Process Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mStream}:] Video Stream Abstraction Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mControl}:] Control Process Module
+                \begin{description}
+                  \item [\refstepcounter{mnum} \mthemnum \label{mCVManagement}:] CV Process Management Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mVideoManagement}:] Live Video Process Management Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mTranscodeManagement}:] Transcode Process Management Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mTrack}:] Tracking Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mGimbal}:] Gimbal Abstraction Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mSerial}:] Serial Abstraction Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mStatus}:] System Status Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mRecord}:] Recording Database Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mState}:] State Management Module
+                \end{description}
+        \end{description}
   \item [\refstepcounter{mnum} \mthemnum \label{mAPI}:] API Gateway Module
   \item [\refstepcounter{mnum} \mthemnum \label{mUI}:] UI Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mPreview}:] Preview Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mManual}:] Manual Control Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mRecordMng}:] Recording Management Module
-  \item [\refstepcounter{mnum} \mthemnum \label{mConfig}:] Configuration Module
+        \begin{description}
+          \item [\refstepcounter{mnum} \mthemnum \label{mPreview}:] Preview Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mManual}:] Manual Control Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mRecordMng}:] Recording Management Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mConfig}:] Configuration Module
+        \end{description}
 \end{description}
-
-\begin{table}[h!]
-  \centering
-  \begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
-    \toprule
-    \textbf{Level 1}               & \textbf{Level 2}                                                  \\
-    \midrule
-
-    Jetson Module (\mref{mJetson}) & CV Process Module (\mref{mCV})                                    \\  & CV Process
-    Management Module (\mref{mCVManagement})                                                           \\  & Live Video Process Module
-    (\mref{mVideo})                                                                                    \\  & Live Video Process Management Module
-    (\mref{mVideoManagement})                                                                          \\ & Transcode Process Module (\mref{mTranscode}) \\
-                                   & Transcode Process Management Module (\mref{mTranscodeManagement}) \\  &
-    Tracking Module (\mref{mTrack})                                                                    \\  & Gimbal Abstraction Module (\mref{mGimbal})
-    \\ & Serial Abstraction Module (\mref{mSerial}) \\  & System Status Module
-    (\mref{mStatus})                                                                                   \\ & Recording Database Module (\mref{mRecord}) \\  & State
-    Management Module (\mref{mState})                                                                  \\  & Video Stream Abstraction Module
-    (\mref{mStream})                                                                                   \\ & API Gateway Module (\mref{mAPI}) \\
-
-    \midrule
-
-    UI Module (\mref{mUI})         & Preview Module (\mref{mPreview})                                  \\  & Manual Control
-    Module (\mref{mManual})                                                                            \\ & Recording Management Module (\mref{mRecordMng}) \\
-                                   & Configuration Module (\mref{mConfig})                             \\ \bottomrule
-
-  \end{tabular}
-  \caption{Module Hierarchy}
-  \label{TblMH}
-\end{table}
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
