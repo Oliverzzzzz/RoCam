@@ -23,11 +23,11 @@ from pycocotools.cocoeval import COCOeval
 logger = logging.getLogger("accuracy_benchmark")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 
-# 你线上 pipeline 是固定 1920x1080
+# Match your DeepStream pipeline streammux size (main.py uses 1920x1080)
 WIDTH = 1920
 HEIGHT = 1080
 
-# ---------- image IO ----------
+# ---------------- image IO ----------------
 def _load_image_size(path: Path) -> Tuple[int, int]:
     try:
         import cv2  # type: ignore
@@ -69,14 +69,13 @@ def _write_jpg(path: Path, bgr, quality: int = 95):
         path.parent.mkdir(parents=True, exist_ok=True)
         im.save(path, format="JPEG", quality=quality, subsampling=0)
 
-# ---------- YAML ----------
-def load_data_yaml(path: Path) -> Dict:
+# ---------------- YAML loader ----------------
+def load_data_yaml(path: Path) -> Dict[str, Any]:
     try:
         import yaml  # type: ignore
         return yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore"))
     except Exception:
-        # fallback: extremely simple parser
-        out: Dict = {}
+        out: Dict[str, Any] = {}
         txt = path.read_text(encoding="utf-8", errors="ignore").splitlines()
         key = None
         for line in txt:
@@ -99,14 +98,14 @@ def load_data_yaml(path: Path) -> Dict:
                 out[key].append(s[1:].strip().strip("'\""))
         return out
 
-# ---------- pgie config patch ----------
+# ---------------- pgie config patch ----------------
 def write_temp_pgie_config(orig_cfg: Path, engine_path: Optional[Path]) -> Path:
     text = orig_cfg.read_text(encoding="utf-8", errors="ignore").splitlines()
     out: List[str] = []
     in_prop = False
     replaced = False
 
-    for_engine = (engine_path is not None)
+    for_engine = engine_path is not None
 
     for line in text:
         s = line.strip()
@@ -130,7 +129,7 @@ def write_temp_pgie_config(orig_cfg: Path, engine_path: Optional[Path]) -> Path:
         inserted = False
         for line in out:
             final.append(line)
-            if (not inserted) and line.strip().lower() == "[property]":
+            if not inserted and line.strip().lower() == "[property]":
                 final.append(f"model-engine-file={engine_path}")
                 inserted = True
         out = final
@@ -139,7 +138,7 @@ def write_temp_pgie_config(orig_cfg: Path, engine_path: Optional[Path]) -> Path:
     tmp.write_text("\n".join(out) + "\n", encoding="utf-8")
     return tmp
 
-# ---------- staging + transform ----------
+# ---------------- staging + transform ----------------
 @dataclass
 class StageInfo:
     orig_path: Path
@@ -179,7 +178,7 @@ def stage_images(images_dir: Path, staging_dir: Path, mode: str, limit: Optional
 
     staged_files = sorted(staging_dir.glob("*.jpg"))
     if len(staged_files) == len(imgs):
-        # 复用前抽样校验尺寸
+        # reuse only if staged jpg really matches WIDTHxHEIGHT
         ok = True
         for k in [0, len(staged_files)//2, len(staged_files)-1]:
             if k < 0 or k >= len(staged_files):
@@ -246,7 +245,7 @@ def stage_images(images_dir: Path, staging_dir: Path, mode: str, limit: Optional
     logger.info(f"staging done: {len(infos)} -> {staging_dir} (mode={mode})")
     return infos, staging_dir / "%06d.jpg"
 
-# ---------- YOLO label -> staged pixel bbox ----------
+# ---------------- YOLO label -> staged pixel bbox ----------------
 def parse_yolo_label_file(label_path: Path) -> List[Tuple[int, float, float, float, float]]:
     if not label_path.exists():
         return []
@@ -265,7 +264,7 @@ def parse_yolo_label_file(label_path: Path) -> List[Tuple[int, float, float, flo
 
 def yolo_to_staged_xywh(cls: int, x: float, y: float, w: float, h: float, st: StageInfo) -> Optional[Tuple[int, float, float, float, float]]:
     ow, oh = st.orig_w, st.orig_h
-    # 绝大多数 YOLO label 是 0..1 normalized
+    # most YOLO txt are normalized
     normalized = (0.0 <= x <= 1.5 and 0.0 <= y <= 1.5 and 0.0 <= w <= 1.5 and 0.0 <= h <= 1.5)
     if normalized:
         cx = x * ow
@@ -283,9 +282,10 @@ def yolo_to_staged_xywh(cls: int, x: float, y: float, w: float, h: float, st: St
     bw_s = bw * st.sx
     bh_s = bh * st.sy
 
-    # clip
     if bw_s <= 0 or bh_s <= 0:
         return None
+
+    # clip
     if left_s >= WIDTH or top_s >= HEIGHT:
         return None
     if left_s + bw_s <= 0 or top_s + bh_s <= 0:
@@ -295,62 +295,107 @@ def yolo_to_staged_xywh(cls: int, x: float, y: float, w: float, h: float, st: St
     top_s = max(0.0, min(float(HEIGHT - 1), top_s))
     bw_s = max(0.0, min(float(WIDTH) - left_s, bw_s))
     bh_s = max(0.0, min(float(HEIGHT) - top_s, bh_s))
-
     if bw_s < 1e-3 or bh_s < 1e-3:
         return None
     return (cls, left_s, top_s, bw_s, bh_s)
 
-# ---------- simple NMS (pure python) ----------
-def nms_xywh(dets: List[Dict[str, Any]], iou_th: float) -> List[Dict[str, Any]]:
-    if iou_th <= 0:
-        return dets
-    if not dets:
-        return dets
+# ---------------- NMS / postprocess ----------------
+def _iou_xywh(a: List[float], b: List[float]) -> float:
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    ax2, ay2 = ax + aw, ay + ah
+    bx2, by2 = bx + bw, by + bh
+    ix1, iy1 = max(ax, bx), max(ay, by)
+    ix2, iy2 = min(ax2, bx2), min(ay2, by2)
+    iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+    inter = iw * ih
+    if inter <= 0:
+        return 0.0
+    union = aw * ah + bw * bh - inter
+    return inter / max(union, 1e-9)
 
-    # convert to xyxy
-    boxes = []
-    scores = []
+def nms_xywh(dets: List[Dict[str, Any]], iou_thr: float) -> List[Dict[str, Any]]:
+    if iou_thr <= 0:
+        return dets
+    dets = sorted(dets, key=lambda d: float(d["score"]), reverse=True)
+    keep: List[Dict[str, Any]] = []
     for d in dets:
-        x, y, w, h = d["bbox"]
-        boxes.append((x, y, x + w, y + h))
-        scores.append(float(d["score"]))
+        ok = True
+        for k in keep:
+            if _iou_xywh(d["bbox"], k["bbox"]) >= iou_thr:
+                ok = False
+                break
+        if ok:
+            keep.append(d)
+    return keep
 
-    idxs = sorted(range(len(dets)), key=lambda i: scores[i], reverse=True)
-    keep: List[int] = []
+def postprocess_by_image(
+    dets: List[Dict[str, Any]],
+    top1: bool,
+    topk: int,
+    nms_iou: float
+) -> List[Dict[str, Any]]:
+    by_img: Dict[int, List[Dict[str, Any]]] = {}
+    for d in dets:
+        by_img.setdefault(int(d["image_id"]), []).append(d)
 
-    def iou(a, b) -> float:
-        ax1, ay1, ax2, ay2 = a
-        bx1, by1, bx2, by2 = b
-        inter_x1 = max(ax1, bx1)
-        inter_y1 = max(ay1, by1)
-        inter_x2 = min(ax2, bx2)
-        inter_y2 = min(ay2, by2)
-        iw = max(0.0, inter_x2 - inter_x1)
-        ih = max(0.0, inter_y2 - inter_y1)
-        inter = iw * ih
-        if inter <= 0:
-            return 0.0
-        area_a = max(0.0, ax2 - ax1) * max(0.0, ay2 - ay1)
-        area_b = max(0.0, bx2 - bx1) * max(0.0, by2 - by1)
-        return inter / max(1e-9, (area_a + area_b - inter))
+    out: List[Dict[str, Any]] = []
+    for img_id, lst in by_img.items():
+        lst = sorted(lst, key=lambda d: float(d["score"]), reverse=True)
+        if top1:
+            lst = lst[:1]
+        elif topk > 0:
+            lst = lst[:topk]
+        lst = nms_xywh(lst, nms_iou)
+        out.extend(lst)
+    return out
 
-    while idxs:
-        cur = idxs.pop(0)
-        keep.append(cur)
-        cur_box = boxes[cur]
-        rest = []
-        for j in idxs:
-            if iou(cur_box, boxes[j]) <= iou_th:
-                rest.append(j)
-        idxs = rest
+# ---------------- debug visualization ----------------
+def draw_debug_overlays(
+    stage_infos: List[StageInfo],
+    preds: List[Dict[str, Any]],
+    gt_coco: Dict[str, Any],
+    out_dir: Path,
+    max_n: int
+):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    by_img_pred: Dict[int, List[Dict[str, Any]]] = {}
+    for d in preds:
+        by_img_pred.setdefault(int(d["image_id"]), []).append(d)
 
-    return [dets[i] for i in keep]
+    by_img_gt: Dict[int, List[List[float]]] = {}
+    for ann in gt_coco.get("annotations", []):
+        by_img_gt.setdefault(int(ann["image_id"]), []).append(list(map(float, ann["bbox"])))
 
-# ---------- GStreamer ----------
+    n = min(max_n, len(stage_infos))
+    for i in range(n):
+        img_path = stage_infos[i].staged_path
+        try:
+            bgr = _read_image_bgr(img_path)
+        except Exception:
+            continue
+
+        # draw GT (green) and preds (red)
+        try:
+            import cv2  # type: ignore
+            for bbox in by_img_gt.get(i, []):
+                x, y, w, h = bbox
+                cv2.rectangle(bgr, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2)
+            for d in by_img_pred.get(i, []):
+                x, y, w, h = d["bbox"]
+                s = float(d["score"])
+                cv2.rectangle(bgr, (int(x), int(y)), (int(x + w), int(y + h)), (0, 0, 255), 2)
+                cv2.putText(bgr, f"{s:.2f}", (int(x), max(0, int(y) - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            cv2.imwrite(str(out_dir / f"{i:06d}.jpg"), bgr)
+        except Exception:
+            # if no cv2 drawing available, just save raw staged
+            _write_jpg(out_dir / f"{i:06d}.jpg", bgr, quality=95)
+
+# ---------------- GStreamer globals ----------------
 pipeline = None
-detections: List[Dict[str, Any]] = []
+detections_raw: List[Dict[str, Any]] = []
 frame_counter = 0
-seq_image_id = 0
+seq_counter = 0
 args_global = None
 
 def bus_call(bus, message, loop):
@@ -360,29 +405,12 @@ def bus_call(bus, message, loop):
         logger.error(f"GStreamer ERROR: {err}\n{dbg}")
         loop.quit()
     elif t == Gst.MessageType.EOS:
-        print("End-of-stream")
+        sys.stdout.write("End-of-stream\n")
         loop.quit()
     return True
 
-def _get_bbox_from_obj(obj_meta, source: str):
-    """
-    source=detector: use detector_bbox_info.org_bbox_coords (与你 main.py 一致)
-    source=rect: use rect_params
-    """
-    if source == "detector":
-        try:
-            b = obj_meta.detector_bbox_info.org_bbox_coords
-            return float(b.left), float(b.top), float(b.width), float(b.height)
-        except Exception:
-            # fallback
-            rp = obj_meta.rect_params
-            return float(rp.left), float(rp.top), float(rp.width), float(rp.height)
-    else:
-        rp = obj_meta.rect_params
-        return float(rp.left), float(rp.top), float(rp.width), float(rp.height)
-
 def infer_probe(pad, info, u_data):
-    global detections, frame_counter, seq_image_id, args_global
+    global detections_raw, frame_counter, seq_counter
     gst_buffer = info.get_buffer()
     if not gst_buffer:
         return Gst.PadProbeReturn.OK
@@ -396,20 +424,12 @@ def infer_probe(pad, info, u_data):
         except StopIteration:
             break
 
-        # 关键：保证 image_id 和 GT 对齐
         if args_global.image_id_mode == "seq":
-            image_id = int(seq_image_id)
-            seq_image_id += 1
+            image_id = int(seq_counter)
         else:
-            # frame 模式：做 offset，避免从 1 开始
-            fn = int(frame_meta.frame_num)
-            if args_global._frame_num0 is None:
-                args_global._frame_num0 = fn
-            image_id = fn - int(args_global._frame_num0)
+            image_id = int(frame_meta.frame_num)
 
-        fw = int(getattr(frame_meta, "source_frame_width", WIDTH)) or WIDTH
-        fh = int(getattr(frame_meta, "source_frame_height", HEIGHT)) or HEIGHT
-
+        # batch-size=1 normally, but keep safe
         l_obj = frame_meta.obj_meta_list
         while l_obj is not None:
             try:
@@ -419,18 +439,33 @@ def infer_probe(pad, info, u_data):
 
             score = float(obj.confidence)
             if score >= float(args_global.conf):
-                left, top, w, h = _get_bbox_from_obj(obj, args_global.bbox_source)
+                if args_global.bbox_source == "detector":
+                    # DeepStream-aligned: detector org bbox
+                    bb = obj.detector_bbox_info.org_bbox_coords
+                    left = float(bb.left)
+                    top = float(bb.top)
+                    w = float(bb.width)
+                    h = float(bb.height)
+                else:
+                    # display rect bbox
+                    rp = obj.rect_params
+                    left = float(rp.left)
+                    top = float(rp.top)
+                    w = float(rp.width)
+                    h = float(rp.height)
 
-                # clamp to frame size
-                left = max(0.0, min(float(fw - 1), left))
-                top = max(0.0, min(float(fh - 1), top))
-                w = max(0.0, min(float(fw) - left, w))
-                h = max(0.0, min(float(fh) - top, h))
+                # clip to staged frame
+                left = max(0.0, min(float(WIDTH - 1), left))
+                top = max(0.0, min(float(HEIGHT - 1), top))
+                w = max(0.0, min(float(WIDTH) - left, w))
+                h = max(0.0, min(float(HEIGHT) - top, h))
 
                 if w > 1e-3 and h > 1e-3:
-                    detections.append({
+                    # COCO category_id starts from 1
+                    cls_id = int(getattr(obj, "class_id", 0))
+                    detections_raw.append({
                         "image_id": image_id,
-                        "category_id": 1,
+                        "category_id": cls_id + 1,
                         "bbox": [left, top, w, h],
                         "score": score,
                     })
@@ -441,6 +476,8 @@ def infer_probe(pad, info, u_data):
                 break
 
         frame_counter += 1
+        seq_counter += 1
+
         if frame_counter % 200 == 0:
             logger.info(f"infer progress: frames={frame_counter}")
 
@@ -452,7 +489,7 @@ def infer_probe(pad, info, u_data):
     return Gst.PadProbeReturn.OK
 
 def build_minimal_pipeline_desc(staged_pattern: Path, count: int, pgie_cfg: Path, fps: int) -> str:
-    # 固定 image/jpeg caps，避免 unfixed caps 报错
+    # Important: fix caps width/height + jpegparse to avoid unfixed caps error
     return f"""
         multifilesrc location={staged_pattern} start-index=0 stop-index={count-1} do-timestamp=true !
         image/jpeg,width={WIDTH},height={HEIGHT},framerate={fps}/1 !
@@ -468,61 +505,37 @@ def build_minimal_pipeline_desc(staged_pattern: Path, count: int, pgie_cfg: Path
         fakesink sync=false
     """
 
-# ---------- debug visualization ----------
-def draw_debug(staged_img: Path, gt_boxes: List[List[float]], pred_boxes: List[List[float]], out_path: Path):
-    try:
-        import cv2  # type: ignore
-        img = cv2.imread(str(staged_img), cv2.IMREAD_COLOR)
-        if img is None:
-            return
-        # GT green
-        for (x, y, w, h) in gt_boxes:
-            x1, y1, x2, y2 = int(x), int(y), int(x + w), int(y + h)
-            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        # Pred red
-        for (x, y, w, h) in pred_boxes:
-            x1, y1, x2, y2 = int(x), int(y), int(x + w), int(y + h)
-            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        cv2.imwrite(str(out_path), img)
-    except Exception:
-        return
-
 def main():
-    global pipeline, detections, frame_counter, seq_image_id, args_global
+    global pipeline, detections_raw, frame_counter, seq_counter, args_global
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="pgie_config.txt")
-    ap.add_argument("--engine", default=None)
-    ap.add_argument("--data-yaml", required=True)
+    ap.add_argument("--config", default="pgie_config.txt", help="DeepStream pgie config path")
+    ap.add_argument("--engine", default=None, help="Force model-engine-file to this engine plan")
+    ap.add_argument("--data-yaml", required=True, help="YOLO data.yaml path")
     ap.add_argument("--split", choices=["val", "test"], default="val")
     ap.add_argument("--images-dir", default=None)
     ap.add_argument("--labels-dir", default=None)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--fps", type=int, default=60)
-    ap.add_argument("--conf", type=float, default=0.001)
-
+    ap.add_argument("--conf", type=float, default=0.25, help="pre-cluster-threshold aligned (e.g. 0.25)")
     ap.add_argument("--stage-mode", choices=["none", "stretch", "letterbox"], default="letterbox")
     ap.add_argument("--staging-dir", default="/tmp/rocam_bench_fixedjpg")
 
-    # 🔥关键：跟你线上一致
-    ap.add_argument("--bbox-source", choices=["detector", "rect"], default="detector")
-    ap.add_argument("--image-id-mode", choices=["seq", "frame"], default="seq")
+    ap.add_argument("--bbox-source", choices=["detector", "rect"], default="detector",
+                    help="Use detector org bbox (DeepStream-aligned) or rect_params bbox")
+    ap.add_argument("--image-id-mode", choices=["seq", "frame"], default="seq",
+                    help="seq=0..N-1 in file order; frame=use frame_meta.frame_num")
 
-    # 可选：贴近线上只取最大 conf
-    ap.add_argument("--top1", action="store_true", help="keep only top-1 detection per image (like main.py)")
-    ap.add_argument("--nms-iou", type=float, default=0.0, help="apply python NMS per image (0 disables)")
-
-    # 诊断用
-    ap.add_argument("--dump-json", default=None)
-    ap.add_argument("--dump-stage-csv", default=None)
-    ap.add_argument("--debug-vis", type=int, default=0, help="save first N images with GT(green)/Pred(red) overlay into /tmp/rocam_bench_debug")
-
+    ap.add_argument("--top1", action="store_true", help="keep only top-1 det per image before NMS")
+    ap.add_argument("--topk", type=int, default=300, help="keep top-k dets per image before NMS (DeepStream topk)")
+    ap.add_argument("--nms-iou", type=float, default=0.45, help="NMS IoU threshold (DeepStream nms-iou-threshold)")
+    ap.add_argument("--dump-json", default=None, help="dump final detections (after postprocess) as json")
+    ap.add_argument("--dump-stage-csv", default=None, help="dump staging transform info as csv")
+    ap.add_argument("--debug-vis", type=int, default=0, help="save N debug overlay images to /tmp/rocam_bench_debug")
     args = ap.parse_args()
     args_global = args
-    args_global._frame_num0 = None  # for frame id offset
 
-    data_yaml = Path(args.data_yaml).resolve()
+    data_yaml = Path(args.data_yaml).expanduser().resolve()
     data = load_data_yaml(data_yaml)
 
     names = data.get("names", ["rocket"])
@@ -535,6 +548,7 @@ def main():
     root = data_yaml.parent
     split_key = args.split
 
+    # images dir
     if args.images_dir:
         images_dir = Path(args.images_dir).expanduser().resolve()
     else:
@@ -543,9 +557,11 @@ def main():
             images_dir = (root / "images" / split_key).resolve()
         else:
             images_dir = (root / str(split_path)).expanduser().resolve()
+            # handle when yaml points to dataset root
             if (images_dir / "images" / split_key).is_dir():
                 images_dir = (images_dir / "images" / split_key).resolve()
 
+    # labels dir
     if args.labels_dir:
         labels_dir = Path(args.labels_dir).expanduser().resolve()
     else:
@@ -557,54 +573,61 @@ def main():
     logger.info(f"Images dir: {images_dir}")
     logger.info(f"Labels dir: {labels_dir}")
 
+    # stage images to WIDTHxHEIGHT
     staging_dir = Path(args.staging_dir).resolve()
     stage_infos, pattern = stage_images(images_dir, staging_dir, args.stage_mode, args.limit)
     count = len(stage_infos)
     logger.info(f"Total images to eval: {count}")
 
-    # 导出每张图的 resize/letterbox 参数
+    # dump stage csv (optional)
     if args.dump_stage_csv:
-        lines = ["idx,orig_path,orig_w,orig_h,sx,sy,pad_x,pad_y,staged_path"]
-        for i, st in enumerate(stage_infos):
-            lines.append(f"{i},{st.orig_path},{st.orig_w},{st.orig_h},{st.sx:.8f},{st.sy:.8f},{st.pad_x:.4f},{st.pad_y:.4f},{st.staged_path}")
-        Path(args.dump_stage_csv).write_text("\n".join(lines) + "\n", encoding="utf-8")
-        logger.info(f"Dumped stage csv: {args.dump_stage_csv}")
+        import csv
+        p = Path(args.dump_stage_csv).expanduser().resolve()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["idx", "orig_path", "orig_w", "orig_h", "sx", "sy", "pad_x", "pad_y", "staged_path"])
+            for i, st in enumerate(stage_infos):
+                w.writerow([i, str(st.orig_path), st.orig_w, st.orig_h, st.sx, st.sy, st.pad_x, st.pad_y, str(st.staged_path)])
+        logger.info(f"Dumped stage csv: {p}")
 
-    # ---- build COCO GT ----
-    coco_gt = {"images": [], "annotations": [], "categories": [{"id": 1, "name": names[0] if names else "rocket"}]}
+    # build COCO GT in staged coordinate system (WIDTHxHEIGHT)
+    categories = [{"id": i + 1, "name": str(n)} for i, n in enumerate(names)]
+    coco_gt: Dict[str, Any] = {"images": [], "annotations": [], "categories": categories}
     ann_id = 1
-
-    # also keep per-image GT for debug vis
-    gt_boxes_by_img: Dict[int, List[List[float]]] = {}
 
     for i, st in enumerate(stage_infos):
         coco_gt["images"].append({"id": i, "file_name": str(st.orig_path), "width": WIDTH, "height": HEIGHT})
         label_path = labels_dir / f"{st.orig_path.stem}.txt"
         rows = parse_yolo_label_file(label_path)
         for (cls, x, y, w, h) in rows:
-            # 单类数据集：cls 应该是 0
-            if len(names) == 1 and cls != 0:
+            # safety for single-class datasets
+            if len(names) == 1:
                 cls = 0
             mapped = yolo_to_staged_xywh(cls, x, y, w, h, st)
             if mapped is None:
                 continue
-            _, left, top, bw, bh = mapped
+            cls_m, left, top, bw, bh = mapped
             coco_gt["annotations"].append({
-                "id": ann_id, "image_id": i, "category_id": 1,
-                "bbox": [left, top, bw, bh], "area": float(bw * bh), "iscrowd": 0
+                "id": ann_id,
+                "image_id": i,
+                "category_id": int(cls_m) + 1,
+                "bbox": [left, top, bw, bh],
+                "area": float(bw * bh),
+                "iscrowd": 0
             })
-            gt_boxes_by_img.setdefault(i, []).append([left, top, bw, bh])
             ann_id += 1
 
     gt_json = Path("/tmp/rocam_gt_coco.json")
     gt_json.write_text(json.dumps(coco_gt), encoding="utf-8")
 
-    orig_cfg = Path(args.config).resolve()
-    engine_path = Path(args.engine).resolve() if args.engine else None
+    # patch pgie config to force engine
+    orig_cfg = Path(args.config).expanduser().resolve()
+    engine_path = Path(args.engine).expanduser().resolve() if args.engine else None
     tmp_cfg = write_temp_pgie_config(orig_cfg, engine_path)
     logger.info(f"Using temp config: {tmp_cfg} (engine forced to {engine_path})")
 
-    # ---- run DeepStream inference ----
+    # build pipeline
     Gst.init(None)
     pipeline_desc = build_minimal_pipeline_desc(pattern, count, tmp_cfg, args.fps)
     pipeline = Gst.parse_launch(pipeline_desc)
@@ -622,9 +645,9 @@ def main():
     infer_src.add_probe(Gst.PadProbeType.BUFFER, infer_probe, 0)
 
     logger.info(f"Starting inference over {count} images...")
-    detections = []
+    detections_raw = []
     frame_counter = 0
-    seq_image_id = 0
+    seq_counter = 0
 
     pipeline.set_state(Gst.State.PLAYING)
     try:
@@ -632,48 +655,30 @@ def main():
     finally:
         pipeline.set_state(Gst.State.NULL)
 
-    logger.info(f"Collected detections: {len(detections)} (after conf>={args.conf:.4f})")
+    logger.info(f"Collected detections: {len(detections_raw)} (after conf>={args.conf:.4f})")
 
-    # ---- postprocess: group by image_id ----
-    det_by_img: Dict[int, List[Dict[str, Any]]] = {}
-    for d in detections:
-        det_by_img.setdefault(int(d["image_id"]), []).append(d)
+    # postprocess to match DeepStream config knobs
+    dets_pp = postprocess_by_image(
+        dets=detections_raw,
+        top1=bool(args.top1),
+        topk=int(args.topk) if args.topk is not None else 0,
+        nms_iou=float(args.nms_iou),
+    )
+    logger.info(f"Detections after postprocess: {len(dets_pp)} (top1={args.top1}, topk={args.topk}, nms_iou={args.nms_iou})")
 
-    # top1 / nms
-    final_dets: List[Dict[str, Any]] = []
-    for img_id, ds in det_by_img.items():
-        # NMS (optional)
-        if args.nms_iou > 0:
-            ds = nms_xywh(ds, args.nms_iou)
-
-        # top1 (optional)
-        if args.top1 and ds:
-            ds = [max(ds, key=lambda x: float(x["score"]))]
-
-        final_dets.extend(ds)
-
-    detections = final_dets
-    logger.info(f"Detections after postprocess: {len(detections)} (top1={args.top1}, nms_iou={args.nms_iou})")
+    # debug overlays
+    if args.debug_vis and int(args.debug_vis) > 0:
+        out_dir = Path("/tmp/rocam_bench_debug")
+        draw_debug_overlays(stage_infos, dets_pp, coco_gt, out_dir, int(args.debug_vis))
+        logger.info(f"Saved debug overlay images to {out_dir} (N={args.debug_vis})")
 
     if args.dump_json:
-        Path(args.dump_json).write_text(json.dumps(detections), encoding="utf-8")
+        Path(args.dump_json).expanduser().resolve().write_text(json.dumps(dets_pp), encoding="utf-8")
         logger.info(f"Dumped detections json: {args.dump_json}")
 
-    # debug visualization
-    if args.debug_vis and args.debug_vis > 0:
-        out_dir = Path("/tmp/rocam_bench_debug")
-        for i in range(min(args.debug_vis, count)):
-            st = stage_infos[i]
-            gt = gt_boxes_by_img.get(i, [])
-            preds = [d["bbox"] for d in det_by_img.get(i, [])]
-            # 如果启用了 top1/nms，用最终结果更直观
-            preds2 = [d["bbox"] for d in detections if int(d["image_id"]) == i]
-            draw_debug(st.staged_path, gt, preds2, out_dir / f"{i:06d}.jpg")
-        logger.info(f"Saved debug overlay images to /tmp/rocam_bench_debug (N={min(args.debug_vis, count)})")
-
-    # ---- COCO eval ----
+    # COCO eval
     coco = COCO(str(gt_json))
-    if len(detections) == 0:
+    if len(dets_pp) == 0:
         logger.error("No detections produced. mAP=0.")
         print("\n=== ACCURACY SUMMARY (COCOeval) ===")
         print(f"split: {args.split}")
@@ -681,16 +686,14 @@ def main():
         print(f"stage-mode: {args.stage_mode}")
         print(f"bbox-source: {args.bbox_source}")
         print(f"image-id-mode: {args.image_id_mode}")
+        print(f"top1: {args.top1}   topk: {args.topk}   nms_iou: {args.nms_iou}")
         print(f"detections (conf>={args.conf:.4f}): 0")
         print("mAP@0.50:0.95 = 0.000000")
         print("mAP@0.50      = 0.000000")
         return 0
 
-    coco_dt = coco.loadRes(detections)
+    coco_dt = coco.loadRes(dets_pp)
     ev = COCOeval(coco, coco_dt, iouType="bbox")
-
-    # 如果你想更贴近“每张图只用一个框”的场景，可以把 maxDets=1 的指标也打印出来：
-    # COCOeval 默认 summarize 用 maxDets=100；但 evaluate/accumulate 可以通过 params 控制
     ev.evaluate()
     ev.accumulate()
     ev.summarize()
@@ -704,8 +707,8 @@ def main():
     print(f"stage-mode: {args.stage_mode}")
     print(f"bbox-source: {args.bbox_source}")
     print(f"image-id-mode: {args.image_id_mode}")
-    print(f"top1: {args.top1}   nms_iou: {args.nms_iou}")
-    print(f"detections (conf>={args.conf:.4f}): {len(detections)}")
+    print(f"top1: {args.top1}   topk: {args.topk}   nms_iou: {args.nms_iou}")
+    print(f"detections (conf>={args.conf:.4f}): {len(dets_pp)}")
     print(f"mAP@0.50:0.95 = {map_5095:.6f}")
     print(f"mAP@0.50      = {map_50:.6f}")
     return 0
