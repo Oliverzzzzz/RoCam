@@ -287,18 +287,18 @@ The jetson module contains all the code that runs on the Nvidia Jetson.
 
 \begin{description}
   \item[Secrets:] \leavevmode
-    \begin{itemize}
-      \item How to retreive and process the video feed from camera
-      \item Computer vision algorithms
-      \item How to start/stop recording
-    \end{itemize}
-  \item[Services:]  \leavevmode
-    \begin{itemize}
-      \item Detects rocket location from the camera feed
-      \item Record camera feed to disk
-      \item Generate preview video feed
-      \item Generate live stream video feed
-    \end{itemize}
+        \begin{itemize}
+          \item How to retreive and process the video feed from camera
+          \item Computer vision algorithms
+          \item How to start/stop recording
+        \end{itemize}
+  \item[Services:] \leavevmode
+        \begin{itemize}
+          \item Detects rocket location from the camera feed
+          \item Record camera feed to disk
+          \item Generate preview video feed
+          \item Generate live stream video feed
+        \end{itemize}
   \item[Implemented By:] \progname
   \item[Type of Module:] Process
 \end{description}
@@ -307,16 +307,16 @@ The jetson module contains all the code that runs on the Nvidia Jetson.
 
 \begin{description}
   \item[Secrets:] \leavevmode
-    \begin{itemize}
-      \item How to stablize and overlay text to the live video feed
-      \item How to handle CV process crashes
-      \item How to output video to HDMI
-    \end{itemize}
-  \item[Services:]  \leavevmode
-    \begin{itemize}
-      \item Stablize and overlay text to the live stream video feed
-      \item Output the live stream video feed to HDMI
-    \end{itemize}
+        \begin{itemize}
+          \item How to stablize and overlay text to the live video feed
+          \item How to handle CV process crashes
+          \item How to output video to HDMI
+        \end{itemize}
+  \item[Services:] \leavevmode
+        \begin{itemize}
+          \item Stablize and overlay text to the live stream video feed
+          \item Output the live stream video feed to HDMI
+        \end{itemize}
   \item[Implemented By:] \progname
   \item[Type of Module:] Process
 \end{description}
@@ -325,10 +325,10 @@ The jetson module contains all the code that runs on the Nvidia Jetson.
 
 \begin{description}
   \item[Secrets:] \leavevmode
-    \begin{itemize}
-      \item How to encode recorded video to a more efficient format
-      \item How to stablize and overlay text to the recorded video
-    \end{itemize}
+        \begin{itemize}
+          \item How to encode recorded video to a more efficient format
+          \item How to stablize and overlay text to the recorded video
+        \end{itemize}
   \item[Services:] Transcode a recording with optional stablization and text overlay
   \item[Implemented By:] \progname
   \item[Type of Module:] Process
@@ -345,17 +345,19 @@ The jetson module contains all the code that runs on the Nvidia Jetson.
 
 \subsection{Control Process Module (\mref{mControl})}
 
-The control process module orchestrates all the processes and manages the system state.
+The control process module orchestrates all the processes and manages the
+system state.
 
 \subsection{CV Process Management Module (\mref{mCVManagement})}
 
 \begin{description}
   \item[Secrets:] \leavevmode
-    \begin{itemize}
-      \item How to start the CV process
-      \item How to communicate with the CV process
-    \end{itemize}
-  \item[Services:] Allows the Control Process Module (\mref{mControl}) to access service provided by the CV Process Module (\mref{mCV})
+        \begin{itemize}
+          \item How to start the CV process
+          \item How to communicate with the CV process
+        \end{itemize}
+  \item[Services:] Allows the Control Process Module (\mref{mControl}) to access
+        service provided by the CV Process Module (\mref{mCV})
   \item[Implemented By:] \progname
   \item[Type of Module:] Class
 \end{description}
@@ -364,11 +366,12 @@ The control process module orchestrates all the processes and manages the system
 
 \begin{description}
   \item[Secrets:] \leavevmode
-    \begin{itemize}
-      \item How to start the Live Video process
-      \item How to communicate with the Live Video process
-    \end{itemize}
-  \item[Services:] Allows the Control Process Module (\mref{mControl}) to access service provided by the Live Video Process Module (\mref{mVideo})
+        \begin{itemize}
+          \item How to start the Live Video process
+          \item How to communicate with the Live Video process
+        \end{itemize}
+  \item[Services:] Allows the Control Process Module (\mref{mControl}) to access
+        service provided by the Live Video Process Module (\mref{mVideo})
   \item[Implemented By:] \progname
   \item[Type of Module:] Class
 \end{description}
@@ -377,11 +380,12 @@ The control process module orchestrates all the processes and manages the system
 
 \begin{description}
   \item[Secrets:] \leavevmode
-    \begin{itemize}
-      \item How to start the Transcode process
-      \item How to communicate with the Transcode process
-    \end{itemize}
-  \item[Services:] Allows the Control Process Module (\mref{mControl}) to access service provided by the Transcode Process Module (\mref{mTranscode})
+        \begin{itemize}
+          \item How to start the Transcode process
+          \item How to communicate with the Transcode process
+        \end{itemize}
+  \item[Services:] Allows the Control Process Module (\mref{mControl}) to access
+        service provided by the Transcode Process Module (\mref{mTranscode})
   \item[Implemented By:] \progname
   \item[Type of Module:] Class
 \end{description}
@@ -390,7 +394,8 @@ The control process module orchestrates all the processes and manages the system
 
 \begin{description}
   \item[Secrets:] The tracking algorithm
-  \item[Services:] Calculates the angle of the gimbal required to keep the rocket in the frame.
+  \item[Services:] Calculates the angle of the gimbal required to keep the rocket in
+        the frame.
   \item[Implemented By:] \progname
   \item[Type of Module:] Class
 \end{description}
@@ -400,10 +405,10 @@ The control process module orchestrates all the processes and manages the system
 \begin{description}
   \item[Secrets:] The communication protocol of the gimbal
   \item[Services:] \leavevmode
-    \begin{itemize}
-      \item Command the gimbal to go to a specified angle
-      \item Measure the current angle of the gimbal
-    \end{itemize}
+        \begin{itemize}
+          \item Command the gimbal to go to a specified angle
+          \item Measure the current angle of the gimbal
+        \end{itemize}
   \item[Implemented By:] \progname
   \item[Type of Module:] Class
 \end{description}
@@ -421,7 +426,8 @@ The control process module orchestrates all the processes and manages the system
 
 \begin{description}
   \item[Secrets:] How to retreive various system status
-  \item[Services:] Provide various system status (e.g. GPU ultilization, core temperature)
+  \item[Services:] Provide various system status (e.g. GPU ultilization, core
+        temperature)
   \item[Implemented By:] pip package jetson-stats
   \item[Type of Module:] Library
 \end{description}
@@ -439,15 +445,15 @@ The control process module orchestrates all the processes and manages the system
 
 \begin{description}
   \item[Secrets:] \leavevmode
-    \begin{itemize}
-      \item The data structure to store the state of the system
-      \item State transition logic
-    \end{itemize}
+        \begin{itemize}
+          \item The data structure to store the state of the system
+          \item State transition logic
+        \end{itemize}
   \item[Services:] \leavevmode
-    \begin{itemize}
-      \item Manages the state transitions of the system
-      \item Aggregate data for the API Gateway
-    \end{itemize}
+        \begin{itemize}
+          \item Manages the state transitions of the system
+          \item Aggregate data for the API Gateway
+        \end{itemize}
   \item[Implemented By:] \progname
   \item[Type of Module:] Class
 \end{description}
@@ -478,8 +484,10 @@ system via the web interface.
 \subsection{Manual Control Module (\mref{mManual})}
 
 \begin{description}
-  \item[Secrets:] Intuitive user interface for manual control, and how to send manual control commands to the API Gateway.
-  \item[Services:] Allows the operator to control the gimbal manually via a user interface.
+  \item[Secrets:] Intuitive user interface for manual control, and how to send manual
+        control commands to the API Gateway.
+  \item[Services:] Allows the operator to control the gimbal manually via a user
+        interface.
   \item[Implemented By:] \progname
   \item[Type of Module:] Library
 \end{description}
@@ -488,7 +496,8 @@ system via the web interface.
 
 \begin{description}
   \item[Secrets:] How to list, delete, and download the recorded videos and log files.
-  \item[Services:] Allows the operator to list, delete, and download the recorded videos and log files.
+  \item[Services:] Allows the operator to list, delete, and download the recorded
+        videos and log files.
   \item[Implemented By:] \progname
   \item[Type of Module:] Library
 \end{description}
