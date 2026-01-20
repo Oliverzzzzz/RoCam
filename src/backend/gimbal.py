@@ -355,6 +355,30 @@ class GimbalSerial:
         except RuntimeError:
             return False
 
+    def get_focal_length(self) -> float:
+        """
+        Request current camera focal length from the device.
+
+        request_id: 0x06
+        payload:    none (empty)
+        request:    [0]=CRC([1]), [1]=0x06
+
+        response (5 bytes):
+          [0..3] float32 focal_length_mm (LE)
+          [4]    uint8  CRC-8/SMBUS over bytes [0..3]
+
+        Returns:
+          Focal length in millimeters as float.
+
+        Raises:
+          RuntimeError on port closed, short write, timeout, or CRC mismatch.
+        """
+        if not self.ser or not self.ser.is_open:
+            raise RuntimeError("Serial port is not open")
+        resp_data = self._send_request(0x06, b"", 4)
+        focal_length = struct.unpack("<f", resp_data[0:4])[0]
+        return focal_length
+
 if __name__ == "__main__":
     with GimbalSerial(port="/dev/ttyTHS1", baudrate=115200, timeout=0.5) as dev:
         dev.arm_led(True)
