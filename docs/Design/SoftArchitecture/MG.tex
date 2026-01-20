@@ -502,18 +502,18 @@ requirements and between the modules and the anticipated changes.
     \toprule
     \textbf{Req.} & \textbf{Modules}                                                                           \\
     \midrule
-    FR-1          & \mref{mJetson}, \mref{mVideo}, \mref{mCV}                                                  \\
-    FR-2          & \mref{mGimbal}, \mref{mTrack}, \mref{mManual}, \mref{mAPI}                                 \\
-    FR-3          & \mref{mCV}, \mref{mJetson}                                                                 \\
-    FR-4          & \mref{mState}, \mref{mGimbal}, \mref{mCV}                                                  \\
-    FR-5          & \mref{mState}, \mref{mCV}, \mref{mTrack}                                                   \\
-    FR-6          & \mref{mManual}, \mref{mAPI}, \mref{mGimbal}, \mref{mState}                                 \\
-    FR-7          & \mref{mTrack}, \mref{mCV}, \mref{mGimbal}, \mref{mState}                                   \\
-    FR-8          & \mref{mVideo}, \mref{mJetson}, \mref{mAPI}, \mref{mUI}, \mref{mPreview}                    \\
-    FR-9          & \mref{mVideo}, \mref{mGimbal}, \mref{mUI}, \mref{mAPI}, \mref{mPreview}                    \\
-    FR-10         & \mref{mPreview}, \mref{mUI}, \mref{mState}, \mref{mAPI}, \mref{mVideo}                     \\
-    FR-11         & \mref{mRecord}, \mref{mRecordMng}, \mref{mAPI}, \mref{mUI}, \mref{mPreview}, \mref{mVideo} \\
-    FR-12         & \mref{mRecordMng}, \mref{mAPI}, \mref{mRecord}, \mref{mUI},                                \\
+    FR-1          & \mref{mJetson}, \mref{mVideo}, \mref{mCV}, \mref{mControl}, \mref{mCVManagement}, \mref{mVideoManagement} \\
+    FR-2          & \mref{mGimbal}, \mref{mTrack}, \mref{mManual}, \mref{mAPI}, \mref{mControl}                     \\
+    FR-3          & \mref{mCV}, \mref{mJetson}, \mref{mControl}, \mref{mCVManagement}                             \\
+    FR-4          & \mref{mState}, \mref{mGimbal}, \mref{mTrack}, \mref{mCV}, \mref{mControl}, \mref{mCVManagement} \\
+    FR-5          & \mref{mState}, \mref{mCV}, \mref{mTrack}, \mref{mControl}                                     \\
+    FR-6          & \mref{mManual}, \mref{mAPI}, \mref{mGimbal}, \mref{mState}, \mref{mControl}                     \\
+    FR-7          & \mref{mTrack}, \mref{mCV}, \mref{mGimbal}, \mref{mState}, \mref{mControl}                     \\
+    FR-8          & \mref{mJetson}, \mref{mCV}, \mref{mVideo}, \mref{mControl}, \mref{mCVManagement}, \mref{mVideoManagement} \\
+    FR-9          & \mref{mVideo}, \mref{mGimbal}, \mref{mControl}, \mref{mVideoManagement}                        \\
+    FR-10         & \mref{mPreview}, \mref{mUI}, \mref{mState}, \mref{mAPI}, \mref{mCV}, \mref{mStatus}           \\
+    FR-11         & \mref{mCV}, \mref{mRecord}, \mref{mRecordMng}, \mref{mAPI}, \mref{mUI}, \mref{mControl}, \mref{mTranscode}, \mref{mTranscodeManagement} \\
+    FR-12         & \mref{mRecordMng}, \mref{mAPI}, \mref{mRecord}, \mref{mUI}, \mref{mControl}, \mref{mTranscode}, \mref{mTranscodeManagement} \\
     \bottomrule
   \end{tabular}
   \caption{Trace Between Functional Requirements and Modules}
@@ -557,7 +557,7 @@ requirements and between the modules and the anticipated changes.
     \midrule
     EZ-1          & \mref{mUI}                                                     \\
     EZ-2          & \mref{mUI}, \mref{mAPI}                                        \\
-    EZ-3          & \mref{mUI},  \mref{mAPI}, \mref{mConfig}                       \\
+    EZ-3          & \mref{mUI},  \mref{mAPI}, \mref{mConfig}, \mref{mStatus}          \\
     EZ-4          & \mref{mUI},  \mref{mConfig}, \mref{mAPI}, \mref{mState}        \\
     PI-1          & \mref{mUI}, \mref{mConfig}, \mref{mPreview}, \mref{mRecordMng} \\
     PI-2          & \mref{mUI}, \mref{mConfig}                                     \\
@@ -578,20 +578,20 @@ requirements and between the modules and the anticipated changes.
     \toprule
     \textbf{Req.} & \textbf{Modules}                                                                      \\
     \midrule
-    SLR-1         & \mref{mJetson}, \mref{mCV}, \mref{mTrack}, \mref{mGimbal}, \mref{mState}              \\
-    SLR-2         & \mref{mJetson}, \mref{mCV}, \mref{mVideo}, \mref{mTrack}                              \\
-    SLR-3         & \mref{mVideo}, \mref{mJetson}, \mref{mAPI}                                            \\
-    SCR-1         & \mref{mUI}, \mref{mManual}, \mref{mState}, \mref{mAPI}, \mref{mGimbal}                \\
-    SCR-2         & \mref{mTrack}, \mref{mState}, \mref{mCV}, \mref{mGimbal}, \mref{mJetson}              \\
-    SCR-3         & \mref{mUI}, \mref{mAPI}, \mref{mState}, \mref{mJetson}                                \\
-    SCR-4         & \mref{mUI}, \mref{mState}, \mref{mAPI}, \mref{mGimbal}                                \\
-    PAR-1         & \mref{mTrack}, \mref{mCV}, \mref{mGimbal}, \mref{mVideo}, \mref{mAPI}, \mref{mJetson} \\
-    RFR-1         & \mref{mUI}, \mref{mAPI}, \mref{mState}                                                \\
-    RFR-2         & \mref{mState}, \mref{mTrack}, \mref{mGimbal}, \mref{mAPI}                             \\
-    RFR-3         & \mref{mJetson}, \mref{mAPI}, \mref{mUI}, \mref{mState}, \mref{mJetson}                \\
-    RFR-4         & \mref{mTrack}, \mref{mCV}, \mref{mState}, \mref{mGimbal}, \mref{mJetson}              \\
-    RFR-5         & \mref{mTrack}, \mref{mCV}, \mref{mGimbal}, \mref{mState}                              \\
-    CR-1          & \mref{mRecord}, \mref{mRecordMng}, \mref{mJetson}                                     \\
+    SLR-1         & \mref{mJetson}, \mref{mCV}, \mref{mTrack}, \mref{mGimbal}, \mref{mState}, \mref{mControl}, \mref{mCVManagement} \\
+    SLR-2         & \mref{mJetson}, \mref{mCV}, \mref{mVideo}, \mref{mTrack}, \mref{mControl}, \mref{mCVManagement}     \\
+    SLR-3         & \mref{mVideo}, \mref{mJetson}, \mref{mAPI}, \mref{mControl}, \mref{mVideoManagement}  \\
+    SCR-1         & \mref{mUI}, \mref{mManual}, \mref{mState}, \mref{mAPI}, \mref{mGimbal}, \mref{mControl}                \\
+    SCR-2         & \mref{mTrack}, \mref{mState}, \mref{mCV}, \mref{mGimbal}, \mref{mJetson}, \mref{mControl}              \\
+    SCR-3         & \mref{mUI}, \mref{mAPI}, \mref{mState}, \mref{mJetson}, \mref{mControl}                                \\
+    SCR-4         & \mref{mUI}, \mref{mState}, \mref{mAPI}, \mref{mGimbal}, \mref{mControl}                                \\
+    PAR-1         & \mref{mTrack}, \mref{mCV}, \mref{mGimbal}, \mref{mVideo}, \mref{mAPI}, \mref{mJetson}, \mref{mControl} \\
+    RFR-1         & \mref{mUI}, \mref{mAPI}, \mref{mState}, \mref{mControl}, \mref{mStatus}                                                \\
+    RFR-2         & \mref{mState}, \mref{mTrack}, \mref{mGimbal}, \mref{mAPI}, \mref{mControl}                             \\
+    RFR-3         & \mref{mJetson}, \mref{mAPI}, \mref{mUI}, \mref{mState}, \mref{mControl}                \\
+    RFR-4         & \mref{mTrack}, \mref{mCV}, \mref{mState}, \mref{mGimbal}, \mref{mJetson}, \mref{mControl}              \\
+    RFR-5         & \mref{mTrack}, \mref{mCV}, \mref{mGimbal}, \mref{mState}, \mref{mControl}                              \\
+    CR-1          & \mref{mRecord}, \mref{mRecordMng}, \mref{mJetson}, \mref{mControl}, \mref{mTranscode}, \mref{mTranscodeManagement}                                     \\
     \bottomrule
   \end{tabular}
   \caption{Trace Between Performance Requirements and Modules}
@@ -604,9 +604,9 @@ requirements and between the modules and the anticipated changes.
     \toprule
     \textbf{Req.} & \textbf{Modules}                                  \\
     \midrule
-    EPE-1         & \mref{mJetson}, \mref{mGimbal}                    \\
-    INT-1         & \mref{mVideo}, \mref{mJetson}                     \\
-    INT-2         & \mref{mGimbal}, \mref{mAPI}, \mref{mJetson}       \\
+    EPE-1         & \mref{mJetson}, \mref{mGimbal}, \mref{mStatus}                    \\
+    INT-1         & \mref{mVideo}, \mref{mJetson}, \mref{mControl}, \mref{mVideoManagement}                     \\
+    INT-2         & \mref{mGimbal}, \mref{mSerial}, \mref{mAPI}, \mref{mJetson}, \mref{mControl}       \\
     RR-1          & \mref{mRecord}, \mref{mRecordMng}, \mref{mJetson} \\
     \bottomrule
   \end{tabular}
