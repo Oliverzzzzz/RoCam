@@ -230,9 +230,71 @@ modules.
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
-The design of the system is intended to satisfy the requirements developed in
-the SRS. In this stage, the system is decomposed into modules. The connection
-between requirements and modules is listed in Table~\ref{TblRT}.
+This design decomposes RoCam into modules that directly realize the SRS
+requirements. Tables in Section~\ref{SecTM} provide requirement-to-module
+traceability (e.g., Table~\ref{TblRT}). This section complements the tables by
+recording the main architectural decisions that map the SRS requirements to
+responsible modules and interfaces.
+
+\subsection{Design Decisions Traced to SRS Requirements}
+
+\begin{itemize}
+  \item \textbf{Single control surface via REST API (\mref{mAPI}):}
+        All operator actions and status queries are mediated by the API Gateway.
+        This supports remote operation over a local network (SCR-3) and keeps the UI
+        decoupled from backend implementation details (FR-10, FR-6, FR-11, FR-12).
+
+  \item \textbf{Explicit state machine and safe transitions (\mref{mState}):}
+        System modes (idle/armed/tracking/recording) are owned by State Management.
+        Manual override to leave armed/tracking is enforced through state transitions
+        (SCR-1), and arming occurs only by explicit user command (SCR-4). This ensures
+        predictable behavior for core workflows (FR-4, FR-5, FR-6).
+
+  \item \textbf{Validated command path for hardware safety (\mref{mAPI}, \mref{mManual}, \mref{mGimbal}):}
+        User inputs are validated before gimbal actuation to prevent invalid commands
+        (IR-1). Manual control is only available in idle state (FR-6), while the
+        tracking loop issues motion commands autonomously (FR-2, FR-7).
+
+  \item \textbf{Process separation for real-time performance (\mref{mCV}, \mref{mVideo}, \mref{mTranscode}):}
+        Vision/tracking, live output, and transcoding are separated into worker
+        processes to protect throughput and latency. This supports sustained handling
+        of 1080p 60fps (SLR-2) and continuous live output (SLR-3), while preventing
+        offline work (transcode) from degrading tracking responsiveness.
+
+  \item \textbf{Dedicated worker supervision (\mref{mControl}, \mref{mCVManagement}, \mref{mVideoManagement}, \mref{mTranscodeManagement}):}
+        Control/management modules start/stop and monitor workers so failures can be
+        reported and recovered cleanly, supporting error visibility (RFR-1) and safe
+        behavior on unrecoverable faults (RFR-2).
+
+  \item \textbf{Offline-first operation (\mref{mAPI}, \mref{mUI}, \mref{mRecord}):}
+        The system is designed to operate without public internet access (RFR-3, AS-1)
+        and exposes all functions over a local network only (SCR-3).
+
+  \item \textbf{Recording + management as first-class workflow (\mref{mRecordMng}, \mref{mRecord}, \mref{mTranscode}):}
+        Recording and associated logs are initiated from the UI (FR-11) and stored with
+        metadata to support listing/deleting/downloading (FR-12). Separating record and
+        transcode aligns with performance goals (SLR-2/SLR-3) and supports post-flight
+        review use cases (PUC 5).
+
+  \item \textbf{HDMI live output pipeline (\mref{mStream}, \mref{mVideo}):}
+        The live output path is treated as a required interface to adjacent systems via
+        HDMI (INT-1). The stream abstraction localizes encoder/pipeline choices while
+        ensuring consistent output format (SLR-3).
+
+  \item \textbf{Auditable operations (\mref{mState}, \mref{mRecord}, \mref{mAPI}):}
+        User actions (arm/disarm, manual moves, record start/stop, delete/download) are
+        logged with timestamps to satisfy audit requirements (AUR-1) and to support
+        troubleshooting and analysis.
+
+\end{itemize}
+
+\subsection{Traceability Conventions}
+
+In the traceability tables, each SRS requirement (FR/SLR/SCR/IR/AUR/INT) is mapped
+to the modules responsible for implementing and verifying it. Where requirements
+are cross-cutting (e.g., SCR-3 remote operation, RFR-1 error reporting), they are
+intentionally traced to both interface modules (UI/API) and the backend modules
+that provide the underlying behavior.
 
 \wss{The intention of this section is to document decisions that are made
   ``between'' the requirements and the design.  To satisfy some requirements,
