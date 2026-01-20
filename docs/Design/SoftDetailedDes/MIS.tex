@@ -38,6 +38,10 @@ urlcolor=cyan          % color of external links
 \input{../../Comments}
 \input{../../Common}
 
+\newcounter{mnum}
+\newcommand{\mthemnum}{M\themnum}
+\newcommand{\mref}[1]{M\ref{#1}}
+
 \begin{document}
 
 \title{Module Interface Specification for \progname{}}
@@ -125,37 +129,941 @@ different types. In addition, \progname \ uses functions, which
 are defined by the data types of their inputs and outputs. Local functions are
 described by giving their type signature followed by their specification.
 
+The following table summarizes the programming language type notations used in
+this specification:
+
+\begin{center}
+  \renewcommand{\arraystretch}{1.2}
+  \noindent
+  \begin{tabular}{l l p{7.5cm}}
+    \toprule
+    \textbf{Type Notation}    & \textbf{Mathematical Type} & \textbf{Description}                              \\
+    \midrule
+    int                       & $\mathbb{Z}$               & 32-bit signed integer                             \\
+    float                     & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754) \\
+    f32                       & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754) \\
+    f64                       & $\mathbb{R}$               & 64-bit double-precision floating point (IEEE 754) \\
+    u64                       & $\mathbb{N}$               & 64-bit unsigned integer                           \\
+    bool                      & \{true, false\}            & boolean value (true or false)                     \\
+    str                       & sequence of char           & string (sequence of characters)                   \\
+    bytes                     & sequence of byte           & sequence of bytes (8-bit unsigned integers)       \\
+    null $|$ Type             & Type $\cup$ \{null\}       & optional/nullable type (union with null)          \\
+    'literal1' $|$ 'literal2' & \{'literal1', 'literal2'\} & union of string literals (enum-like type)         \\
+    Type[]                    & sequence of Type           & array or sequence of elements of type Type        \\
+    Optional[Type]            & Type $\cup$ \{null\}       & optional type (Python-style notation)             \\
+    Tuple[Type1, Type2]       & Type1 $\times$ Type2       & tuple containing values of Type1 and Type2        \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
 \section{Module Decomposition}
 
-The following table is taken directly from the Module Guide document for this
-project.
+The following list is taken directly from the Module Guide document for this
+project. Modules are organized in a hierarchy decomposed by secrets. The
+modules listed below represent the complete module hierarchy. Container modules
+(\mref{mJetson}, \mref{mControl}, and \mref{mUI}) will not actually be
+implemented since they are not leaf modules.
 
-\begin{table}[h!]
-  \centering
-  \begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
-    \toprule
-    \textbf{Level 1} & \textbf{Level 2}          \\
-    \midrule
-
-    Jetson Module    & Gimbal Abstraction Module \\ & Computer Vision Module \\  &
-    Tracking Module                              \\ & Output Video Module \\ & Recording Module \\  & State
-    Management Module                            \\ & API Gateway Module \\ & Serial Abstraction Module \\  &
-    Video Stream Abstraction Module              \\
-
-    \midrule
-
-    UI Module        & Preview Module            \\ & Manual Control Module \\  & Recording Management
-    Module                                       \\ & Configuration Module\\ \bottomrule
-
-  \end{tabular}
-  \caption{Module Hierarchy}
-  \label{TblMH}
-\end{table}
+\begin{description}
+  \item [\refstepcounter{mnum} \mthemnum \label{mJetson}:] Jetson Module
+        \begin{description}
+          \item [\refstepcounter{mnum} \mthemnum \label{mCV}:] CV Process Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mVideo}:] Live Video Process Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mTranscode}:] Transcode Process Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mStream}:] Video Stream Abstraction Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mControl}:] Control Process Module
+                \begin{description}
+                  \item [\refstepcounter{mnum} \mthemnum \label{mCVManagement}:] CV Process Management Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mVideoManagement}:] Live Video Process Management Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mTranscodeManagement}:] Transcode Process Management Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mTrack}:] Tracking Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mGimbal}:] Gimbal Abstraction Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mSerial}:] Serial Abstraction Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mStatus}:] System Status Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mRecord}:] Recording Database Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mState}:] State Management Module
+                  \item [\refstepcounter{mnum} \mthemnum \label{mAPI}:] API Gateway Module
+                \end{description}
+        \end{description}
+  \item [\refstepcounter{mnum} \mthemnum \label{mUI}:] UI Module
+        \begin{description}
+          \item [\refstepcounter{mnum} \mthemnum \label{mPreview}:] Preview Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mManual}:] Manual Control Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mRecordMng}:] Recording Management Module
+          \item [\refstepcounter{mnum} \mthemnum \label{mConfig}:] Configuration Module
+        \end{description}
+\end{description}
 
 \newpage
-~\newpage
 
-\section{MIS of Gimbal Abstraction Module} \label{mGimbal} \wss{Use labels for
+\section{MIS of CV Process Module (\mref{mCV})}  \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+CV
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the Video Stream Abstraction Module (\mref{mStream}) and the
+Recording Database Module (\mref{mRecord}).
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+\begin{itemize}
+  \item WIDTH: width of the video feed (in pixels)
+  \item HEIGHT: height of the video feed (in pixels)
+  \item SHARED\_MEMORY\_PATH: path to the shared memory file
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+    \hline
+    \textbf{Name} & \textbf{In} & \textbf{Out}                & \textbf{Exceptions}                                             \\
+    \hline
+    main          & -           & main function never returns & on exception, the process will log the error to stderr and exit \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsubsection{Exported Data Structures}
+
+Data structures that are passed through IPC between the CV Process Module and
+the CV Process Management Module:
+
+\begin{itemize}
+  \item \textbf{BoundingBox}: coordinates are normalized (0.0 to 1.0)
+        \begin{itemize}
+          \item confidence: float (confidence score of the detection, 0.0 to 1.0)
+          \item left: float
+          \item top: float
+          \item width: float
+          \item height: float
+        \end{itemize}
+  \item \textbf{CVData}:
+        \begin{itemize}
+          \item frame\_number: int (frame number of the current frame, every frame is numbered
+                sequentially)
+          \item average\_fps: float (average frames per second over the last 60 frames)
+          \item preview: bytes (JPEG encoded preview of the current frame for the frontend. The
+                frame is rotated 90 degrees counter-clockwise, the frontend needs to rotate it
+                90 degrees clockwise to display it correctly)
+          \item bbox: null $|$ BoundingBox (bounding box of the rocket in the current frame,
+                null if no rocket is found)
+        \end{itemize}
+  \item \textbf{OSDData}:
+        \begin{itemize}
+          \item frame\_number: int (the frame number this OSD data is for)
+          \item translate\_x: int (transformation data used to digitally stabilize the frame)
+          \item translate\_y: int (transformation data used to digitally stabilize the frame)
+          \item scale: float (transformation data used to digitally stabilize the frame)
+          \item average\_fps: float (text to be rendered on the frame)
+          \item gimbal\_tilt\_deg: float (text to be rendered on the frame)
+          \item gimbal\_pan\_deg: float (text to be rendered on the frame)
+          \item gimbal\_focal\_length\_mm: float (text to be rendered on the frame)
+          \item device\_ip\_addresses: sequence of strings (text to be rendered on the frame)
+          \item unix\_timestamp\_ms: int (text to be rendered on the frame)
+          \item tracking\_state: 'idle' $|$ 'armed' $|$ 'tracking' (text to be rendered on the
+                frame)
+          \item longitude: float
+          \item latitude: float
+        \end{itemize}
+  \item \textbf{StopRecording}: empty structure
+\end{itemize}
+
+The CV Process Module also passes uncompressed frames to the Live Video Process
+Module via shared memory. This is done through the Video Stream Abstraction
+Module. The frame is transformed correctly and has OSD (on-screen display)
+already applied.
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+\begin{itemize}
+  \item ipc connection to the CV Process Management Module
+  \item recording: null $|$ RecordingInfo (recording information, null if not
+        recording)
+  \item osd\_data: OSDData (OSD data for frame transformation and text rendering)
+\end{itemize}
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+\begin{itemize}
+  \item External camera sensor
+\end{itemize}
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+Camera is assumed to be connected and working properly.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent main():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item connect to the IPC server of the CV Process Management Module
+          \item start \texttt{pipeline()} in a background thread
+          \item For each message received from CV Process Management Module:
+                \begin{itemize}
+                  \item (if \texttt{RecordingInfo}): Set state variable \texttt{recording} to the recording info
+                  \item (if \texttt{StopRecording}): Set state variable \texttt{recording} to null
+                  \item (if \texttt{OSDData}): Set state variable \texttt{osd\_data} to the OSD data
+                \end{itemize}
+        \end{itemize}
+  \item exception: None
+\end{itemize}
+
+\wss{A module without environment variables or state variables is unlikely to
+  have a state transition.  In this case a state transition can only occur if
+  the module is changing the state of another module.}
+
+\wss{Modules rarely have both a transition and an output.  In most cases you
+  will have one or the other.}
+
+\subsubsection{Local Functions}
+
+\noindent pipeline():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item For each frame from the camera:
+                \begin{itemize}
+                  \item Detect the rocket location in the frame
+                  \item (always):
+                        \begin{itemize}
+                          \item Rotate the frame 90 degrees clockwise
+                          \item Translate the frame by \texttt{osd\_data.translate\_x} and
+                                \texttt{osd\_data.translate\_y} pixels
+                          \item Scale the frame by \texttt{osd\_data.scale}
+                          \item Render the text from \texttt{osd\_data} over the frame
+                          \item Send the frame to the Live Video Process Module via shared memory
+                        \end{itemize}
+                  \item (if \texttt{recording}):
+                        \begin{itemize}
+                          \item Append \texttt{osd\_data} to \texttt{recording.log\_path}
+                          \item Encode the frame and save to \texttt{recording.video\_path}
+                        \end{itemize}
+                  \item (skip every 1 frame):
+                        \begin{itemize}
+                          \item Downsample to 480p
+                          \item Encode the frame to JPEG
+                          \item Send the encoded frame along with the detected rocket location to the CV
+                                Process Management Module via IPC
+                        \end{itemize}
+                \end{itemize}
+        \end{itemize}
+  \item exception: None
+\end{itemize}
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of Live Video Process Module (\mref{mVideo})} \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+videoOut
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the Video Stream Abstraction Module (\mref{mStream}) and the
+CV Process Module (\mref{mCV}).
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+    \hline
+    \textbf{Name} & \textbf{In} & \textbf{Out}                & \textbf{Exceptions}                                             \\
+    \hline
+    main          & -           & main function never returns & on exception, the process will log the error to stderr and exit \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+This module does not have any state variables.
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+\begin{itemize}
+  \item HDMI monitor connected to the Jetson (for displaying frames)
+\end{itemize}
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+HDMI monitor is assumed to be connected and working properly.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent main():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item For each frame from the CV Process Module:
+                \begin{itemize}
+                  \item Output the frame to the HDMI monitor
+                \end{itemize}
+        \end{itemize}
+  \item exception: None
+\end{itemize}
+
+\wss{A module without environment variables or state variables is unlikely to
+  have a state transition.  In this case a state transition can only occur if
+  the module is changing the state of another module.}
+
+\wss{Modules rarely have both a transition and an output.  In most cases you
+  will have one or the other.}
+
+\subsubsection{Local Functions}
+
+This module does not have any local functions.
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of Transcode Process Module (\mref{mTranscode})} \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+transcode
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the Video Stream Abstraction Module (\mref{mStream}), the CV
+Process Module (\mref{mCV}) for the OSDData type, and the Recording Database
+Module (\mref{mRecord}) for the RecordingInfo type.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+    \hline
+    \textbf{Name} & \textbf{In}                                        & \textbf{Out} & \textbf{Exceptions}                                             \\
+    \hline
+    main          & recording: RecordingInfo, output\_video\_path: str & None         & on exception, the process will log the error to stderr and exit \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+This module does not have any state variables.
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+This module does not have any environment variables.
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+This module does not have any assumptions.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent main(recording: RecordingInfo, output\_video\_path: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Read the recorded video from \texttt{recording.video\_path}
+          \item Read the log from \texttt{recording.log\_path}
+          \item For each frame in the recorded video:
+                \begin{itemize}
+                  \item Find the corresponding OSDData from the log
+                  \item Rotate the frame 90 degrees clockwise
+                  \item Translate the frame by \texttt{osd\_data.translate\_x} and
+                        \texttt{osd\_data.translate\_y} pixels
+                  \item Scale the frame by \texttt{osd\_data.scale}
+                  \item Render the text from \texttt{osd\_data} over the frame
+                  \item Encode the frame as H.265 and save to \texttt{output\_video\_path}
+                \end{itemize}
+        \end{itemize}
+  \item exception: None
+\end{itemize}
+
+\wss{A module without environment variables or state variables is unlikely to
+  have a state transition.  In this case a state transition can only occur if
+  the module is changing the state of another module.}
+
+\wss{Modules rarely have both a transition and an output.  In most cases you
+  will have one or the other.}
+
+\subsubsection{Local Functions}
+
+This module does not have any local functions.
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of Video Stream Abstraction Module (\mref{mStream})} \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+Video Stream Abstraction
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the Nvidia Deepstream SDK library.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Access Programs}
+
+Nvidia Deepstream SDK is too complex to specify in this MIS. Its full
+documentation is available at
+\href{https://docs.nvidia.com/metropolis/deepstream/7.1/index.html}{https://docs.nvidia.com/metropolis/deepstream/7.1/index.html}.
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+This module does not have any state variables.
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+This module does not have any environment variables.
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+This module does not have any assumptions.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+This module's access routines are defined by the Nvidia Deepstream SDK
+documentation.
+
+\subsubsection{Local Functions}
+
+This module does not have any local functions.
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of CV Process Management Module (\mref{mCVManagement})} \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+cvProcessManagement
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the CV Process Module (\mref{mCV}) and the Recording Database
+Module (\mref{mRecord}) for the RecordingInfo type.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+    \hline
+    \textbf{Name}    & \textbf{In}                                                                                              & \textbf{Out} & \textbf{Exceptions} \\
+    \hline
+    start\_process   & on\_cv\_data: (cv\_data: CVData) $\rightarrow$ None, on\_process\_crash: (error: str) $\rightarrow$ None & -            & processStartError   \\
+    \hline
+    start\_recording & recording\_info: RecordingInfo                                                                           & -            & ipcError            \\
+    \hline
+    stop\_recording  & -                                                                                                        & -            & ipcError            \\
+    \hline
+    set\_osd\_data   & osd\_data: OSDData                                                                                       & -            & ipcError            \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+\begin{itemize}
+  \item ipc connection to the CV Process Module
+\end{itemize}
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+This module does not have any environment variables.
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+This module does not have any assumptions.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent start\_process(on\_cv\_data: (cv\_data: CVData) $\rightarrow$ None, on\_process\_crash: (error: str) $\rightarrow$ None):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Start an IPC server
+          \item Start the CV Process Module in a separate process
+          \item Wait for the CV Process Module to connect to the IPC server
+          \item Start the \texttt{receive\_cv\_data\_loop} in a background thread
+        \end{itemize}
+  \item output: None
+  \item exception: processStartError
+\end{itemize}
+
+\noindent start\_recording(recording\_info: RecordingInfo):
+\begin{itemize}
+  \item transition: Send the recording info to the CV Process Module through the IPC
+        connection
+  \item output: None
+  \item exception: ipcError
+\end{itemize}
+
+\noindent stop\_recording():
+\begin{itemize}
+  \item transition: Send a stop recording message to the CV Process Module through the
+        IPC connection
+  \item output: None
+  \item exception: ipcError
+\end{itemize}
+
+\noindent set\_osd\_data(osd\_data: OSDData):
+\begin{itemize}
+  \item transition: Send the OSD data to the CV Process Module through the IPC
+        connection
+  \item output: None
+  \item exception: ipcError
+\end{itemize}
+
+\wss{A module without environment variables or state variables is unlikely to
+  have a state transition.  In this case a state transition can only occur if
+  the module is changing the state of another module.}
+
+\wss{Modules rarely have both a transition and an output.  In most cases you
+  will have one or the other.}
+
+\subsubsection{Local Functions}
+
+\noindent receive\_cv\_data\_loop():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Loop forever:
+                \begin{itemize}
+                  \item Receive a message from the IPC connection
+                  \item Call the \texttt{on\_cv\_data} callback with the CVData received
+                  \item If the IPC connection is closed or error occurs, exit the loop
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of Live Video Process Management Module (\mref{mVideoManagement})} \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+liveVideoProcessManagement
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the Live Video Process Module (\mref{mVideo}).
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+    \hline
+    \textbf{Name}  & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+    \hline
+    start\_process & -           & -            & processStartError   \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+This module does not have any state variables.
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+This module does not have any environment variables.
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+This module does not have any assumptions.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent start\_process():
+\begin{itemize}
+  \item transition: Run \texttt{run\_live\_video\_process()} in a background thread
+  \item output: None
+  \item exception: processStartError
+\end{itemize}
+
+\wss{A module without environment variables or state variables is unlikely to
+  have a state transition.  In this case a state transition can only occur if
+  the module is changing the state of another module.}
+
+\wss{Modules rarely have both a transition and an output.  In most cases you
+  will have one or the other.}
+
+\subsubsection{Local Functions}
+
+\noindent run\_live\_video\_process():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Loop forever:
+                \begin{itemize}
+                  \item Start the Live Video Process Module in a separate process
+                  \item Wait for the Live Video Process Module to exit
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: processStartError
+\end{itemize}
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of Transcode Process Management Module (\mref{mTranscodeManagement})} \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+transcodeProcessManagement
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the Transcode Process Module (\mref{mTranscode}) and the
+Recording Database Module (\mref{mRecord}) for the RecordingInfo type.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+    \hline
+    \textbf{Name}    & \textbf{In}              & \textbf{Out}             & \textbf{Exceptions} \\
+    \hline
+    start\_transcode & recording: RecordingInfo & output\_video\_pipe: str & processStartError   \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+This module does not have any state variables.
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+This module does not have any environment variables.
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+This module does not have any assumptions.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent start\_transcode(recording: RecordingInfo):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item create a temporary unix pipe and save the path to \texttt{output\_video\_pipe}
+          \item Start the Transcode Process Module in a separate process with the given
+                recording and \texttt{output\_video\_pipe}
+        \end{itemize}
+  \item output: output\_video\_pipe: str
+  \item exception: processStartError
+\end{itemize}
+
+\wss{A module without environment variables or state variables is unlikely to
+  have a state transition.  In this case a state transition can only occur if
+  the module is changing the state of another module.}
+
+\wss{Modules rarely have both a transition and an output.  In most cases you
+  will have one or the other.}
+
+\subsubsection{Local Functions}
+
+This module does not have any local functions.
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of Tracking Module (\mref{mTrack})} \wss{Use labels for
+  cross-referencing}
+
+\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
+
+\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+
+\subsection{Module}
+
+Tracking
+
+\wss{Short name for the module}
+
+\subsection{Uses}
+
+This module uses the CV Process Module (\mref{mCV}) for the BoundingBox type
+and the Gimbal Abstraction Module (\mref{mGimbal}).
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+    \hline
+    \textbf{Name} & \textbf{In}                       & \textbf{Out} & \textbf{Exceptions} \\
+    \hline
+    init          & gimbal: Gimbal Abstraction Module & -            & -                   \\
+    \hline
+    step          & rocket\_bbox: BoundingBox         & -            & -                   \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+\begin{itemize}
+  \item gimbal: Gimbal Abstraction Module
+\end{itemize}
+
+\wss{Not all modules will have state variables.  State variables give the module
+  a memory.}
+
+\subsubsection{Environment Variables}
+
+This module does not have any environment variables.
+
+\wss{This section is not necessary for all modules.  Its purpose is to capture
+  when the module has external interaction with the environment, such as for a
+  device driver, screen interface, keyboard, file, etc.}
+
+\subsubsection{Assumptions}
+
+This module does not have any assumptions.
+
+\wss{Try to minimize assumptions and anticipate programmer errors via
+  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent init(gimbal: Gimbal Abstraction Module):
+\begin{itemize}
+  \item transition: Set the \texttt{gimbal} state variable to the given gimbal
+  \item output: None
+  \item exception: -
+\end{itemize}
+
+\noindent step(rocket\_bbox: BoundingBox):
+\begin{itemize}
+  \item transition:
+        \begin{enumerate}
+          \item Retrieve the current gimbal angle from the Gimbal Abstraction Module.
+          \item Calculate the desired gimbal angle from \texttt{rocket\_bbox}.
+          \item Send the desired gimbal angle to the Gimbal Abstraction Module.
+        \end{enumerate}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\wss{A module without environment variables or state variables is unlikely to
+  have a state transition.  In this case a state transition can only occur if
+  the module is changing the state of another module.}
+
+\wss{Modules rarely have both a transition and an output.  In most cases you
+  will have one or the other.}
+
+\subsubsection{Local Functions}
+
+This module does not have any local functions.
+
+\wss{As appropriate} \wss{These functions are for the purpose of specification.
+  They are not necessarily something that is going to be implemented
+  explicitly.  Even if they are implemented, they are not exported; they only
+  have local scope.}
+
+\section{MIS of Gimbal Abstraction Module (\mref{mGimbal})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -170,7 +1078,7 @@ Gimbal
 
 \subsection{Uses}
 
-This module uses the Serial Abstraction Module (M14 described in the MG).
+This module uses the Serial Abstraction Module (\mref{mSerial}).
 
 \subsection{Syntax}
 
@@ -183,15 +1091,23 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}        & \textbf{In}         & \textbf{Out}        & \textbf{Exceptions}      \\
+    \textbf{Name}        & \textbf{In}              & \textbf{Out}                                                           & \textbf{Exceptions}      \\
     \hline
-    move\_deg            & tilt: f32, pan: f32 & -                   & gimbalCommunicationError \\
+    connect              & port: str, baudrate: int & -                                                                      & serialOpenError          \\
     \hline
-    measure\_deg         & -                   & tilt: f32, pan: f32 & gimbalCommunicationError \\
+    move\_deg            & tilt: f32, pan: f32      & -                                                                      & gimbalCommunicationError \\
     \hline
-    control\_arm\_led    & enabled: bool       & -                   & gimbalCommunicationError \\
+    measure\_deg         & -                        & tilt: f32, pan: f32                                                    & gimbalCommunicationError \\
     \hline
-    control\_status\_led & enabled: bool       & -                   & gimbalCommunicationError \\
+    control\_arm\_led    & enabled: bool            & -                                                                      & gimbalCommunicationError \\
+    \hline
+    control\_status\_led & enabled: bool            & -                                                                      & gimbalCommunicationError \\
+    \hline
+    get\_gps\_data       & -                        & (coordinates: Optional[Tuple[float, float]], timestamp: Optional[int]) & gimbalCommunicationError \\
+    \hline
+    set\_focal\_length   & focal\_length\_mm: f32   & -                                                                      & gimbalCommunicationError \\
+    \hline
+    get\_focal\_length   & -                        & focal\_length\_mm: f32                                                 & gimbalCommunicationError \\
     \hline
   \end{tabular}
 \end{center}
@@ -201,7 +1117,7 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item presistent connection to the gimbal
+  \item Opened hardware serial port to the gimbal
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -219,14 +1135,25 @@ This module does not have any exported constants.
 
 \subsubsection{Assumptions}
 
+This module does not have any assumptions.
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
+\noindent connect(port: str, baudrate: int):
+\begin{itemize}
+  \item transition: opens the hardware serial port to the gimbal with the given port
+        and baudrate
+  \item output: None
+  \item exception: serialOpenError
+\end{itemize}
+
 \noindent move\_deg(tilt: f32, pan: f32):
 \begin{itemize}
-  \item transition: sends the tilt and pan angles to the gimbal
+  \item transition: sends the tilt and pan angles to the gimbal through the Serial
+        Abstraction Module (see the Gimbal Protocol doc for details)
   \item output: None
   \item exception: gimbalCommunicationError
 \end{itemize}
@@ -234,21 +1161,55 @@ This module does not have any exported constants.
 \noindent measure\_deg():
 \begin{itemize}
   \item transition: retrieves the tilt and pan angle measurements from the gimbal
+        through the Serial Abstraction Module (see the Gimbal Protocol doc for details)
   \item output: (tilt: f32, pan: f32)
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent control\_arm\_led(enabled: bool):
 \begin{itemize}
-  \item transition: controls the arm LED on the gimbal
+  \item transition: controls the arm LED on the gimbal through the Serial Abstraction
+        Module (see the Gimbal Protocol doc for details)
   \item output: None
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent control\_status\_led(enabled: bool):
 \begin{itemize}
-  \item transition: controls the status LED on the gimbal
+  \item transition: controls the status LED on the gimbal through the Serial
+        Abstraction Module (see the Gimbal Protocol doc for details)
   \item output: None
+  \item exception: gimbalCommunicationError
+\end{itemize}
+
+\noindent get\_gps\_data():
+\begin{itemize}
+  \item transition: retrieves GPS data from the gimbal through the Serial Abstraction
+        Module (see the Gimbal Protocol doc for details)
+  \item output: (coordinates: Optional[Tuple[float, float]], timestamp: Optional[int])
+        \begin{itemize}
+          \item If coordinates are unknown (NaN), coordinates is None
+          \item If timestamp is unknown (0), timestamp is None
+          \item Returns (None, None) if no GPS lock
+          \item Returns (None, timestamp) if time only (no coordinates)
+          \item Returns ((longitude, latitude), timestamp) if full GPS lock
+        \end{itemize}
+  \item exception: gimbalCommunicationError
+\end{itemize}
+
+\noindent set\_focal\_length(focal\_length\_mm: f32):
+\begin{itemize}
+  \item transition: sets the camera focal length on the gimbal through the Serial
+        Abstraction Module (see the Gimbal Protocol doc for details)
+  \item output: None
+  \item exception: gimbalCommunicationError
+\end{itemize}
+
+\noindent get\_focal\_length():
+\begin{itemize}
+  \item transition: retrieves the current camera focal length from the gimbal through
+        the Serial Abstraction Module (see the Gimbal Protocol doc for details)
+  \item output: focal\_length\_mm: f32
   \item exception: gimbalCommunicationError
 \end{itemize}
 
@@ -266,7 +1227,7 @@ This module does not have any exported constants.
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-\section{MIS of Computer Vision Module} \label{mCV} \wss{Use labels for
+\section{MIS of Serial Abstraction Module (\mref{mSerial})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -275,33 +1236,32 @@ This module does not have any exported constants.
 
 \subsection{Module}
 
-CV
+serial
 
 \wss{Short name for the module}
 
 \subsection{Uses}
 
-This module uses the Video Stream Abstraction Module (M15 described in the MG).
+This module uses the pyserial library module.
 
 \subsection{Syntax}
 
 \subsubsection{Exported Constants}
 
-\begin{itemize}
-  \item WIDTH: width of the video feed (in pixels)
-  \item HEIGHT: height of the video feed (in pixels)
-\end{itemize}
+(TODO)
 
 \subsubsection{Exported Access Programs}
 
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}         & \textbf{In} & \textbf{Out}   & \textbf{Exceptions}        \\
+    \textbf{Name}  & \textbf{In}              & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    get\_frame            & -           & frame          & cameraError                \\
+    open\_port     & port: str, baudrate: int & -            & serialOpenError     \\
     \hline
-    get\_rocket\_location & frame       & x: f32, y: f32 & noRocketFound, cameraError \\
+    send\_bytes    & data: bytes              & -            & serialWriteError    \\
+    \hline
+    receive\_bytes & num\_bytes: int          & data: bytes  & serialReadError     \\
     \hline
   \end{tabular}
 \end{center}
@@ -310,10 +1270,7 @@ This module uses the Video Stream Abstraction Module (M15 described in the MG).
 
 \subsubsection{State Variables}
 
-\begin{itemize}
-  \item computer vision model
-  \item presistent connection to the camera sensor
-\end{itemize}
+This module does not have any state variables.
 
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
@@ -321,7 +1278,7 @@ This module uses the Video Stream Abstraction Module (M15 described in the MG).
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item This module interacts with an external camera sensor.
+  \item Hardware serial port
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -330,23 +1287,32 @@ This module uses the Video Stream Abstraction Module (M15 described in the MG).
 
 \subsubsection{Assumptions}
 
+This module does not have any assumptions.
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
-\noindent get\_frame():
+\noindent open\_port(port: str, baudrate: int):
 \begin{itemize}
-  \item transition: retrieves a frame from the camera sensor
-  \item output: frame
-  \item exception: cameraError
+  \item transition: opens the hardware serial port with the given port and baudrate
+  \item output: None
+  \item exception: serialOpenError
 \end{itemize}
 
-\noindent get\_rocket\_location(frame):
+\noindent send\_bytes(data: bytes):
 \begin{itemize}
-  \item transition: analyzes the frame to find the rocket
-  \item output: (x: f32, y: f32)
-  \item exception: noRocketFound, cameraError
+  \item transition: sends the given bytes to the hardware serial port
+  \item output: None
+  \item exception: serialWriteError
+\end{itemize}
+
+\noindent receive\_bytes(num\_bytes: int):
+\begin{itemize}
+  \item transition: receives the given number of bytes from the hardware serial port
+  \item output: data: bytes
+  \item exception: serialReadError
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -358,12 +1324,14 @@ This module uses the Video Stream Abstraction Module (M15 described in the MG).
 
 \subsubsection{Local Functions}
 
+This module does not have any local functions.
+
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-\section{MIS of Tracking Module} \label{mTracking} \wss{Use labels for
+\section{MIS of System Status Module (\mref{mStatus})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -372,14 +1340,13 @@ This module uses the Video Stream Abstraction Module (M15 described in the MG).
 
 \subsection{Module}
 
-Tracking
+jetson-stats
 
 \wss{Short name for the module}
 
 \subsection{Uses}
 
-This module uses the Computer Vision Module (\ref{mCV}) and the Gimbal
-Abstraction Module (\ref{mGimbal}).
+This module uses the jetson-stats library module.
 
 \subsection{Syntax}
 
@@ -392,9 +1359,15 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+    \textbf{Name}                   & \textbf{In} & \textbf{Out}                                & \textbf{Exceptions} \\
     \hline
-    step          & -           & -            & -                   \\
+    get\_gpu\_utilization           & -           & utilization: float (0.0 to 100.0)           & statusError         \\
+    \hline
+    get\_cpu\_utilization           & -           & utilization: float (0.0 to 100.0)           & statusError         \\
+    \hline
+    get\_memory\_usage\_bytes       & -           & usage: \{used: int, total: int\} (in bytes) & statusError         \\
+    \hline
+    get\_core\_temperature\_celsius & -           & temperature: float (in Celsius)             & statusError         \\
     \hline
   \end{tabular}
 \end{center}
@@ -403,16 +1376,16 @@ This module does not have any exported constants.
 
 \subsubsection{State Variables}
 
-\begin{itemize}
-  \item PID parameters for controlling the gimbal
-\end{itemize}
+This module does not have any state variables.
 
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
 
 \subsubsection{Environment Variables}
 
-None
+\begin{itemize}
+  \item The Jetson system
+\end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
   when the module has external interaction with the environment, such as for a
@@ -420,22 +1393,39 @@ None
 
 \subsubsection{Assumptions}
 
+This module does not have any assumptions.
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
-\noindent step():
+\noindent get\_gpu\_utilization():
 \begin{itemize}
-  \item transition:
-        \begin{enumerate}
-          \item Retrieve the current gimbal angle from the Gimbal Abstraction Module.
-          \item Get the location of the rocket from the Computer Vision Module.
-          \item Calculate the desired gimbal angle using the PID algorithm.
-          \item Send the desired gimbal angle to the Gimbal Abstraction Module.
-        \end{enumerate}
-  \item output: None
-  \item exception: None
+  \item transition: retrieves the GPU utilization from the Jetson system
+  \item output: utilization: float (0.0 to 100.0)
+  \item exception: statusError
+\end{itemize}
+
+\noindent get\_cpu\_utilization():
+\begin{itemize}
+  \item transition: retrieves the CPU utilization from the Jetson system
+  \item output: utilization: float (0.0 to 100.0)
+  \item exception: statusError
+\end{itemize}
+
+\noindent get\_memory\_usage\_bytes():
+\begin{itemize}
+  \item transition: retrieves the memory usage from the Jetson system
+  \item output: usage: \{used: int, total: int\} (in bytes)
+  \item exception: statusError
+\end{itemize}
+
+\noindent get\_core\_temperature\_celsius():
+\begin{itemize}
+  \item transition: retrieves the core temperature from the Jetson system
+  \item output: temperature: float (in Celsius)
+  \item exception: statusError
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -447,97 +1437,14 @@ None
 
 \subsubsection{Local Functions}
 
-\wss{As appropriate} \wss{These functions are for the purpose of specification.
-  They are not necessarily something that is going to be implemented
-  explicitly.  Even if they are implemented, they are not exported; they only
-  have local scope.}
-
-\section{MIS of Output Video Module} \label{mOutputVideo} \wss{Use labels for
-  cross-referencing}
-
-\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
-
-\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
-
-\subsection{Module}
-
-videoOut
-
-\wss{Short name for the module}
-
-\subsection{Uses}
-
-This module uses the Video Stream Abstraction Module (M15 described in the MG).
-
-\subsection{Syntax}
-
-\subsubsection{Exported Constants}
-
-\subsubsection{Exported Access Programs}
-
-\begin{center}
-  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
-    \hline
-    \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
-    \hline
-    output\_frame & states      & -            & outputDeviceError   \\
-    \hline
-  \end{tabular}
-\end{center}
-
-\subsection{Semantics}
-
-\subsubsection{State Variables}
-
-None
-
-\wss{Not all modules will have state variables.  State variables give the module
-  a memory.}
-
-\subsubsection{Environment Variables}
-
-This module displays the frame on the screen connected to the Jetson.
-
-\wss{This section is not necessary for all modules.  Its purpose is to capture
-  when the module has external interaction with the environment, such as for a
-  device driver, screen interface, keyboard, file, etc.}
-
-\subsubsection{Assumptions}
-
-\wss{Try to minimize assumptions and anticipate programmer errors via
-  exceptions, but for practical purposes assumptions are sometimes appropriate.}
-
-\subsubsection{Access Routine Semantics}
-
-\noindent output\_frame(states):
-\begin{itemize}
-  \item transition:
-        \begin{enumerate}
-          \item Retrieve the frame from the Computer Vision Module.
-          \item Retrieve the location of the rocket from the Computer Vision Module.
-          \item Crop the frame so the rocket is in the center of the frame.
-          \item Overlay the states on the cropped frame.
-          \item Display the cropped frame on the screen connected to the Jetson.
-        \end{enumerate}
-  \item output: None
-  \item exception: outputDeviceError
-\end{itemize}
-
-\wss{A module without environment variables or state variables is unlikely to
-  have a state transition.  In this case a state transition can only occur if
-  the module is changing the state of another module.}
-
-\wss{Modules rarely have both a transition and an output.  In most cases you
-  will have one or the other.}
-
-\subsubsection{Local Functions}
+This module does not have any local functions.
 
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-\section{MIS of Recording Module} \label{mRecording} \wss{Use labels for
+\section{MIS of Recording Database Module (\mref{mRecord})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -552,26 +1459,50 @@ recording
 
 \subsection{Uses}
 
-This module uses the Video Stream Abstraction Module (M15 described in the MG).
+This module uses the Video Stream Abstraction Module (\mref{mStream}).
 
 \subsection{Syntax}
 
 \subsubsection{Exported Constants}
+
+This module does not have any exported constants.
+
+\subsubsection{Exported Data Structures}
+
+\begin{itemize}
+  \item \textbf{RecordingInfo}:
+        \begin{itemize}
+          \item id: str
+          \item name: str
+          \item start\_time: str $|$ null
+          \item duration\_seconds: int $|$ null
+          \item video\_path: str
+          \item log\_path: str
+        \end{itemize}
+\end{itemize}
 
 \subsubsection{Exported Access Programs}
 
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}     & \textbf{In}      & \textbf{Out}                & \textbf{Exceptions} \\
+    \textbf{Name}          & \textbf{In}                        & \textbf{Out}                            & \textbf{Exceptions}    \\
     \hline
-    start\_recording  & -                & -                           & recordingError      \\
+    init                   & base\_path: str                    & -                                       & -                      \\
     \hline
-    stop\_recording   & -                & -                           & recordingError      \\
+    allocate\_recording    & -                                  & recording\_info: RecordingInfo          & recordingError         \\
     \hline
-    list\_recordings  & -                & recordings: list[Recording] &                     \\
+    read\_log\_by\_id      & recording\_id: str                 & log: list[OSDData] $|$ null             & -                      \\
     \hline
-    delete\_recording & recordingId: str & -                           &                     \\
+    get\_recording\_by\_id & recording\_id: str                 & recording\_info: RecordingInfo $|$ null & -                      \\
+    \hline
+    list\_all\_recordings  & -                                  & recordings: list[RecordingInfo]         & -                      \\
+    \hline
+    rename\_recording      & recording\_id: str, new\_name: str & -                                       & recordingNotFoundError \\
+    \hline
+    delete\_recording      & recording\_id: str                 & -                                       & recordingNotFoundError \\
+    \hline
+    space\_usage\_bytes    & -                                  & \{used: int, total: int\} (in bytes)    & -                      \\
     \hline
   \end{tabular}
 \end{center}
@@ -581,7 +1512,7 @@ This module uses the Video Stream Abstraction Module (M15 described in the MG).
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item recording status
+  \item \texttt{base\_path}: base path for recording video and log files
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -589,7 +1520,7 @@ This module uses the Video Stream Abstraction Module (M15 described in the MG).
 
 \subsubsection{Environment Variables}
 
-This module interacts with the file system to record the video and log files.
+This module does not have any environment variables.
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
   when the module has external interaction with the environment, such as for a
@@ -597,37 +1528,138 @@ This module interacts with the file system to record the video and log files.
 
 \subsubsection{Assumptions}
 
+This module does not have any assumptions.
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
-\noindent start\_recording():
+\noindent init(base\_path: str):
 \begin{itemize}
-  \item transition: starts recording the video and log files
+  \item transition: sets the \texttt{base\_path} state variable to the given base path
   \item output: None
+  \item exception: -
+\end{itemize}
+
+\noindent allocate\_recording():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Generate a new random ID \texttt{recording\_id} for the recording
+          \item Generate a name \texttt{Recording \{YYYY-MM-DD HH:MM:SS\}}
+          \item Create a folder under \texttt{base\_path} with the ID as the folder name
+          \item Create a file \texttt{\{base\_path\}/\{recording\_id\}/meta.json} with the name
+                in the json
+          \item return recording info:
+                \begin{itemize}
+                  \item id: the generated ID
+                  \item name: the generated name
+                  \item start\_time: null
+                  \item duration\_seconds: null
+                  \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}
+                  \item log\_path: \texttt{\{base\_path\}/\{recording\_id\}/log.txt}
+                \end{itemize}
+        \end{itemize}
+  \item output: recording\_info: RecordingInfo
   \item exception: recordingError
 \end{itemize}
 
-\noindent stop\_recording():
+\noindent read\_log\_by\_id(recording\_id: str):
 \begin{itemize}
-  \item transition: stops recording the video and log files
-  \item output: None
-  \item exception: recordingError
+  \item transition:
+        \begin{itemize}
+          \item Check if file at \texttt{\{base\_path\}/\{recording\_id\}/log.txt} exists
+          \item If it does:
+                \begin{itemize}
+                  \item Create an empty list \texttt{logs}
+                  \item For each line in the file:
+                        \begin{itemize}
+                          \item Parse the line as json, as a \texttt{OSDData} object
+                          \item Append the \texttt{OSDData} object to the list
+                        \end{itemize}
+                  \item Return \texttt{logs}
+                \end{itemize}
+          \item If it does not, return null
+        \end{itemize}
+  \item output: log: list[OSDData] $|$ null
+  \item exception: -
 \end{itemize}
 
-\noindent list\_recordings():
+\noindent get\_recording\_by\_id(recording\_id: str):
 \begin{itemize}
-  \item transition: retrieves the list of recordings from the file system
-  \item output: recordings: list[Recording]
-  \item exception: None
+  \item transition:
+        \begin{itemize}
+          \item Check if folder at \texttt{\{base\_path\}/\{recording\_id\}} exists
+          \item If it does, and both \texttt{video.avi}, \texttt{log.txt} and
+                \texttt{meta.json} exist:
+                \begin{itemize}
+                  \item \texttt{logs} = \texttt{read\_log\_by\_id(recording\_id)}
+                  \item return recording info:
+                        \begin{itemize}
+                          \item id: the given ID
+                          \item name: the name in the \texttt{meta.json}
+                          \item start\_time: convert the first \texttt{OSDData.unix\_timestamp\_ms} in
+                                \texttt{logs} to a string representation
+                          \item duration\_seconds: the difference between the last and first
+                                \texttt{OSDData.unix\_timestamp\_ms} in \texttt{logs} (in seconds)
+                          \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}
+                          \item log\_path: \texttt{\{base\_path\}/\{recording\_id\}/log.txt}
+                        \end{itemize}
+                \end{itemize}
+          \item If it does not, return null
+        \end{itemize}
+  \item output: recording\_info: RecordingInfo $|$ null
+  \item exception: recordingNotFoundError
 \end{itemize}
 
-\noindent delete\_recording(recordingId: str):
+\noindent list\_all\_recordings():
 \begin{itemize}
-  \item transition: deletes the recording from the file system
+  \item transition:
+        \begin{itemize}
+          \item Create an empty list \texttt{recordings}
+          \item For each folder under \texttt{base\_path}:
+                \begin{itemize}
+                  \item \texttt{recording\_info} = \texttt{get\_recording\_by\_id(folder\_name)}
+                  \item If \texttt{recording\_info} is not null, append it to \texttt{recordings}
+                \end{itemize}
+          \item Return \texttt{recordings}
+        \end{itemize}
+  \item output: recordings: list[RecordingInfo]
+  \item exception: -
+\end{itemize}
+
+\noindent rename\_recording(recording\_id: str, new\_name: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Check if file at \texttt{\{base\_path\}/\{recording\_id\}/meta.json} exists
+          \item If it does, update the \texttt{name} field to the given new name
+          \item If it does not, return recordingNotFoundError
+        \end{itemize}
   \item output: None
-  \item exception: None
+  \item exception: recordingNotFoundError
+\end{itemize}
+
+\noindent delete\_recording(recording\_id: str):
+\begin{itemize}
+  \item transition: Delete the folder at \texttt{\{base\_path\}/\{recording\_id\}}
+  \item output: None
+  \item exception: recordingNotFoundError
+\end{itemize}
+
+\noindent space\_usage\_bytes():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item return:
+                \begin{itemize}
+                  \item used: the total space used under \texttt{base\_path}
+                  \item total: the total space under \texttt{base\_path}
+                \end{itemize}
+        \end{itemize}
+  \item output: \{used: int, total: int\} (in bytes)
+  \item exception: -
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -639,12 +1671,14 @@ This module interacts with the file system to record the video and log files.
 
 \subsubsection{Local Functions}
 
+This module does not have any local functions.
+
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-\section{MIS of State Management Module} \label{mStateManagement} \wss{Use labels for
+\section{MIS of State Management Module (\mref{mState})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -659,8 +1693,11 @@ stateManagement
 
 \subsection{Uses}
 
-This module uses the Recording Module (\ref{mRecording}), Tracking Module
-(\ref{mTracking}), and Output Video Module (\ref{mOutputVideo}).
+This module uses the CV Process Management Module (\mref{mCVManagement}), Live
+Video Process Management Module (\mref{mVideoManagement}), Transcode Process
+Management Module (\mref{mTranscodeManagement}), Recording Database Module
+(\mref{mRecord}), Tracking Module (\mref{mTrack}), Gimbal Abstraction Module
+(\mref{mGimbal}), and System Status Module (\mref{mStatus}).
 
 \subsection{Syntax}
 
@@ -668,18 +1705,55 @@ This module uses the Recording Module (\ref{mRecording}), Tracking Module
 
 This module does not have any exported constants.
 
+\subsubsection{Exported Data Structures}
+
+\begin{itemize}
+  \item \textbf{SystemStatus}:
+        \begin{itemize}
+          \item average\_fps: float
+          \item gimbal\_tilt\_deg: float
+          \item gimbal\_pan\_deg: float
+          \item gimbal\_focal\_length\_mm: float
+          \item gimbal\_zoom\_digital: float
+          \item tracking\_state: 'idle' $|$ 'armed' $|$ 'tracking'
+          \item preview: bytes
+          \item osd\_data: OSDData $|$ null
+          \item unix\_timestamp\_ms: int
+          \item longitude: float $|$ null
+          \item latitude: float $|$ null
+          \item gpu\_utilization: float (0.0 to 100.0)
+          \item cpu\_utilization: float (0.0 to 100.0)
+          \item core\_temperature\_celsius: float
+          \item memory\_usage\_bytes: \{used: int, total: int\}
+          \item disk\_usage\_bytes: \{used: int, total: int\}
+          \item in\_progress\_recording\_id: str $|$ null
+        \end{itemize}
+\end{itemize}
+
 \subsubsection{Exported Access Programs}
 
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}   & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+    \textbf{Name}       & \textbf{In}         & \textbf{Out}             & \textbf{Exceptions}    \\
     \hline
-    arm             & -           & -            & -                   \\
+    init                & -                   & -                        & -                      \\
     \hline
-    disarm          & -           & -            & -                   \\
+    arm                 & -                   & -                        & -                      \\
     \hline
-    manual\_control & direction   & -            & -                   \\
+    disarm              & -                   & -                        & -                      \\
+    \hline
+    status              & -                   & SystemStatus             & -                      \\
+    \hline
+    manual\_move        & direction: str      & -                        & -                      \\
+    \hline
+    manual\_move\_to    & tilt: f32, pan: f32 & -                        & -                      \\
+    \hline
+    start\_recording    & -                   & -                        & -                      \\
+    \hline
+    stop\_recording     & -                   & -                        & -                      \\
+    \hline
+    download\_recording & recording\_id: str  & output\_video\_pipe: str & recordingNotFoundError \\
     \hline
   \end{tabular}
 \end{center}
@@ -689,7 +1763,18 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item armed status
+  \item cv\_process\_mng: CV Process Management Module
+  \item live\_video\_process\_mng: Live Video Process Management Module
+  \item transcode\_process\_mng: Transcode Process Management Module
+  \item recording\_db: Recording Database Module
+  \item gimbal: Gimbal Abstraction Module
+  \item tracking: Tracking Module
+  \item system\_status: System Status Module
+  \item is\_armed: bool
+  \item cv\_data: CVData $|$ null
+  \item osd\_data: OSDData $|$ null
+  \item in\_progress\_recording\_id: str $|$ null (if not null, a recording is in
+        progress)
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -697,7 +1782,7 @@ This module does not have any exported constants.
 
 \subsubsection{Environment Variables}
 
-None
+This module does not have any environment variables.
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
   when the module has external interaction with the environment, such as for a
@@ -705,44 +1790,152 @@ None
 
 \subsubsection{Assumptions}
 
+(TODO)
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
+\noindent init():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Start \texttt{update\_system\_time()} in a background thread
+          \item Call \texttt{cv\_process\_mng.start\_process(on\_cv\_data,
+                  on\_cv\_process\_crash)}
+          \item Call \texttt{live\_video\_process\_mng.start\_process()}
+          \item Call \texttt{recording\_db.init("/mnt/data/recordings")}
+          \item Call \texttt{gimbal.connect("/dev/ttyTHS1", 115200)}
+          \item Call \texttt{tracking.init(gimbal)}
+          \item Set \texttt{is\_armed} to false
+          \item Set \texttt{in\_progress\_recording\_id} to null
+        \end{itemize}
+  \item output: None
+  \item exception: -
+\end{itemize}
+
 \noindent arm():
 \begin{itemize}
   \item transition:
-        \begin{enumerate}
-          \item Set the armed state variable to true.
-          \item Start a loop in the background, which does the following until the armed state
-                variable is set to false:
-                \begin{enumerate}
-                  \item Call "get\_frame" from the Computer Vision Module.
-                  \item Call "get\_rocket\_location" from the Computer Vision Module.
-                  \item Call "step" from the Tracking Module to adjust the gimbal to keep the rocket in
-                        the center of the frame.
-                  \item Call "output\_frame" from the Output Video Module to display the frame on the
-                        screen.
-                \end{enumerate}
-        \end{enumerate}
+        \begin{itemize}
+          \item Set \texttt{is\_armed} to true
+          \item Call \texttt{gimbal.control\_arm\_led(true)}
+        \end{itemize}
   \item output: None
   \item exception: None
 \end{itemize}
 
 \noindent disarm():
 \begin{itemize}
-  \item transition: sets the armed state variable to false
+  \item transition:
+        \begin{itemize}
+          \item Set \texttt{is\_armed} to false
+          \item Call \texttt{gimbal.control\_arm\_led(false)}
+        \end{itemize}
   \item output: None
   \item exception: None
 \end{itemize}
 
-\noindent manual\_control(direction):
+\noindent status():
 \begin{itemize}
-  \item transition: adjusts the gimbal to the given direction if the armed state
-        variable is false
+  \item transition: Return SystemStatus with the following fields:
+        \begin{itemize}
+          \item average\_fps: \texttt{cv\_data.average\_fps}
+          \item gimbal\_tilt\_deg: from \texttt{gimbal.measure\_deg()}
+          \item gimbal\_pan\_deg: from \texttt{gimbal.measure\_deg()}
+          \item gimbal\_focal\_length\_mm: from \texttt{gimbal.get\_focal\_length()}
+          \item gimbal\_zoom\_digital: (not currently used, reserved for future use)
+          \item tracking\_state:
+                \begin{itemize}
+                  \item if \texttt{is\_armed} is false, return 'idle'
+                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null, return
+                        'tracking'
+                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is null, return
+                        'armed'
+                \end{itemize}
+          \item preview: \texttt{cv\_data.preview}
+          \item osd\_data: \texttt{osd\_data}
+          \item unix\_timestamp\_ms: get from system time
+          \item longitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (first
+                element of tuple if coordinates is not None, else null)
+          \item latitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (second
+                element of tuple if coordinates is not None, else null)
+          \item gpu\_utilization: from \texttt{system\_status.get\_gpu\_utilization()}
+          \item cpu\_utilization: from \texttt{system\_status.get\_cpu\_utilization()}
+          \item core\_temperature\_celsius: from
+                \texttt{system\_status.get\_core\_temperature\_celsius()}
+          \item memory\_usage\_bytes: from \texttt{system\_status.get\_memory\_usage\_bytes()}
+          \item disk\_usage\_bytes: from \texttt{recording\_db.space\_usage\_bytes()}
+          \item in\_progress\_recording\_id: \texttt{in\_progress\_recording\_id}
+        \end{itemize}
+  \item output: SystemStatus
+  \item exception: None
+\end{itemize}
+
+\noindent manual\_move(direction: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Get current gimbal angle from \texttt{gimbal.measure\_deg()}
+          \item Calculate the new gimbal angle based on the given direction
+                \begin{itemize}
+                  \item If direction is "up", new tilt is \texttt{current\_tilt + 10}
+                  \item If direction is "down", new tilt is \texttt{current\_tilt - 10}
+                  \item If direction is "left", new pan is \texttt{current\_pan - 10}
+                  \item If direction is "right", new pan is \texttt{current\_pan + 10}
+                \end{itemize}
+          \item Call \texttt{gimbal.move\_deg(new\_tilt, new\_pan)}
+        \end{itemize}
   \item output: None
   \item exception: None
+\end{itemize}
+
+\noindent manual\_move\_to(tilt: float, pan: float):
+\begin{itemize}
+  \item transition: Call \texttt{gimbal.move\_deg(tilt, pan)}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent start\_recording():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item (if state \texttt{in\_progress\_recording\_id} is not null): return recordingError
+          \item let recording\_info = \texttt{recording\_db.allocate\_recording()}
+          \item Set state \texttt{in\_progress\_recording\_id} to \texttt{recording\_info.id}
+          \item Call \texttt{cv\_process\_mng.start\_recording(recording\_info)}
+        \end{itemize}
+  \item output: None
+  \item exception: recordingError
+\end{itemize}
+
+\noindent stop\_recording():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Call \texttt{cv\_process\_mng.stop\_recording()}
+          \item Set state \texttt{in\_progress\_recording\_id} to null
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent download\_recording(recording\_id: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item (if state \texttt{in\_progress\_recording\_id} is not null): return recordingInProgressError
+          \item let recording\_info =
+                \texttt{recording\_db.get\_recording\_by\_id(recording\_id)}
+          \item (if recording\_info is null): return recordingNotFoundError
+          \item let output\_video\_pipe =
+                \texttt{transcode\_process\_mng.start\_transcode(recording\_info)}
+          \item Return \texttt{output\_video\_pipe}
+        \end{itemize}
+  \item output: output\_video\_pipe: str
+  \item exception: recordingNotFoundError, recordingInProgressError
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -754,12 +1947,90 @@ None
 
 \subsubsection{Local Functions}
 
+\noindent create\_osd\_data(cv\_data: CVData):
+\begin{itemize}
+  \item transition: Return the following OSDData object:
+        \begin{itemize}
+          \item frame\_number: \texttt{cv\_data.frame\_number}
+          \item translate\_x, translate\_y, scale: calculated from \texttt{cv\_data.bbox} (if
+                \texttt{cv\_data.bbox} is not null, such that when applied to the frame, the
+                rocket is centered and the height of the rocket is 75\% of the frame height; if
+                \texttt{cv\_data.bbox} is null, use default values: translate\_x = 0,
+                translate\_y = 0, scale = 1.0)
+          \item average\_fps: \texttt{cv\_data.average\_fps}
+          \item gimbal\_tilt\_deg: from \texttt{gimbal.measure\_deg()}
+          \item gimbal\_pan\_deg: from \texttt{gimbal.measure\_deg()}
+          \item gimbal\_focal\_length\_mm: from \texttt{gimbal.get\_focal\_length()}
+          \item device\_ip\_addresses: get from system network interfaces
+          \item unix\_timestamp\_ms: get from system time
+          \item tracking\_state:
+                \begin{itemize}
+                  \item if \texttt{is\_armed} is false, return 'idle'
+                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null, return
+                        'tracking'
+                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is null, return
+                        'armed'
+                \end{itemize}
+          \item longitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (first
+                element of tuple if coordinates is not None, else 0.0)
+          \item latitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (second
+                element of tuple if coordinates is not None, else 0.0)
+        \end{itemize}
+  \item output: OSDData
+  \item exception: None
+\end{itemize}
+
+\noindent on\_cv\_data(cv\_data: CVData):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Set state variable \texttt{cv\_data} to the given CVData
+          \item Set state variable \texttt{osd\_data} to \texttt{create\_osd\_data(cv\_data)}
+          \item Run \texttt{cv\_process\_mng.set\_osd\_data(osd\_data)}
+          \item (if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null): Call \texttt{tracking.step(cv\_data.bbox)}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent update\_system\_time():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Loop every 5 seconds:
+                \begin{itemize}
+                  \item Call \texttt{gimbal.get\_gps\_data()}
+                  \item If the timestamp is not None, set the system time to the timestamp and break
+                        the loop
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent on\_cv\_process\_crash(error: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Log the error to stderr
+          \item Call \texttt{cv\_process\_mng.start\_process(on\_cv\_data,
+                  on\_cv\_process\_crash)}
+          \item (if state \texttt{in\_progress\_recording\_id} is not null):
+                \begin{itemize}
+                  \item Set state \texttt{in\_progress\_recording\_id} to null
+                  \item Call \texttt{start\_recording()}
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-\section{MIS of API Gateway Module} \label{mAPI} \wss{Use labels for
+\section{MIS of API Gateway Module (\mref{mAPI})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -774,7 +2045,7 @@ apiGateway
 
 \subsection{Uses}
 
-This module uses the State Management Module (\ref{mStateManagement}) .
+This module uses the State Management Module (\mref{mState}).
 
 \subsection{Syntax}
 
@@ -787,9 +2058,9 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+    \textbf{Name} & \textbf{In}          & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    start\_server & -           & -            & -                   \\
+    start\_server & host: str, port: int & -            & serverStartError    \\
     \hline
   \end{tabular}
 \end{center}
@@ -798,14 +2069,16 @@ This module does not have any exported constants.
 
 \subsubsection{State Variables}
 
-None
+\begin{itemize}
+  \item state\_management: State Management Module
+\end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
 
 \subsubsection{Environment Variables}
 
-None
+This module does not have any environment variables.
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
   when the module has external interaction with the environment, such as for a
@@ -813,17 +2086,133 @@ None
 
 \subsubsection{Assumptions}
 
+This module does not have any assumptions.
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
-\noindent start\_server():
+(This is the entry point of the Jetson Module)
+
+\noindent start\_server(host: str, port: int):
 \begin{itemize}
-  \item transition: starts the api server and listens for requests from the web
-        interface.
+  \item transition:
+        \begin{itemize}
+          \item \texttt{state\_management.init()}
+          \item Start a HTTP server
+          \item Respond to all HTTP requests forever
+        \end{itemize}
   \item output: None
   \item exception: None
+\end{itemize}
+
+\subsubsection{API Endpoint Semantics}
+
+\noindent POST /api/status:
+\begin{itemize}
+  \item transition: Return \texttt{state\_management.status()}
+  \item output: StatusResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent POST /api/manual\_move:
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Parse request body to get \texttt{direction} (must be one of: "up", "down",
+                "left", "right")
+          \item Call \texttt{state\_management.manual\_move(direction)}
+        \end{itemize}
+  \item output: EmptyResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent POST /api/manual\_move\_to:
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Parse request body to get \texttt{tilt} and \texttt{pan} (both numbers)
+          \item Call \texttt{state\_management.manual\_move\_to(tilt, pan)}
+        \end{itemize}
+  \item output: EmptyResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent POST /api/gimbal/home:
+\begin{itemize}
+  \item transition: Call \texttt{state\_management.manual\_move\_to(0.0, 0.0)}
+  \item output: EmptyResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent POST /api/arm:
+\begin{itemize}
+  \item transition: Call \texttt{state\_management.arm()}
+  \item output: EmptyResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent POST /api/disarm:
+\begin{itemize}
+  \item transition: Call \texttt{state\_management.disarm()}
+  \item output: EmptyResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent POST /api/recordings/start:
+\begin{itemize}
+  \item transition: Call \texttt{state\_management.start\_recording()}
+  \item output: RecordingStatusResponse JSON
+  \item exception: recordingError (if recording already in progress)
+\end{itemize}
+
+\noindent POST /api/recordings/stop:
+\begin{itemize}
+  \item transition: Call \texttt{state\_management.stop\_recording()}
+  \item output: RecordingStatusResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent GET /api/recordings:
+\begin{itemize}
+  \item transition: Return
+        \texttt{state\_management.recording\_db.list\_all\_recordings()}
+  \item output: RecordingListResponse JSON
+  \item exception: None
+\end{itemize}
+
+\noindent DELETE /api/recordings/\{recordingId\}:
+\begin{itemize}
+  \item transition: Call
+        \texttt{state\_management.recording\_db.delete\_recording(recordingId)}
+  \item output: EmptyResponse JSON
+  \item exception: recordingNotFoundError (returns 404 HTTP status)
+\end{itemize}
+
+\noindent PATCH /api/recordings/\{recordingId\}:
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Parse request body to get \texttt{new\_name} (string)
+          \item Call \texttt{state\_management.recording\_db.rename\_recording(recordingId,
+                  new\_name)}
+        \end{itemize}
+  \item output: EmptyResponse JSON
+  \item exception: recordingNotFoundError (returns 404 HTTP status)
+\end{itemize}
+
+\noindent GET /api/recordings/\{recordingId\}/download:
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item let output\_video\_pipe =
+                \texttt{state\_management.download\_recording(recordingId)}
+          \item Stream the file at \texttt{output\_video\_pipe} as binary data with
+                Content-Type: video/mp4
+        \end{itemize}
+  \item output: Binary video file stream
+  \item exception: recordingNotFoundError (returns 404 HTTP status)
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -840,7 +2229,7 @@ None
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-\section{MIS of Preview Module} \label{mPreview} \wss{Use labels for
+\section{MIS of Preview Module (\mref{mPreview})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -855,7 +2244,7 @@ preview
 
 \subsection{Uses}
 
-This module uses the API Gateway Module (\ref{mAPI}).
+This module uses the API Gateway Module (\mref{mAPI}).
 
 \subsection{Syntax}
 
@@ -865,13 +2254,13 @@ This module does not have any exported constants.
 
 \subsubsection{Exported Access Programs}
 
-This module does not have any exported access programs
+This module does not have any exported access programs.
 
 \subsection{Semantics}
 
 \subsubsection{State Variables}
 
-None
+This module does not have any state variables.
 
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
@@ -879,7 +2268,7 @@ None
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item This module shows the preview on the screen.
+  \item Screen (for showing the preview)
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -888,10 +2277,14 @@ None
 
 \subsubsection{Assumptions}
 
+(TODO)
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
+
+(TODO - UI module, may not have exported access programs)
 
 \wss{A module without environment variables or state variables is unlikely to
   have a state transition.  In this case a state transition can only occur if
@@ -902,12 +2295,14 @@ None
 
 \subsubsection{Local Functions}
 
+(TODO)
+
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-\section{MIS of Manual Control Module} \label{mManualControl} \wss{Use labels for
+\section{MIS of Manual Control Module (\mref{mManual})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -922,7 +2317,7 @@ manualControl
 
 \subsection{Uses}
 
-This module uses the State Management Module (\ref{mStateManagement}).
+This module uses the State Management Module (\mref{mState}).
 
 \subsection{Syntax}
 
@@ -973,7 +2368,7 @@ None
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
-\section{MIS of Recording Management Module} \label{mRecordingManagement} \wss{Use labels for
+\section{MIS of Recording Management Module (\mref{mRecordMng})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -988,7 +2383,7 @@ recordingManagement
 
 \subsection{Uses}
 
-This module uses the Recording Module (\ref{mRecording}).
+This module uses the Recording Database Module (\mref{mRecord}).
 
 \subsection{Syntax}
 
@@ -1014,7 +2409,7 @@ This module does not have any exported access programs
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item This module manages the recordings.
+  \item (for managing recordings)
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -1023,10 +2418,14 @@ This module does not have any exported access programs
 
 \subsubsection{Assumptions}
 
+(TODO)
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
+
+(TODO - UI module, may not have exported access programs)
 
 \wss{A module without environment variables or state variables is unlikely to
   have a state transition.  In this case a state transition can only occur if
@@ -1037,11 +2436,13 @@ This module does not have any exported access programs
 
 \subsubsection{Local Functions}
 
+(TODO)
+
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
-\section{MIS of Configuration Module} \label{mConfiguration} \wss{Use labels for
+\section{MIS of Configuration Module (\mref{mConfig})} \wss{Use labels for
   cross-referencing}
 
 \wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
@@ -1056,7 +2457,7 @@ configuration
 
 \subsection{Uses}
 
-This module uses the Recording Management Module (\ref{mRecordingManagement}).
+This module uses the Recording Management Module (\mref{mRecordMng}).
 
 \subsection{Syntax}
 
@@ -1082,7 +2483,7 @@ This module does not have any exported access programs
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item This module manages the configuration settings.
+  \item (for managing configuration settings)
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -1091,10 +2492,14 @@ This module does not have any exported access programs
 
 \subsubsection{Assumptions}
 
+(TODO)
+
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
+
+(TODO - UI module, may not have exported access programs)
 
 \wss{A module without environment variables or state variables is unlikely to
   have a state transition.  In this case a state transition can only occur if
@@ -1104,6 +2509,8 @@ This module does not have any exported access programs
   will have one or the other.}
 
 \subsubsection{Local Functions}
+
+(TODO)
 
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
