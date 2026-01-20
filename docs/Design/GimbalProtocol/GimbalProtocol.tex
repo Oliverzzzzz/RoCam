@@ -364,14 +364,14 @@ command, we specify:
   \centering
   \begin{tabularx}{\textwidth}{ccX}
     \toprule
-    \textbf{Command ID} & \textbf{Name}  & \textbf{Description}                              \\
+    \textbf{Command ID} & \textbf{Name}    & \textbf{Description}                              \\
     \midrule
-    \texttt{0x00}       & Set ARM LED    & Turn the ARM indicator LED on or off              \\
-    \texttt{0x01}       & Set Status LED & Turn the Status indicator LED on or off           \\
-    \texttt{0x02}       & Move           & Move the gimbal to a specified tilt and pan angle \\
-    \texttt{0x03}       & Measure        & Read the current tilt and pan angles              \\
-    \texttt{0x04}       & Get GPS Data   & Read the current GPS coordinates and timestamp    \\
-    \texttt{0x05}       & Set Focal Length & Set the camera focal length in millimeters       \\
+    \texttt{0x00}       & Set ARM LED      & Turn the ARM indicator LED on or off              \\
+    \texttt{0x01}       & Set Status LED   & Turn the Status indicator LED on or off           \\
+    \texttt{0x02}       & Move             & Move the gimbal to a specified tilt and pan angle \\
+    \texttt{0x03}       & Measure          & Read the current tilt and pan angles              \\
+    \texttt{0x04}       & Get GPS Data     & Read the current GPS coordinates and timestamp    \\
+    \texttt{0x05}       & Set Focal Length & Set the camera focal length in millimeters        \\
     \bottomrule
   \end{tabularx}
   \caption{Command Summary}
@@ -591,9 +591,9 @@ Example response (tilt = 12.5°, pan = 3.25°):
 \subsubsection{Purpose}
 This command requests the current GPS data from the gimbal. The gimbal responds
 with its current longitude, latitude, and Unix timestamp in milliseconds. GPS
-typically acquires time before coordinates. If coordinates are unknown, they are
-returned as NaN (Not a Number). If the timestamp is unknown, it is returned as
-zero.
+typically acquires time before coordinates. If coordinates are unknown, they
+are returned as NaN (Not a Number). If the timestamp is unknown, it is returned
+as zero.
 
 \subsubsection{Request Format}
 
@@ -619,12 +619,12 @@ Since there is no payload, the CRC is calculated over just the Command ID byte
   \centering
   \begin{tabular}{cccl}
     \toprule
-    \textbf{Byte} & \textbf{Size} & \textbf{Value} & \textbf{Description}                    \\
+    \textbf{Byte} & \textbf{Size} & \textbf{Value} & \textbf{Description}           \\
     \midrule
-    0..7          & 8             & (float64 LE)   & Longitude in degrees                    \\
-    8..15         & 8             & (float64 LE)   & Latitude in degrees                     \\
-    16..23        & 8             & (u64 LE)       & Unix timestamp in milliseconds          \\
-    24            & 1             & (calculated)   & CRC-8 over bytes [0..23]                \\
+    0..7          & 8             & (float64 LE)   & Longitude in degrees           \\
+    8..15         & 8             & (float64 LE)   & Latitude in degrees            \\
+    16..23        & 8             & (u64 LE)       & Unix timestamp in milliseconds \\
+    24            & 1             & (calculated)   & CRC-8 over bytes [0..23]       \\
     \bottomrule
   \end{tabular}
   \caption{Get GPS Data Response (25 bytes total)}
@@ -635,8 +635,8 @@ Since there is no payload, the CRC is calculated over just the Command ID byte
   \item If coordinates are unknown, longitude and latitude are returned as NaN
         (IEEE-754 NaN value).
   \item If the timestamp is unknown, it is returned as zero.
-  \item GPS typically acquires time before coordinates, so it is possible to have
-        a valid timestamp with NaN coordinates.
+  \item GPS typically acquires time before coordinates, so it is possible to have a
+        valid timestamp with NaN coordinates.
 \end{itemize}
 
 \subsubsection{Example}
@@ -648,22 +648,30 @@ Request to read GPS data:
   \item Complete request: \texttt{0x0C 0x04}
 \end{itemize}
 
-Example response with full GPS lock (longitude = -79.9167°, latitude = 43.2567°, timestamp = 1705123456789 ms):
+Example response with full GPS lock (longitude = -79.9167°, latitude =
+43.2567°, timestamp = 1705123456789 ms):
 \begin{itemize}
-  \item Longitude (-79.9167 as float64 LE): \texttt{0xCD 0xCC 0xCC 0xCC 0xCC 0x9C 0x4F 0xC0}
-  \item Latitude (43.2567 as float64 LE): \texttt{0x33 0x33 0x33 0x33 0x33 0x33 0x4D 0x40}
-  \item Timestamp (1705123456789 as u64 LE): \texttt{0x15 0xDE 0x29 0x09 0x8E 0x01 0x00 0x00}
-  \item Data bytes: \texttt{0xCD 0xCC 0xCC 0xCC 0xCC 0x9C 0x4F 0xC0 0x33 0x33 0x33 0x33 0x33 0x33 0x4D 0x40 0x15 0xDE 0x29 0x09 0x8E 0x01 0x00 0x00}
+  \item Longitude (-79.9167 as float64 LE): \texttt{0xCD 0xCC 0xCC 0xCC 0xCC 0x9C 0x4F
+          0xC0}
+  \item Latitude (43.2567 as float64 LE): \texttt{0x33 0x33 0x33 0x33 0x33 0x33 0x4D
+          0x40}
+  \item Timestamp (1705123456789 as u64 LE): \texttt{0x15 0xDE 0x29 0x09 0x8E 0x01 0x00
+          0x00}
+  \item Data bytes: \texttt{0xCD 0xCC 0xCC 0xCC 0xCC 0x9C 0x4F 0xC0 0x33 0x33 0x33 0x33
+          0x33 0x33 0x4D 0x40 0x15 0xDE 0x29 0x09 0x8E 0x01 0x00 0x00}
   \item CRC over data: (calculated)
   \item Complete response: (data bytes + CRC byte)
 \end{itemize}
 
-Example response with time only (timestamp = 1705123456789 ms, coordinates unknown):
+Example response with time only (timestamp = 1705123456789 ms, coordinates
+unknown):
 \begin{itemize}
   \item Longitude (NaN as float64 LE): \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F}
   \item Latitude (NaN as float64 LE): \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F}
-  \item Timestamp (1705123456789 as u64 LE): \texttt{0x15 0xDE 0x29 0x09 0x8E 0x01 0x00 0x00}
-  \item Data bytes: \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F 0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F 0x15 0xDE 0x29 0x09 0x8E 0x01 0x00 0x00}
+  \item Timestamp (1705123456789 as u64 LE): \texttt{0x15 0xDE 0x29 0x09 0x8E 0x01 0x00
+          0x00}
+  \item Data bytes: \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F 0x00 0x00 0x00 0x00
+          0x00 0x00 0xF8 0x7F 0x15 0xDE 0x29 0x09 0x8E 0x01 0x00 0x00}
   \item CRC over data: (calculated)
   \item Complete response: (data bytes + CRC byte)
 \end{itemize}
@@ -673,7 +681,8 @@ Example response without GPS lock (no time, no coordinates):
   \item Longitude (NaN as float64 LE): \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F}
   \item Latitude (NaN as float64 LE): \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F}
   \item Timestamp (0 as u64 LE): \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00}
-  \item Data bytes: \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F 0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00}
+  \item Data bytes: \texttt{0x00 0x00 0x00 0x00 0x00 0x00 0xF8 0x7F 0x00 0x00 0x00 0x00
+          0x00 0x00 0xF8 0x7F 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00}
   \item CRC over data: (calculated)
   \item Complete response: (data bytes + CRC byte)
 \end{itemize}
