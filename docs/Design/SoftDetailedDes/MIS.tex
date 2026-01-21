@@ -2657,14 +2657,11 @@ This module does not have any exported access programs.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item recordings: list[\texttt{RecordingInfo}] (cached list of recordings most
-        recently fetched from the backend)
-  \item selected\_recording\_id: str $|$ null (currently selected recording in the UI;
-        null if none selected)
-  \item last\_refresh\_time\_ms: int $|$ null (timestamp of last successful refresh;
-        null if never refreshed)
-  \item last\_error: str $|$ null (latest error message to display; null if no error)
+  \item The current set of recordings available to the user (may be empty if not yet retrieved).
+  \item The currently selected recording (may be none).
+  \item The status of the most recent backend interaction (success/failure).
 \end{itemize}
+
 
 \noindent \textbf{State Invariant:}
 \begin{itemize}
