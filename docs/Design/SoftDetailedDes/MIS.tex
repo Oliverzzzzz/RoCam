@@ -150,23 +150,24 @@ this specification:
 \begin{center}
   \renewcommand{\arraystretch}{1.2}
   \noindent
-  \begin{tabular}{l l p{7.5cm}}
+  \begin{tabular}{l l p{6cm}}
     \toprule
-    \textbf{Type Notation}    & \textbf{Mathematical Type} & \textbf{Description}                               \\
+    \textbf{Type Notation}                  & \textbf{Mathematical Type}                    & \textbf{Description}                                                      \\
     \midrule
-    int                       & $\mathbb{Z}$               & 32-bit signed integer.                             \\
-    float                     & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754). \\
-    f32                       & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754). \\
-    f64                       & $\mathbb{R}$               & 64-bit double-precision floating point (IEEE 754). \\
-    u64                       & $\mathbb{N}$               & 64-bit unsigned integer.                           \\
-    bool                      & \{true, false\}            & Boolean value (true or false).                     \\
-    str                       & sequence of char           & String (sequence of characters).                   \\
-    bytes                     & sequence of byte           & Sequence of bytes (8-bit unsigned integers).       \\
-    null $|$ Type             & Type $\cup$ \{null\}       & Optional/nullable type (union with null).          \\
-    'literal1' $|$ 'literal2' & \{'literal1', 'literal2'\} & Union of string literals (enum-like type).         \\
-    Type[]                    & sequence of Type           & Array or sequence of elements of type Type.        \\
-    Optional[Type]            & Type $\cup$ \{null\}       & Optional type (Python-style notation).             \\
-    Tuple[Type1, Type2]       & Type1 $\times$ Type2       & Tuple containing values of Type1 and Type2.        \\
+    int                                     & $\mathbb{Z}$                                  & 32-bit signed integer.                                                    \\
+    float                                   & $\mathbb{R}$                                  & 32-bit single-precision floating point (IEEE 754).                        \\
+    f32                                     & $\mathbb{R}$                                  & 32-bit single-precision floating point (IEEE 754).                        \\
+    f64                                     & $\mathbb{R}$                                  & 64-bit double-precision floating point (IEEE 754).                        \\
+    u64                                     & $\mathbb{N}$                                  & 64-bit unsigned integer.                                                  \\
+    bool                                    & \{true, false\}                               & Boolean value (true or false).                                            \\
+    str                                     & sequence of char                              & String (sequence of characters).                                          \\
+    bytes                                   & sequence of byte                              & Sequence of bytes (8-bit unsigned integers).                              \\
+    null $|$ Type                           & Type $\cup$ \{null\}                          & Optional/nullable type (union with null).                                 \\
+    'literal1' $|$ 'literal2'               & \{'literal1', 'literal2'\}                    & Union of string literals (enum-like type).                                \\
+    Type[]                                  & sequence of Type                              & Array or sequence of elements of type Type.                               \\
+    Optional[Type]                          & Type $\cup$ \{null\}                          & Optional type (Python-style notation).                                    \\
+    Tuple[Type1, Type2]                     & Type1 $\times$ Type2                          & Tuple containing values of Type1 and Type2.                               \\
+    (Type1, Type2) $\rightarrow$ ReturnType & Type1 $\times$ Type2 $\rightarrow$ ReturnType & Function type taking parameters of Type1 and Type2, returning ReturnType. \\
     \bottomrule
   \end{tabular}
 \end{center}
@@ -702,17 +703,17 @@ This module does not have any exported constants.
 \subsubsection{Exported Access Programs}
 
 \begin{center}
-  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+  \begin{tabular}{p{3cm} p{6cm} p{2cm} p{3.5cm}}
     \hline
-    \textbf{Name}    & \textbf{In}                                                                                                       & \textbf{Out} & \textbf{Exceptions} \\
+    \textbf{Name}    & \textbf{In}                                                                                                               & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    start\_process   & on\_cv\_data: (cv\_data: \texttt{CVData}) $\rightarrow$ None, on\_process\_crash: (error: str) $\rightarrow$ None & -            & processStartError   \\
+    start\_process   & on\_cv\_data: (cv\_data: \texttt{CVData}) $\rightarrow$ None \newline on\_process\_crash: (error: str) $\rightarrow$ None & -            &                     \\
     \hline
-    start\_recording & recording\_info: \texttt{RecordingInfo}                                                                           & -            & ipcError            \\
+    start\_recording & recording\_info: \texttt{RecordingInfo}                                                                                   & -            & IPCError            \\
     \hline
-    stop\_recording  & -                                                                                                                 & -            & ipcError            \\
+    stop\_recording  & -                                                                                                                         & -            & IPCError            \\
     \hline
-    set\_osd\_data   & osd\_data: \texttt{OSDData}                                                                                       & -            & ipcError            \\
+    set\_osd\_data   & osd\_data: \texttt{OSDData}                                                                                               & -            & IPCError            \\
     \hline
   \end{tabular}
 \end{center}
@@ -752,10 +753,11 @@ This module does not have any assumptions.
           \item Start an IPC server.
           \item Start the CV Process Module (\mref{mCV}) in a separate process.
           \item Wait for the CV Process Module (\mref{mCV}) to connect to the IPC server.
-          \item Start the \texttt{receive\_cv\_data\_loop} in a background thread.
+          \item Start \texttt{receive\_cv\_data\_loop()} in a background thread.
         \end{itemize}
   \item output: None
-  \item exception: processStartError
+  \item exception: IPCError if the CV Process Module (\mref{mCV}) does not connect to
+        the IPC server within a timeout period.
 \end{itemize}
 
 \noindent start\_recording(recording\_info: \texttt{RecordingInfo}):
@@ -763,7 +765,7 @@ This module does not have any assumptions.
   \item transition: Send the recording info to the CV Process Module (\mref{mCV})
         through the IPC connection.
   \item output: None
-  \item exception: ipcError
+  \item exception: IPCError if failed to send the value through the IPC connection.
 \end{itemize}
 
 \noindent stop\_recording():
@@ -771,7 +773,7 @@ This module does not have any assumptions.
   \item transition: Send a stop recording message to the CV Process Module (\mref{mCV})
         through the IPC connection.
   \item output: None
-  \item exception: ipcError
+  \item exception: IPCError if failed to send the value through the IPC connection.
 \end{itemize}
 
 \noindent set\_osd\_data(osd\_data: \texttt{OSDData}):
@@ -779,7 +781,7 @@ This module does not have any assumptions.
   \item transition: Send the OSD data to the CV Process Module (\mref{mCV}) through the
         IPC connection.
   \item output: None
-  \item exception: ipcError
+  \item exception: IPCError if failed to send the value through the IPC connection.
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -820,7 +822,7 @@ This module does not have any assumptions.
 
 \subsection{Module}
 
-liveVideoProcessManagement
+live\_video\_process\_management
 
 \wss{Short name for the module}
 
@@ -843,7 +845,7 @@ This module does not have any exported constants.
     \hline
     \textbf{Name}  & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    start\_process & -           & -            & processStartError   \\
+    start\_process & -           & -            & -                   \\
     \hline
   \end{tabular}
 \end{center}
@@ -901,7 +903,7 @@ This module does not have any assumptions.
                 \end{itemize}
         \end{itemize}
   \item output: None
-  \item exception: processStartError
+  \item exception: None
 \end{itemize}
 
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
@@ -918,7 +920,7 @@ This module does not have any assumptions.
 
 \subsection{Module}
 
-transcodeProcessManagement
+transcode\_process\_management
 
 \wss{Short name for the module}
 
@@ -941,7 +943,7 @@ This module does not have any exported constants.
     \hline
     \textbf{Name}    & \textbf{In}                       & \textbf{Out}             & \textbf{Exceptions} \\
     \hline
-    start\_transcode & recording: \texttt{RecordingInfo} & output\_video\_pipe: str & processStartError   \\
+    start\_transcode & recording: \texttt{RecordingInfo} & output\_video\_pipe: str & -                   \\
     \hline
   \end{tabular}
 \end{center}
@@ -965,7 +967,9 @@ This module does not have any environment variables.
 
 \subsubsection{Assumptions}
 
-This module does not have any assumptions.
+\begin{itemize}
+  \item The provided \texttt{RecordingInfo} is valid.
+\end{itemize}
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
@@ -981,7 +985,7 @@ This module does not have any assumptions.
                 with the given recording and \texttt{output\_video\_pipe}.
         \end{itemize}
   \item output: output\_video\_pipe: str
-  \item exception: processStartError
+  \item exception: None
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -1009,7 +1013,7 @@ This module does not have any local functions.
 
 \subsection{Module}
 
-Tracking
+tracking
 
 \wss{Short name for the module}
 
@@ -1028,11 +1032,11 @@ This module does not have any exported constants.
 \subsubsection{Exported Access Programs}
 
 \begin{center}
-  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+  \begin{tabular}{p{3cm} p{6cm} p{2cm} p{3.5cm}}
     \hline
     \textbf{Name} & \textbf{In}                                        & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    init          & gimbal: Gimbal Abstraction Module (\mref{mGimbal}) & -            & -                   \\
+    init          & gimbal: Gimbal Abstraction Module (\mref{mGimbal}) & -            & GimbalError         \\
     \hline
     step          & rocket\_bbox: \texttt{BoundingBox}                 & -            & -                   \\
     \hline
@@ -1078,14 +1082,15 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{enumerate}
-          \item Retrieve the current gimbal angle from the Gimbal Abstraction Module
-                (\mref{mGimbal}).
-          \item Calculate the desired gimbal angle from \texttt{rocket\_bbox}.
-          \item Send the desired gimbal angle to the Gimbal Abstraction Module
-                (\mref{mGimbal}).
+          \item Get the current gimbal state from \texttt{gimbal.measure\_deg()} and
+                \texttt{gimbal.get\_focal\_length()}.
+          \item Calculate the desired gimbal state from \texttt{rocket\_bbox} so that the
+                rocket is centered and the height of the rocket is 50\% of the frame height.
+          \item Set the desired gimbal state using \texttt{gimbal.move\_deg()} and
+                \texttt{gimbal.set\_focal\_length()}.
         \end{enumerate}
   \item output: None
-  \item exception: None
+  \item exception: GimbalError if the functions in \texttt{gimbal} return an error.
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -1113,7 +1118,7 @@ This module does not have any local functions.
 
 \subsection{Module}
 
-Gimbal
+gimbal
 
 \wss{Short name for the module}
 
@@ -1134,23 +1139,23 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}        & \textbf{In}              & \textbf{Out}                                                           & \textbf{Exceptions}      \\
+    \textbf{Name}        & \textbf{In}                      & \textbf{Out}                                                           & \textbf{Exceptions} \\
     \hline
-    connect              & port: str, baudrate: int & -                                                                      & serialOpenError          \\
+    connect              & port: str \newline baudrate: int & -                                                                      & SerialError         \\
     \hline
-    move\_deg            & tilt: f32, pan: f32      & -                                                                      & gimbalCommunicationError \\
+    move\_deg            & tilt: f32 \newline pan: f32      & -                                                                      & GimbalError         \\
     \hline
-    measure\_deg         & -                        & tilt: f32, pan: f32                                                    & gimbalCommunicationError \\
+    measure\_deg         & -                                & tilt: f32, pan: f32                                                    & GimbalError         \\
     \hline
-    control\_arm\_led    & enabled: bool            & -                                                                      & gimbalCommunicationError \\
+    control\_arm\_led    & enabled: bool                    & -                                                                      & GimbalError         \\
     \hline
-    control\_status\_led & enabled: bool            & -                                                                      & gimbalCommunicationError \\
+    control\_status\_led & enabled: bool                    & -                                                                      & GimbalError         \\
     \hline
-    get\_gps\_data       & -                        & (coordinates: Optional[Tuple[float, float]], timestamp: Optional[int]) & gimbalCommunicationError \\
+    get\_gps\_data       & -                                & (coordinates: Optional[Tuple[float, float]], timestamp: Optional[int]) & GimbalError         \\
     \hline
-    set\_focal\_length   & focal\_length\_mm: f32   & -                                                                      & gimbalCommunicationError \\
+    set\_focal\_length   & focal\_length\_mm: f32           & -                                                                      & GimbalError         \\
     \hline
-    get\_focal\_length   & -                        & focal\_length\_mm: f32                                                 & gimbalCommunicationError \\
+    get\_focal\_length   & -                                & focal\_length\_mm: f32                                                 & GimbalError         \\
     \hline
   \end{tabular}
 \end{center}
@@ -1196,66 +1201,75 @@ This module does not have any assumptions.
 \noindent move\_deg(tilt: f32, pan: f32):
 \begin{itemize}
   \item transition: Sends the tilt and pan angles to the gimbal through the Serial
-        Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
+        Abstraction Module (\mref{mSerial}) (see the
+        \href{https://github.com/SpaceY-Labs/RoCam/blob/main/docs/Design/GimbalProtocol/GimbalProtocol.pdf}{Gimbal
+          Protocol} doc for details).
   \item output: None
-  \item exception: gimbalCommunicationError
+  \item exception: GimbalError
 \end{itemize}
 
 \noindent measure\_deg():
 \begin{itemize}
   \item transition: Retrieves the tilt and pan angle measurements from the gimbal
-        through the Serial Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol
-        doc for details).
+        through the Serial Abstraction Module (\mref{mSerial}) (see the
+        \href{https://github.com/SpaceY-Labs/RoCam/blob/main/docs/Design/GimbalProtocol/GimbalProtocol.pdf}{Gimbal
+          Protocol} doc for details).
   \item output: (tilt: f32, pan: f32)
-  \item exception: gimbalCommunicationError
+  \item exception: GimbalError
 \end{itemize}
 
 \noindent control\_arm\_led(enabled: bool):
 \begin{itemize}
   \item transition: Controls the arm LED on the gimbal through the Serial Abstraction
-        Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
+        Module (\mref{mSerial}) (see the
+        \href{https://github.com/SpaceY-Labs/RoCam/blob/main/docs/Design/GimbalProtocol/GimbalProtocol.pdf}{Gimbal
+          Protocol} doc for details).
   \item output: None
-  \item exception: gimbalCommunicationError
+  \item exception: GimbalError
 \end{itemize}
 
 \noindent control\_status\_led(enabled: bool):
 \begin{itemize}
   \item transition: Controls the status LED on the gimbal through the Serial
-        Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
+        Abstraction Module (\mref{mSerial}) (see the
+        \href{https://github.com/SpaceY-Labs/RoCam/blob/main/docs/Design/GimbalProtocol/GimbalProtocol.pdf}{Gimbal
+          Protocol} doc for details).
   \item output: None
-  \item exception: gimbalCommunicationError
+  \item exception: GimbalError
 \end{itemize}
 
 \noindent get\_gps\_data():
 \begin{itemize}
   \item transition: Retrieves GPS data from the gimbal through the Serial Abstraction
-        Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
+        Module (\mref{mSerial}) (see the
+        \href{https://github.com/SpaceY-Labs/RoCam/blob/main/docs/Design/GimbalProtocol/GimbalProtocol.pdf}{Gimbal
+          Protocol} doc for details).
   \item output: (coordinates: Optional[Tuple[float, float]], timestamp: Optional[int])
         \begin{itemize}
-          \item If coordinates are unknown (NaN), coordinates is None.
-          \item If timestamp is unknown (0), timestamp is None.
-          \item Returns (None, None) if no GPS lock.
-          \item Returns (None, timestamp) if time only (no coordinates).
-          \item Returns ((longitude, latitude), timestamp) if full GPS lock.
+          \item If coordinates are unknown, coordinates is None.
+          \item If timestamp is unknown, timestamp is None.
         \end{itemize}
-  \item exception: gimbalCommunicationError
+  \item exception: GimbalError
 \end{itemize}
 
 \noindent set\_focal\_length(focal\_length\_mm: f32):
 \begin{itemize}
   \item transition: Sets the camera focal length on the gimbal through the Serial
-        Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
+        Abstraction Module (\mref{mSerial}) (see the
+        \href{https://github.com/SpaceY-Labs/RoCam/blob/main/docs/Design/GimbalProtocol/GimbalProtocol.pdf}{Gimbal
+          Protocol} doc for details).
   \item output: None
-  \item exception: gimbalCommunicationError
+  \item exception: GimbalError
 \end{itemize}
 
 \noindent get\_focal\_length():
 \begin{itemize}
   \item transition: Retrieves the current camera focal length from the gimbal through
-        the Serial Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for
-        details).
+        the Serial Abstraction Module (\mref{mSerial}) (see the
+        \href{https://github.com/SpaceY-Labs/RoCam/blob/main/docs/Design/GimbalProtocol/GimbalProtocol.pdf}{Gimbal
+          Protocol} doc for details).
   \item output: focal\_length\_mm: f32
-  \item exception: gimbalCommunicationError
+  \item exception: GimbalError
 \end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
@@ -1311,13 +1325,13 @@ serial
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}  & \textbf{In}              & \textbf{Out} & \textbf{Exceptions} \\
+    \textbf{Name}  & \textbf{In}                      & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    open\_port     & port: str, baudrate: int & -            & serialOpenError     \\
+    open\_port     & port: str \newline baudrate: int & -            & SerialError         \\
     \hline
-    send\_bytes    & data: bytes              & -            & serialWriteError    \\
+    send\_bytes    & data: bytes                      & -            & SerialError         \\
     \hline
-    receive\_bytes & num\_bytes: int          & data: bytes  & serialReadError     \\
+    receive\_bytes & num\_bytes: int                  & data: bytes  & SerialError         \\
     \hline
   \end{tabular}
 \end{center}
@@ -2967,11 +2981,16 @@ the graduate attribute of Problem Analysis and Design.
   \item While creating the design doc, what parts of your other documents (e.g.
         requirements, hazard analysis, etc), it any, needed to be changed, and why?
   \item What are the limitations of your solution? Put another way, given unlimited
-        resources, what could you do to make the project better? (LO\_ProbSolutions)
+        resources, what could you do to make the project better? (LO\_ProbSolutions) 1.
+        error handling and logging
   \item Give a brief overview of other design solutions you considered. What are the
         benefits and tradeoffs of those other designs compared with the chosen design?
         From all the potential options, why did you select the documented design?
         (LO\_Explores)
+
+        1. seperate cv, display and transcode processes
+        2. direct streaming of transcoded video to the browser
+        3. simple hand rolled recording database
 \end{enumerate}
 
 \end{document}
