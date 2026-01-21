@@ -1313,12 +1313,13 @@ serial
 
 \begin{itemize}
   \item DEFAULT\_BAUDRATE: Default baudrate used when the caller does not provide one.
-  \item READ\_TIMEOUT\_MS: Maximum time to wait for incoming bytes before a read is considered failed.
-  \item MAX\_FRAME\_SIZE\_BYTES: Upper bound on a single read/write transaction size to prevent
-        unbounded buffering.
-  \item IO\_RETRY\_COUNT: Maximum number of retries for transient I/O failures before raising an exception.
+  \item READ\_TIMEOUT\_MS: Maximum time to wait for incoming bytes before a read is
+        considered failed.
+  \item MAX\_FRAME\_SIZE\_BYTES: Upper bound on a single read/write transaction size to
+        prevent unbounded buffering.
+  \item IO\_RETRY\_COUNT: Maximum number of retries for transient I/O failures before
+        raising an exception.
 \end{itemize}
-
 
 \subsubsection{Exported Access Programs}
 
@@ -1344,7 +1345,6 @@ serial
   \item baudrate: int $|$ null
 \end{itemize}
 
-
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
 
@@ -1360,11 +1360,11 @@ serial
 
 \subsubsection{Assumptions}
 \begin{itemize}
-  \item The given \texttt{port} refers to a valid OS serial device path/name and the device is physically connected.
-  \item The caller invokes \texttt{open\_port} successfully before calling \texttt{send\_bytes} or \texttt{receive\_bytes}.
+  \item The given \texttt{port} refers to a valid OS serial device path/name and the
+        device is physically connected.
+  \item The caller invokes \texttt{open\_port} successfully before calling
+        \texttt{send\_bytes} or \texttt{receive\_bytes}.
 \end{itemize}
-
-
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
@@ -1842,22 +1842,21 @@ This module does not have any environment variables.
 \subsubsection{Assumptions}
 
 \begin{itemize}
-  \item Dependent modules satisfy their advertised interfaces: process management modules can
-        start/stop their processes and report failure via their exceptions/callbacks; hardware
-        abstraction modules either perform the requested action or raise the documented exception.
-  \item CV data arrival is asynchronous. Before the first CV update is received, status-related
-        fields derived from \texttt{cv\_data} may be unavailable (represented by null) and must be
-        handled by callers.
-  \item Time synchronization from GPS may not be available at startup; the system continues to
-        operate using local time until a valid GPS timestamp is obtained.
+  \item Dependent modules satisfy their advertised interfaces: process management
+        modules can start/stop their processes and report failure via their
+        exceptions/callbacks; hardware abstraction modules either perform the requested
+        action or raise the documented exception.
+  \item CV data arrival is asynchronous. Before the first CV update is received,
+        status-related fields derived from \texttt{cv\_data} may be unavailable
+        (represented by null) and must be handled by callers.
+  \item Time synchronization from GPS may not be available at startup; the system
+        continues to operate using local time until a valid GPS timestamp is obtained.
   \item At most one recording session may be active at a time; this is represented by
         \texttt{in\_progress\_recording\_id} being non-null.
-  \item Manual control commands and tracking commands are not issued concurrently in a way that
-        violates the Gimbal Abstraction Module interface (i.e., gimbal commands are serialized at
-        the abstraction boundary).
+  \item Manual control commands and tracking commands are not issued concurrently in a
+        way that violates the Gimbal Abstraction Module interface (i.e., gimbal
+        commands are serialized at the abstraction boundary).
 \end{itemize}
-
-
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
@@ -2332,9 +2331,10 @@ This module does not have any exported access programs.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item last\_preview\_jpeg: bytes $|$ null (most recent preview image returned by the backend;
-        null if no preview has been received yet)
-  \item last\_status: \texttt{SystemStatus} $|$ null (most recent decoded status payload; null if none)
+  \item last\_preview\_jpeg: bytes $|$ null (most recent preview image returned by the
+        backend; null if no preview has been received yet)
+  \item last\_status: \texttt{SystemStatus} $|$ null (most recent decoded status
+        payload; null if none)
   \item refresh\_interval\_ms: int (UI polling interval for requesting status/preview)
 \end{itemize}
 
@@ -2355,9 +2355,11 @@ This module does not have any exported access programs.
 
 \begin{itemize}
   \item The API Gateway Module (\mref{mAPI}) is reachable at the configured host/port.
-  \item The API endpoint \texttt{POST /api/status} (see \mref{mAPI}) returns a \texttt{SystemStatus} object whose
-        \texttt{preview} field is a JPEG-encoded image (bytes) compatible with the UI runtime.
-  \item The UI runtime can display a JPEG-encoded byte sequence on the screen and can execute periodic refresh events.
+  \item The API endpoint \texttt{POST /api/status} (see \mref{mAPI}) returns a
+        \texttt{SystemStatus} object whose \texttt{preview} field is a JPEG-encoded
+        image (bytes) compatible with the UI runtime.
+  \item The UI runtime can display a JPEG-encoded byte sequence on the screen and can
+        execute periodic refresh events.
 \end{itemize}
 
 \subsubsection{Access Routine Semantics}
@@ -2368,7 +2370,8 @@ This module does not have any exported access programs.
         \begin{itemize}
           \item Set \texttt{last\_preview\_jpeg} to null and \texttt{last\_status} to null.
           \item Set \texttt{refresh\_interval\_ms} to the given value.
-          \item Begin periodic execution of \texttt{refresh()} every \texttt{refresh\_interval\_ms}.
+          \item Begin periodic execution of \texttt{refresh()} every
+                \texttt{refresh\_interval\_ms}.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2399,9 +2402,10 @@ This module does not have any exported access programs.
   \item transition:
         \begin{itemize}
           \item If \texttt{last\_preview\_jpeg} is not null, display the image on screen.
-          \item If \texttt{last\_preview\_jpeg} is null, display a placeholder (e.g., ``Waiting for preview'').
-          \item If \texttt{last\_status} is not null, display key telemetry fields (e.g., FPS, tracking state,
-                gimbal angles) alongside the preview.
+          \item If \texttt{last\_preview\_jpeg} is null, display a placeholder (e.g., ``Waiting
+                for preview'').
+          \item If \texttt{last\_status} is not null, display key telemetry fields (e.g., FPS,
+                tracking state, gimbal angles) alongside the preview.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2410,8 +2414,6 @@ This module does not have any exported access programs.
 \subsubsection{Local Functions}
 
 This module does not have any local functions.
-
-
 
 %22
 \section{MIS of Manual Control Module (\mref{mManual})} \wss{Use labels for
@@ -2448,12 +2450,17 @@ This module does not have any exported access programs.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item selected\_direction: 'up' $|$ 'down' $|$ 'left' $|$ 'right' $|$ null (currently selected step move direction; null if none)
+  \item selected\_direction: 'up' $|$ 'down' $|$ 'left' $|$ 'right' $|$ null (currently
+        selected step move direction; null if none)
   \item step\_size\_deg: float (degrees to move per step command; default 10.0)
-  \item target\_tilt\_deg: float (latest user-entered target tilt angle for absolute move)
-  \item target\_pan\_deg: float (latest user-entered target pan angle for absolute move)
-  \item last\_command\_time\_ms: int $|$ null (timestamp of last command issued; null if none)
-  \item last\_command\_status: 'ok' $|$ 'failed' $|$ null (result of last command; null if none)
+  \item target\_tilt\_deg: float (latest user-entered target tilt angle for absolute
+        move)
+  \item target\_pan\_deg: float (latest user-entered target pan angle for absolute
+        move)
+  \item last\_command\_time\_ms: int $|$ null (timestamp of last command issued; null
+        if none)
+  \item last\_command\_status: 'ok' $|$ 'failed' $|$ null (result of last command; null
+        if none)
 \end{itemize}
 
 \noindent \textbf{State Invariant:}
@@ -2481,11 +2488,13 @@ This module does not have any exported access programs.
 
 \begin{itemize}
   \item The API Gateway Module (\mref{mAPI}) is reachable at the configured host/port.
-  \item The endpoint \texttt{POST /api/manual\_move} (see \mref{mAPI}) accepts a direction in
-        \{'up','down','left','right'\} and causes a corresponding step movement.
-  \item The endpoint \texttt{POST /api/manual\_move\_to} (see \mref{mAPI}) accepts numeric tilt/pan
-        angles and causes an absolute movement.
-  \item Commands are user-driven; the UI does not automatically issue movement commands without a user action.
+  \item The endpoint \texttt{POST /api/manual\_move} (see \mref{mAPI}) accepts a
+        direction in \{'up','down','left','right'\} and causes a corresponding step
+        movement.
+  \item The endpoint \texttt{POST /api/manual\_move\_to} (see \mref{mAPI}) accepts
+        numeric tilt/pan angles and causes an absolute movement.
+  \item Commands are user-driven; the UI does not automatically issue movement commands
+        without a user action.
 \end{itemize}
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
@@ -2523,7 +2532,8 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
                 \begin{itemize}
                   \item Call API endpoint \texttt{POST /api/manual\_move} (see \mref{mAPI}) with
                         \texttt{direction} = \texttt{selected\_direction}.
-                  \item If request succeeds, set \texttt{last\_command\_status} to 'ok'; else set to 'failed'.
+                  \item If request succeeds, set \texttt{last\_command\_status} to 'ok'; else set to
+                        'failed'.
                 \end{itemize}
           \item Set \texttt{last\_command\_time\_ms} to current system time.
         \end{itemize}
@@ -2547,8 +2557,10 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
   \item transition:
         \begin{itemize}
           \item Call API endpoint \texttt{POST /api/manual\_move\_to} (see \mref{mAPI}) with
-                \texttt{tilt} = \texttt{target\_tilt\_deg} and \texttt{pan} = \texttt{target\_pan\_deg}.
-          \item If request succeeds, set \texttt{last\_command\_status} to 'ok'; else set to 'failed'.
+                \texttt{tilt} = \texttt{target\_tilt\_deg} and \texttt{pan} =
+                \texttt{target\_pan\_deg}.
+          \item If request succeeds, set \texttt{last\_command\_status} to 'ok'; else set to
+                'failed'.
           \item Set \texttt{last\_command\_time\_ms} to current system time.
         \end{itemize}
   \item output: None
@@ -2561,7 +2573,8 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
         \begin{itemize}
           \item Display step movement controls (direction selection and step move trigger).
           \item Display absolute movement controls (tilt/pan input and move trigger).
-          \item Display feedback for \texttt{last\_command\_status} and \texttt{last\_command\_time\_ms}.
+          \item Display feedback for \texttt{last\_command\_status} and
+                \texttt{last\_command\_time\_ms}.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2582,8 +2595,6 @@ This module does not have any local functions.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
-
-
 
 %23
 \section{MIS of Recording Management Module (\mref{mRecordMng})} \wss{Use labels for
@@ -2621,15 +2632,19 @@ This module does not have any exported access programs.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item recordings: list[\texttt{RecordingInfo}] (cached list of recordings most recently fetched from the backend)
-  \item selected\_recording\_id: str $|$ null (currently selected recording in the UI; null if none selected)
-  \item last\_refresh\_time\_ms: int $|$ null (timestamp of last successful refresh; null if never refreshed)
+  \item recordings: list[\texttt{RecordingInfo}] (cached list of recordings most
+        recently fetched from the backend)
+  \item selected\_recording\_id: str $|$ null (currently selected recording in the UI;
+        null if none selected)
+  \item last\_refresh\_time\_ms: int $|$ null (timestamp of last successful refresh;
+        null if never refreshed)
   \item last\_error: str $|$ null (latest error message to display; null if no error)
 \end{itemize}
 
 \noindent \textbf{State Invariant:}
 \begin{itemize}
-  \item selected\_recording\_id $\neq$ null $\Rightarrow \exists r \in recordings: r.id = selected\_recording\_id$
+  \item selected\_recording\_id $\neq$ null $\Rightarrow \exists r \in recordings: r.id
+          = selected\_recording\_id$
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -2651,11 +2666,13 @@ This module does not have any exported access programs.
 
 \begin{itemize}
   \item The API Gateway Module (\mref{mAPI}) is reachable at the configured host/port.
-  \item The endpoint \texttt{GET /api/recordings} (see \mref{mAPI}) returns a list of \texttt{RecordingInfo}.
-  \item The endpoints \texttt{DELETE /api/recordings/\{recordingId\}} and
-        \texttt{PATCH /api/recordings/\{recordingId\}} behave as specified in \mref{mAPI}, including
+  \item The endpoint \texttt{GET /api/recordings} (see \mref{mAPI}) returns a list of
+        \texttt{RecordingInfo}.
+  \item The endpoints \texttt{DELETE /api/recordings/\{recordingId\}} and \texttt{PATCH
+          /api/recordings/\{recordingId\}} behave as specified in \mref{mAPI}, including
         returning an error for unknown recording IDs.
-  \item Recording IDs are stable for the lifetime of a recording and uniquely identify a recording.
+  \item Recording IDs are stable for the lifetime of a recording and uniquely identify
+        a recording.
 \end{itemize}
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
@@ -2703,8 +2720,9 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Call API endpoint \texttt{PATCH /api/recordings/\{recordingId\}} (see \mref{mAPI})
-                with \texttt{recordingId} = \texttt{selected\_recording\_id} and body containing \texttt{new\_name}.
+          \item Call API endpoint \texttt{PATCH /api/recordings/\{recordingId\}} (see
+                \mref{mAPI}) with \texttt{recordingId} = \texttt{selected\_recording\_id} and
+                body containing \texttt{new\_name}.
           \item If request succeeds:
                 \begin{itemize}
                   \item Set \texttt{last\_error} to null.
@@ -2723,8 +2741,8 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Call API endpoint \texttt{DELETE /api/recordings/\{recordingId\}} (see \mref{mAPI})
-                with \texttt{recordingId} = \texttt{selected\_recording\_id}.
+          \item Call API endpoint \texttt{DELETE /api/recordings/\{recordingId\}} (see
+                \mref{mAPI}) with \texttt{recordingId} = \texttt{selected\_recording\_id}.
           \item If request succeeds:
                 \begin{itemize}
                   \item Set \texttt{selected\_recording\_id} to null.
@@ -2744,9 +2762,12 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Open a download/stream from API endpoint \texttt{GET /api/recordings/\{recordingId\}/download} (see \mref{mAPI}).
-          \item If request succeeds, stream bytes to a user-selected save location (browser download or OS file picker).
-          \item If request fails, set \texttt{last\_error} to an error string suitable for display.
+          \item Open a download/stream from API endpoint \texttt{GET
+                  /api/recordings/\{recordingId\}/download} (see \mref{mAPI}).
+          \item If request succeeds, stream bytes to a user-selected save location (browser
+                download or OS file picker).
+          \item If request fails, set \texttt{last\_error} to an error string suitable for
+                display.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2758,7 +2779,8 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
         \begin{itemize}
           \item Display \texttt{recordings} as a selectable list (name, start time, duration).
           \item Display actions for the selected recording: rename, delete, download.
-          \item Display \texttt{last\_error} (if not null) and \texttt{last\_refresh\_time\_ms} (if not null).
+          \item Display \texttt{last\_error} (if not null) and \texttt{last\_refresh\_time\_ms}
+                (if not null).
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2775,8 +2797,9 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
 
 \noindent fetch\_recordings() $\rightarrow$ list[\texttt{RecordingInfo}] $|$ null:
 \begin{itemize}
-  \item transition: Call \texttt{GET /api/recordings} via \mref{mAPI} and decode the response into
-        a list of \texttt{RecordingInfo}; return null if the request fails.
+  \item transition: Call \texttt{GET /api/recordings} via \mref{mAPI} and decode the
+        response into a list of \texttt{RecordingInfo}; return null if the request
+        fails.
   \item output: list[\texttt{RecordingInfo}] $|$ null
   \item exception: None
 \end{itemize}
@@ -2786,7 +2809,8 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
   \item transition:
         \begin{itemize}
           \item If \texttt{selected\_id} is null, return null.
-          \item If $\exists r \in recordings: r.id = selected\_id$, return \texttt{selected\_id}.
+          \item If $\exists r \in recordings: r.id = selected\_id$, return
+                \texttt{selected\_id}.
           \item Otherwise return null.
         \end{itemize}
   \item output: str $|$ null
@@ -2800,13 +2824,10 @@ by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
   \item exception: None
 \end{itemize}
 
-
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
-
-
 
 %24
 \section{MIS of Configuration Module (\mref{mConfig})}
@@ -2841,9 +2862,12 @@ This module does not have any exported access programs.
 \begin{itemize}
   \item backend\_host: str (hostname or IP address of the API Gateway backend)
   \item backend\_port: int (TCP port of the API Gateway backend)
-  \item refresh\_interval\_ms: int (polling interval used by the Preview module \mref{mPreview})
-  \item move\_step\_deg: f32 (manual control step size in degrees used by \mref{mManual})
-  \item selected\_recording\_id: str $|$ null (recording currently selected in \mref{mRecordMng})
+  \item refresh\_interval\_ms: int (polling interval used by the Preview module
+        \mref{mPreview})
+  \item move\_step\_deg: f32 (manual control step size in degrees used by
+        \mref{mManual})
+  \item selected\_recording\_id: str $|$ null (recording currently selected in
+        \mref{mRecordMng})
 \end{itemize}
 
 \noindent \textbf{State Invariant:}
@@ -2857,38 +2881,42 @@ This module does not have any exported access programs.
 
 \begin{itemize}
   \item Screen/GUI environment (to display and edit settings).
-  \item Local persistent storage (browser local storage or a configuration file) for saving settings across restarts.
+  \item Local persistent storage (browser local storage or a configuration file) for
+        saving settings across restarts.
 \end{itemize}
 
 \subsubsection{Assumptions}
 
 \begin{itemize}
-  \item The UI runtime provides a mechanism to persist small key-value settings locally.
-  \item The backend host/port entered by the user correspond to a reachable API Gateway instance (\mref{mAPI}) when the system is used.
-  \item Numeric settings entered by the user are validated by the UI before being applied.
+  \item The UI runtime provides a mechanism to persist small key-value settings
+        locally.
+  \item The backend host/port entered by the user correspond to a reachable API Gateway
+        instance (\mref{mAPI}) when the system is used.
+  \item Numeric settings entered by the user are validated by the UI before being
+        applied.
 \end{itemize}
 
 \subsubsection{Access Routine Semantics}
 
-This module does not export access programs. Its behaviour is defined through UI events
-and shared state read by other UI modules.
+This module does not export access programs. Its behaviour is defined through
+UI events and shared state read by other UI modules.
 
 \subsubsection{Local Functions}
 
 \noindent load\_settings():
 \begin{itemize}
   \item transition:
-    \begin{itemize}
-      \item Read persisted settings from local storage.
-      \item If a setting is missing, use a reasonable default:
         \begin{itemize}
-          \item backend\_host := ``localhost''
-          \item backend\_port := 5000
-          \item refresh\_interval\_ms := 200
-          \item move\_step\_deg := 10.0
+          \item Read persisted settings from local storage.
+          \item If a setting is missing, use a reasonable default:
+                \begin{itemize}
+                  \item backend\_host := ``localhost''
+                  \item backend\_port := 5000
+                  \item refresh\_interval\_ms := 200
+                  \item move\_step\_deg := 10.0
+                \end{itemize}
+          \item Set state variables to the loaded values.
         \end{itemize}
-      \item Set state variables to the loaded values.
-    \end{itemize}
   \item output: None
   \item exception: None
 \end{itemize}
@@ -2903,15 +2931,15 @@ and shared state read by other UI modules.
 \noindent validate\_settings(host: str, port: int, refresh\_interval\_ms: int, step\_deg: f32) $\rightarrow$ bool:
 \begin{itemize}
   \item transition:
-    \begin{itemize}
-      \item Return true iff:
         \begin{itemize}
-          \item host $\neq$ ``''
-          \item port $\in \mathbb{N}$ and $1 \le port \le 65535$
-          \item refresh\_interval\_ms $\in \mathbb{N}$ and $refresh\_interval\_ms > 0$
-          \item step\_deg $\in \mathbb{R}$ and $step\_deg > 0$
+          \item Return true iff:
+                \begin{itemize}
+                  \item host $\neq$ ``''
+                  \item port $\in \mathbb{N}$ and $1 \le port \le 65535$
+                  \item refresh\_interval\_ms $\in \mathbb{N}$ and $refresh\_interval\_ms > 0$
+                  \item step\_deg $\in \mathbb{R}$ and $step\_deg > 0$
+                \end{itemize}
         \end{itemize}
-    \end{itemize}
   \item output: bool
   \item exception: None
 \end{itemize}
@@ -2919,19 +2947,21 @@ and shared state read by other UI modules.
 \noindent apply\_settings(host: str, port: int, refresh\_interval\_ms: int, step\_deg: f32):
 \begin{itemize}
   \item transition:
-    \begin{itemize}
-      \item If \texttt{validate\_settings(...)} is false, do nothing and display an error message.
-      \item Otherwise:
         \begin{itemize}
-          \item Set \texttt{backend\_host}, \texttt{backend\_port}, \texttt{refresh\_interval\_ms}, \texttt{move\_step\_deg}.
-          \item Call \texttt{save\_settings()}.
-          \item Notify dependent UI modules that configuration has changed:
-            \begin{itemize}
-              \item \mref{mPreview} updates its polling interval to \texttt{refresh\_interval\_ms}.
-              \item \mref{mManual} uses \texttt{move\_step\_deg} for step-based movement.
-            \end{itemize}
+          \item If \texttt{validate\_settings(...)} is false, do nothing and display an error
+                message.
+          \item Otherwise:
+                \begin{itemize}
+                  \item Set \texttt{backend\_host}, \texttt{backend\_port},
+                        \texttt{refresh\_interval\_ms}, \texttt{move\_step\_deg}.
+                  \item Call \texttt{save\_settings()}.
+                  \item Notify dependent UI modules that configuration has changed:
+                        \begin{itemize}
+                          \item \mref{mPreview} updates its polling interval to \texttt{refresh\_interval\_ms}.
+                          \item \mref{mManual} uses \texttt{move\_step\_deg} for step-based movement.
+                        \end{itemize}
+                \end{itemize}
         \end{itemize}
-    \end{itemize}
   \item output: None
   \item exception: None
 \end{itemize}
@@ -2939,15 +2969,13 @@ and shared state read by other UI modules.
 \noindent set\_selected\_recording(recording\_id: str $|$ null):
 \begin{itemize}
   \item transition:
-    \begin{itemize}
-      \item Set \texttt{selected\_recording\_id} to the given value.
-      \item Persist the selection by calling \texttt{save\_settings()}.
-    \end{itemize}
+        \begin{itemize}
+          \item Set \texttt{selected\_recording\_id} to the given value.
+          \item Persist the selection by calling \texttt{save\_settings()}.
+        \end{itemize}
   \item output: None
   \item exception: None
 \end{itemize}
-
-
 
 \newpage
 
