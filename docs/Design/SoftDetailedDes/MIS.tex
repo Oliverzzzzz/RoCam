@@ -211,8 +211,10 @@ CV
 
 \subsection{Uses}
 
-This module uses the Video Stream Abstraction Module (\mref{mStream}) and the
-Recording Database Module (\mref{mRecord}).
+\begin{itemize}
+  \item Video Stream Abstraction Module (\mref{mStream})
+  \item Recording Database Module (\mref{mRecord})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -397,8 +399,10 @@ videoOut
 
 \subsection{Uses}
 
-This module uses the Video Stream Abstraction Module (\mref{mStream}) and the
-CV Process Module (\mref{mCV}).
+\begin{itemize}
+  \item Video Stream Abstraction Module (\mref{mStream})
+  \item CV Process Module (\mref{mCV})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -489,9 +493,11 @@ transcode
 
 \subsection{Uses}
 
-This module uses the Video Stream Abstraction Module (\mref{mStream}), the CV
-Process Module (\mref{mCV}) for the OSDData type, and the Recording Database
-Module (\mref{mRecord}) for the RecordingInfo type.
+\begin{itemize}
+  \item Video Stream Abstraction Module (\mref{mStream})
+  \item CV Process Module (\mref{mCV}) for the OSDData type
+  \item Recording Database Module (\mref{mRecord}) for the RecordingInfo type
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -588,7 +594,9 @@ Video Stream Abstraction
 
 \subsection{Uses}
 
-This module uses the Nvidia Deepstream SDK library.
+\begin{itemize}
+  \item Nvidia Deepstream SDK library
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -598,9 +606,9 @@ This module does not have any exported constants.
 
 \subsubsection{Exported Access Programs}
 
-Nvidia Deepstream SDK is too complex to specify in this MIS. Its full
-documentation is available at
-\href{https://docs.nvidia.com/metropolis/deepstream/7.1/index.html}{https://docs.nvidia.com/metropolis/deepstream/7.1/index.html}.
+Nvidia Deepstream SDK is too complex to specify in this MIS, even if we only
+include the access programs we need. Its full documentation is available at
+\url{https://docs.nvidia.com/metropolis/deepstream/7.1/index.html}.
 
 \subsection{Semantics}
 
@@ -655,8 +663,10 @@ cvProcessManagement
 
 \subsection{Uses}
 
-This module uses the CV Process Module (\mref{mCV}) and the Recording Database
-Module (\mref{mRecord}) for the RecordingInfo type.
+\begin{itemize}
+  \item CV Process Module (\mref{mCV})
+  \item Recording Database Module (\mref{mRecord}) for the RecordingInfo type
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -791,7 +801,9 @@ liveVideoProcessManagement
 
 \subsection{Uses}
 
-This module uses the Live Video Process Module (\mref{mVideo}).
+\begin{itemize}
+  \item Live Video Process Module (\mref{mVideo})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -887,8 +899,10 @@ transcodeProcessManagement
 
 \subsection{Uses}
 
-This module uses the Transcode Process Module (\mref{mTranscode}) and the
-Recording Database Module (\mref{mRecord}) for the RecordingInfo type.
+\begin{itemize}
+  \item Transcode Process Module (\mref{mTranscode})
+  \item Recording Database Module (\mref{mRecord}) for the RecordingInfo type
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -977,8 +991,10 @@ Tracking
 
 \subsection{Uses}
 
-This module uses the CV Process Module (\mref{mCV}) for the BoundingBox type
-and the Gimbal Abstraction Module (\mref{mGimbal}).
+\begin{itemize}
+  \item CV Process Module (\mref{mCV}) for the BoundingBox type
+  \item Gimbal Abstraction Module (\mref{mGimbal})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -1078,7 +1094,9 @@ Gimbal
 
 \subsection{Uses}
 
-This module uses the Serial Abstraction Module (\mref{mSerial}).
+\begin{itemize}
+  \item Serial Abstraction Module (\mref{mSerial})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -1242,7 +1260,9 @@ serial
 
 \subsection{Uses}
 
-This module uses the pyserial library module.
+\begin{itemize}
+  \item pyserial library module
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -1346,7 +1366,9 @@ jetson-stats
 
 \subsection{Uses}
 
-This module uses the jetson-stats library module.
+\begin{itemize}
+  \item jetson-stats library module
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -1459,7 +1481,9 @@ recording
 
 \subsection{Uses}
 
-This module uses the Video Stream Abstraction Module (\mref{mStream}).
+\begin{itemize}
+  \item Video Stream Abstraction Module (\mref{mStream})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -1693,11 +1717,15 @@ stateManagement
 
 \subsection{Uses}
 
-This module uses the CV Process Management Module (\mref{mCVManagement}), Live
-Video Process Management Module (\mref{mVideoManagement}), Transcode Process
-Management Module (\mref{mTranscodeManagement}), Recording Database Module
-(\mref{mRecord}), Tracking Module (\mref{mTrack}), Gimbal Abstraction Module
-(\mref{mGimbal}), and System Status Module (\mref{mStatus}).
+\begin{itemize}
+  \item CV Process Management Module (\mref{mCVManagement})
+  \item Live Video Process Management Module (\mref{mVideoManagement})
+  \item Transcode Process Management Module (\mref{mTranscodeManagement})
+  \item Recording Database Module (\mref{mRecord})
+  \item Tracking Module (\mref{mTrack})
+  \item Gimbal Abstraction Module (\mref{mGimbal})
+  \item System Status Module (\mref{mStatus})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -2045,7 +2073,9 @@ apiGateway
 
 \subsection{Uses}
 
-This module uses the State Management Module (\mref{mState}).
+\begin{itemize}
+  \item State Management Module (\mref{mState})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -2244,7 +2274,9 @@ preview
 
 \subsection{Uses}
 
-This module uses the API Gateway Module (\mref{mAPI}).
+\begin{itemize}
+  \item API Gateway Module (\mref{mAPI})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -2317,7 +2349,9 @@ manualControl
 
 \subsection{Uses}
 
-This module uses the State Management Module (\mref{mState}).
+\begin{itemize}
+  \item State Management Module (\mref{mState})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -2383,7 +2417,9 @@ recordingManagement
 
 \subsection{Uses}
 
-This module uses the Recording Database Module (\mref{mRecord}).
+\begin{itemize}
+  \item Recording Database Module (\mref{mRecord})
+\end{itemize}
 
 \subsection{Syntax}
 
@@ -2457,7 +2493,9 @@ configuration
 
 \subsection{Uses}
 
-This module uses the Recording Management Module (\mref{mRecordMng}).
+\begin{itemize}
+  \item Recording Management Module (\mref{mRecordMng})
+\end{itemize}
 
 \subsection{Syntax}
 
