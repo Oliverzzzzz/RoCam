@@ -156,6 +156,116 @@ this specification:
   \end{tabular}
 \end{center}
 
+\section{Data Structures}
+
+This section defines all data structures used across the modules in the system.
+These structures are shared between modules and are defined here for reference.
+
+\subsection{BoundingBox}
+
+Coordinates are normalized (0.0 to 1.0).
+
+\begin{center}
+  \begin{tabular}{p{4cm} p{3cm} p{8cm}}
+    \toprule
+    \textbf{Field Name} & \textbf{Type} & \textbf{Description}                          \\
+    \midrule
+    confidence          & float         & Confidence score of the detection, 0.0 to 1.0 \\
+    left                & float         & Left coordinate (normalized)                  \\
+    top                 & float         & Top coordinate (normalized)                   \\
+    width               & float         & Width (normalized)                            \\
+    height              & float         & Height (normalized)                           \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\subsection{CVData}
+
+\begin{center}
+  \begin{tabular}{p{4cm} p{3cm} p{8cm}}
+    \toprule
+    \textbf{Field Name} & \textbf{Type}        & \textbf{Description}                                                                                                                                                                        \\
+    \midrule
+    frame\_number       & int                  & Frame number of the current frame, every frame is numbered sequentially                                                                                                                     \\
+    average\_fps        & float                & Average frames per second over the last 60 frames                                                                                                                                           \\
+    preview             & bytes                & JPEG encoded preview of the current frame for the frontend. The frame is rotated 90 degrees counter-clockwise, the frontend needs to rotate it 90 degrees clockwise to display it correctly \\
+    bbox                & null $|$ BoundingBox & Bounding box of the rocket in the current frame, null if no rocket is found                                                                                                                 \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\subsection{OSDData}
+
+\begin{center}
+  \begin{tabular}{p{4cm} p{3cm} p{8cm}}
+    \toprule
+    \textbf{Field Name}       & \textbf{Type}                     & \textbf{Description}                                      \\
+    \midrule
+    frame\_number             & int                               & The frame number this OSD data is for                     \\
+    translate\_x              & int                               & Transformation data used to digitally stabilize the frame \\
+    translate\_y              & int                               & Transformation data used to digitally stabilize the frame \\
+    scale                     & float                             & Transformation data used to digitally stabilize the frame \\
+    average\_fps              & float                             & Text to be rendered on the frame                          \\
+    gimbal\_tilt\_deg         & float                             & Text to be rendered on the frame                          \\
+    gimbal\_pan\_deg          & float                             & Text to be rendered on the frame                          \\
+    gimbal\_focal\_length\_mm & float                             & Text to be rendered on the frame                          \\
+    device\_ip\_addresses     & str[]                             & Text to be rendered on the frame                          \\
+    unix\_timestamp\_ms       & int                               & Text to be rendered on the frame                          \\
+    tracking\_state           & 'idle' $|$ 'armed' $|$ 'tracking' & Text to be rendered on the frame                          \\
+    longitude                 & float                             & Longitude coordinate                                      \\
+    latitude                  & float                             & Latitude coordinate                                       \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\subsection{StopRecording}
+
+Empty structure with no fields.
+
+\subsection{RecordingInfo}
+
+\begin{center}
+  \begin{tabular}{p{4cm} p{3cm} p{8cm}}
+    \toprule
+    \textbf{Field Name} & \textbf{Type} & \textbf{Description}                 \\
+    \midrule
+    id                  & str           & Recording identifier                 \\
+    name                & str           & Recording name                       \\
+    start\_time         & str $|$ null  & Start time of the recording          \\
+    duration\_seconds   & int $|$ null  & Duration of the recording in seconds \\
+    video\_path         & str           & Path to the video file               \\
+    log\_path           & str           & Path to the log file                 \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\subsection{SystemStatus}
+
+\begin{center}
+  \begin{tabular}{p{4cm} p{3cm} p{8cm}}
+    \toprule
+    \textbf{Field Name}         & \textbf{Type}                     & \textbf{Description}                                            \\
+    \midrule
+    average\_fps                & float                             & Average frames per second                                       \\
+    gimbal\_tilt\_deg           & float                             & Gimbal tilt angle in degrees                                    \\
+    gimbal\_pan\_deg            & float                             & Gimbal pan angle in degrees                                     \\
+    gimbal\_focal\_length\_mm   & float                             & Gimbal focal length in millimeters                              \\
+    tracking\_state             & 'idle' $|$ 'armed' $|$ 'tracking' & Current tracking state                                          \\
+    preview                     & bytes                             & Preview image data                                              \\
+    osd\_data                   & OSDData $|$ null                  & On-screen display data, null if not available                   \\
+    unix\_timestamp\_ms         & int                               & Unix timestamp in milliseconds                                  \\
+    longitude                   & float $|$ null                    & Longitude coordinate, null if not available                     \\
+    latitude                    & float $|$ null                    & Latitude coordinate, null if not available                      \\
+    gpu\_utilization            & float                             & GPU utilization percentage (0.0 to 100.0)                       \\
+    cpu\_utilization            & float                             & CPU utilization percentage (0.0 to 100.0)                       \\
+    core\_temperature\_celsius  & float                             & Core temperature in Celsius                                     \\
+    memory\_usage\_bytes        & \{used: int, total: int\}         & Memory usage in bytes                                           \\
+    disk\_usage\_bytes          & \{used: int, total: int\}         & Disk usage in bytes                                             \\
+    in\_progress\_recording\_id & str $|$ null                      & ID of the recording currently in progress, null if no recording \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
 \section{Module Decomposition}
 
 The following list is taken directly from the Module Guide document for this
@@ -205,7 +315,7 @@ implemented since they are not leaf modules.
 
 \subsection{Module}
 
-CV
+cv\_process
 
 \wss{Short name for the module}
 
@@ -213,7 +323,6 @@ CV
 
 \begin{itemize}
   \item Video Stream Abstraction Module (\mref{mStream})
-  \item Recording Database Module (\mref{mRecord})
 \end{itemize}
 
 \subsection{Syntax}
@@ -231,59 +340,14 @@ CV
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name} & \textbf{In} & \textbf{Out}                & \textbf{Exceptions}                                             \\
+    \textbf{Name} & \textbf{In} & \textbf{Out}      & \textbf{Exceptions}                                                                       \\
     \hline
-    main          & -           & main function never returns & on exception, the process will log the error to stderr and exit \\
+    main          & -           & Runs indefinitely & No expected exceptions. If unexpected exception occurs, log the error to stderr and exit. \\
     \hline
   \end{tabular}
 \end{center}
 
-\subsubsection{Exported Data Structures}
-
-Data structures that are passed through IPC between the CV Process Module and
-the CV Process Management Module:
-
-\begin{itemize}
-  \item \textbf{BoundingBox}: coordinates are normalized (0.0 to 1.0)
-        \begin{itemize}
-          \item confidence: float (confidence score of the detection, 0.0 to 1.0)
-          \item left: float
-          \item top: float
-          \item width: float
-          \item height: float
-        \end{itemize}
-  \item \textbf{CVData}:
-        \begin{itemize}
-          \item frame\_number: int (frame number of the current frame, every frame is numbered
-                sequentially)
-          \item average\_fps: float (average frames per second over the last 60 frames)
-          \item preview: bytes (JPEG encoded preview of the current frame for the frontend. The
-                frame is rotated 90 degrees counter-clockwise, the frontend needs to rotate it
-                90 degrees clockwise to display it correctly)
-          \item bbox: null $|$ BoundingBox (bounding box of the rocket in the current frame,
-                null if no rocket is found)
-        \end{itemize}
-  \item \textbf{OSDData}:
-        \begin{itemize}
-          \item frame\_number: int (the frame number this OSD data is for)
-          \item translate\_x: int (transformation data used to digitally stabilize the frame)
-          \item translate\_y: int (transformation data used to digitally stabilize the frame)
-          \item scale: float (transformation data used to digitally stabilize the frame)
-          \item average\_fps: float (text to be rendered on the frame)
-          \item gimbal\_tilt\_deg: float (text to be rendered on the frame)
-          \item gimbal\_pan\_deg: float (text to be rendered on the frame)
-          \item gimbal\_focal\_length\_mm: float (text to be rendered on the frame)
-          \item device\_ip\_addresses: sequence of strings (text to be rendered on the frame)
-          \item unix\_timestamp\_ms: int (text to be rendered on the frame)
-          \item tracking\_state: 'idle' $|$ 'armed' $|$ 'tracking' (text to be rendered on the
-                frame)
-          \item longitude: float
-          \item latitude: float
-        \end{itemize}
-  \item \textbf{StopRecording}: empty structure
-\end{itemize}
-
-The CV Process Module also passes uncompressed frames to the Live Video Process
+The CV Process Module passes uncompressed frames to the Live Video Process
 Module via shared memory. This is done through the Video Stream Abstraction
 Module. The frame is transformed correctly and has OSD (on-screen display)
 already applied.
@@ -401,7 +465,6 @@ videoOut
 
 \begin{itemize}
   \item Video Stream Abstraction Module (\mref{mStream})
-  \item CV Process Module (\mref{mCV})
 \end{itemize}
 
 \subsection{Syntax}
@@ -495,8 +558,6 @@ transcode
 
 \begin{itemize}
   \item Video Stream Abstraction Module (\mref{mStream})
-  \item CV Process Module (\mref{mCV}) for the OSDData type
-  \item Recording Database Module (\mref{mRecord}) for the RecordingInfo type
 \end{itemize}
 
 \subsection{Syntax}
@@ -665,7 +726,6 @@ cvProcessManagement
 
 \begin{itemize}
   \item CV Process Module (\mref{mCV})
-  \item Recording Database Module (\mref{mRecord}) for the RecordingInfo type
 \end{itemize}
 
 \subsection{Syntax}
@@ -901,7 +961,6 @@ transcodeProcessManagement
 
 \begin{itemize}
   \item Transcode Process Module (\mref{mTranscode})
-  \item Recording Database Module (\mref{mRecord}) for the RecordingInfo type
 \end{itemize}
 
 \subsection{Syntax}
@@ -992,7 +1051,6 @@ Tracking
 \subsection{Uses}
 
 \begin{itemize}
-  \item CV Process Module (\mref{mCV}) for the BoundingBox type
   \item Gimbal Abstraction Module (\mref{mGimbal})
 \end{itemize}
 
@@ -1481,29 +1539,13 @@ recording
 
 \subsection{Uses}
 
-\begin{itemize}
-  \item Video Stream Abstraction Module (\mref{mStream})
-\end{itemize}
+This module does not use any other modules.
 
 \subsection{Syntax}
 
 \subsubsection{Exported Constants}
 
 This module does not have any exported constants.
-
-\subsubsection{Exported Data Structures}
-
-\begin{itemize}
-  \item \textbf{RecordingInfo}:
-        \begin{itemize}
-          \item id: str
-          \item name: str
-          \item start\_time: str $|$ null
-          \item duration\_seconds: int $|$ null
-          \item video\_path: str
-          \item log\_path: str
-        \end{itemize}
-\end{itemize}
 
 \subsubsection{Exported Access Programs}
 
@@ -1733,31 +1775,6 @@ stateManagement
 
 This module does not have any exported constants.
 
-\subsubsection{Exported Data Structures}
-
-\begin{itemize}
-  \item \textbf{SystemStatus}:
-        \begin{itemize}
-          \item average\_fps: float
-          \item gimbal\_tilt\_deg: float
-          \item gimbal\_pan\_deg: float
-          \item gimbal\_focal\_length\_mm: float
-          \item gimbal\_zoom\_digital: float
-          \item tracking\_state: 'idle' $|$ 'armed' $|$ 'tracking'
-          \item preview: bytes
-          \item osd\_data: OSDData $|$ null
-          \item unix\_timestamp\_ms: int
-          \item longitude: float $|$ null
-          \item latitude: float $|$ null
-          \item gpu\_utilization: float (0.0 to 100.0)
-          \item cpu\_utilization: float (0.0 to 100.0)
-          \item core\_temperature\_celsius: float
-          \item memory\_usage\_bytes: \{used: int, total: int\}
-          \item disk\_usage\_bytes: \{used: int, total: int\}
-          \item in\_progress\_recording\_id: str $|$ null
-        \end{itemize}
-\end{itemize}
-
 \subsubsection{Exported Access Programs}
 
 \begin{center}
@@ -1873,7 +1890,6 @@ This module does not have any environment variables.
           \item gimbal\_tilt\_deg: from \texttt{gimbal.measure\_deg()}
           \item gimbal\_pan\_deg: from \texttt{gimbal.measure\_deg()}
           \item gimbal\_focal\_length\_mm: from \texttt{gimbal.get\_focal\_length()}
-          \item gimbal\_zoom\_digital: (not currently used, reserved for future use)
           \item tracking\_state:
                 \begin{itemize}
                   \item if \texttt{is\_armed} is false, return 'idle'
