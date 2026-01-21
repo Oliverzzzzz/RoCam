@@ -2571,7 +2571,7 @@ This module does not have any local functions.
 
 
 
-%23 
+%23
 \section{MIS of Recording Management Module (\mref{mRecordMng})} \wss{Use labels for
   cross-referencing}
 
@@ -2588,6 +2588,7 @@ recordingManagement
 \subsection{Uses}
 
 \begin{itemize}
+  \item API Gateway Module (\mref{mAPI})
   \item Recording Database Module (\mref{mRecord})
 \end{itemize}
 
@@ -2599,14 +2600,22 @@ This module does not have any exported constants.
 
 \subsubsection{Exported Access Programs}
 
-This module does not have any exported access programs
+This module does not have any exported access programs.
 
 \subsection{Semantics}
 
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item Recording list.
+  \item recordings: list[\texttt{RecordingInfo}] (cached list of recordings most recently fetched from the backend)
+  \item selected\_recording\_id: str $|$ null (currently selected recording in the UI; null if none selected)
+  \item last\_refresh\_time\_ms: int $|$ null (timestamp of last successful refresh; null if never refreshed)
+  \item last\_error: str $|$ null (latest error message to display; null if no error)
+\end{itemize}
+
+\noindent \textbf{State Invariant:}
+\begin{itemize}
+  \item selected\_recording\_id $\neq$ null $\Rightarrow \exists r \in recordings: r.id = selected\_recording\_id$
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -2615,7 +2624,9 @@ This module does not have any exported access programs
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item (for managing recordings)
+  \item Screen (for displaying recording list and actions).
+  \item User input device (mouse/keyboard/touch).
+  \item Network connection to the API Gateway Module (\mref{mAPI}).
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -2624,14 +2635,120 @@ This module does not have any exported access programs
 
 \subsubsection{Assumptions}
 
-(TODO)
+\begin{itemize}
+  \item The API Gateway Module (\mref{mAPI}) is reachable at the configured host/port.
+  \item The endpoint \texttt{GET /api/recordings} (see \mref{mAPI}) returns a list of \texttt{RecordingInfo}.
+  \item The endpoints \texttt{DELETE /api/recordings/\{recordingId\}} and
+        \texttt{PATCH /api/recordings/\{recordingId\}} behave as specified in \mref{mAPI}, including
+        returning an error for unknown recording IDs.
+  \item Recording IDs are stable for the lifetime of a recording and uniquely identify a recording.
+\end{itemize}
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
-(TODO - UI module, may not have exported access programs)
+This module does not provide exported access programs. Its behaviour is defined
+by responses to user interactions, which invoke API endpoints on \mref{mAPI}.
+
+\noindent on\_refresh():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Call API endpoint \texttt{GET /api/recordings} (see \mref{mAPI}).
+          \item If request succeeds:
+                \begin{itemize}
+                  \item Set \texttt{recordings} to the returned list.
+                  \item Set \texttt{last\_refresh\_time\_ms} to current system time.
+                  \item Set \texttt{last\_error} to null.
+                  \item (if \texttt{selected\_recording\_id} is not present in the new list): set \texttt{selected\_recording\_id} to null.
+                \end{itemize}
+          \item If request fails:
+                \begin{itemize}
+                  \item Keep \texttt{recordings} unchanged.
+                  \item Set \texttt{last\_error} to an error string suitable for display.
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent on\_select(recording\_id: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item (if $\exists r \in recordings: r.id = recording\_id$): set \texttt{selected\_recording\_id} to \texttt{recording\_id}.
+          \item (otherwise): set \texttt{selected\_recording\_id} to null and set \texttt{last\_error} to an appropriate message.
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent on\_rename(selected\_recording\_id: str, new\_name: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Call API endpoint \texttt{PATCH /api/recordings/\{recordingId\}} (see \mref{mAPI})
+                with \texttt{recordingId} = \texttt{selected\_recording\_id} and body containing \texttt{new\_name}.
+          \item If request succeeds:
+                \begin{itemize}
+                  \item Set \texttt{last\_error} to null.
+                  \item Call \texttt{on\_refresh()} to update \texttt{recordings}.
+                \end{itemize}
+          \item If request fails:
+                \begin{itemize}
+                  \item Set \texttt{last\_error} to an error string suitable for display.
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent on\_delete(selected\_recording\_id: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Call API endpoint \texttt{DELETE /api/recordings/\{recordingId\}} (see \mref{mAPI})
+                with \texttt{recordingId} = \texttt{selected\_recording\_id}.
+          \item If request succeeds:
+                \begin{itemize}
+                  \item Set \texttt{selected\_recording\_id} to null.
+                  \item Set \texttt{last\_error} to null.
+                  \item Call \texttt{on\_refresh()} to update \texttt{recordings}.
+                \end{itemize}
+          \item If request fails:
+                \begin{itemize}
+                  \item Set \texttt{last\_error} to an error string suitable for display.
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent on\_download(selected\_recording\_id: str):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Open a download/stream from API endpoint \texttt{GET /api/recordings/\{recordingId\}/download} (see \mref{mAPI}).
+          \item If request succeeds, stream bytes to a user-selected save location (browser download or OS file picker).
+          \item If request fails, set \texttt{last\_error} to an error string suitable for display.
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
+
+\noindent render():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Display \texttt{recordings} as a selectable list (name, start time, duration).
+          \item Display actions for the selected recording: rename, delete, download.
+          \item Display \texttt{last\_error} (if not null) and \texttt{last\_refresh\_time\_ms} (if not null).
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
 
 \wss{A module without environment variables or state variables is unlikely to
   have a state transition.  In this case a state transition can only occur if
@@ -2642,12 +2759,42 @@ This module does not have any exported access programs
 
 \subsubsection{Local Functions}
 
-(TODO)
+\noindent fetch\_recordings() $\rightarrow$ list[\texttt{RecordingInfo}] $|$ null:
+\begin{itemize}
+  \item transition: Call \texttt{GET /api/recordings} via \mref{mAPI} and decode the response into
+        a list of \texttt{RecordingInfo}; return null if the request fails.
+  \item output: list[\texttt{RecordingInfo}] $|$ null
+  \item exception: None
+\end{itemize}
+
+\noindent update\_selection(recordings: list[\texttt{RecordingInfo}], selected\_id: str $|$ null) $\rightarrow$ str $|$ null:
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item If \texttt{selected\_id} is null, return null.
+          \item If $\exists r \in recordings: r.id = selected\_id$, return \texttt{selected\_id}.
+          \item Otherwise return null.
+        \end{itemize}
+  \item output: str $|$ null
+  \item exception: None
+\end{itemize}
+
+\noindent set\_error(msg: str):
+\begin{itemize}
+  \item transition: Set state variable \texttt{last\_error} to \texttt{msg}.
+  \item output: None
+  \item exception: None
+\end{itemize}
+
 
 \wss{As appropriate} \wss{These functions are for the purpose of specification.
   They are not necessarily something that is going to be implemented
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
+
+
+
+%24
 \section{MIS of Configuration Module (\mref{mConfig})} \wss{Use labels for
   cross-referencing}
 
