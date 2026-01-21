@@ -3025,7 +3025,11 @@ the graduate attribute of Problem Analysis and Design.
 
 \begin{enumerate}
   \item What went well while writing this deliverable? \\[2mm]
-        This question is answered in the response to the next question.
+        What went well was that the requirements gave us a clear checklist for the Module Guide and the MIS. We could map each feature (arming/disarming, manual control, tracking, recording, downloading) to a small set of responsible modules, and then confirm the mapping again in the traceability tables. This made the document feel structured instead of random, because every section was written to support a requirement. \\[2mm]
+        Another thing that went well was using the “design for change” idea. By writing down anticipated changes (vision model updates and UI updates), it became easier to decide what each module should hide. For example, the CV Process Module hides model details and video input handling, while the UI modules hide page layout and user interaction. This helped us keep the interfaces stable and avoid spreading the same decision across multiple modules. \\[2mm]
+        The prototypes also helped a lot. Because performance requirements are strict (real-time video, 1080p 60fps, continuous output), we could not rely only on a “paper design.” Running small experiments with the Nvidia pipeline and the Jetson hardware gave us confidence that the chosen module boundaries are realistic. These experiments also made it easier to write the “Services” of each module in simple terms, because we understood what each module can reliably provide and what information should stay hidden behind the interface. \\[2mm]
+        Finally, peer review feedback was useful for improving clarity. It pushed us to write more explicit design decisions (for example, why we isolate worker processes and why the API Gateway is the single control surface). Overall, the deliverable went well because the requirements, traceability, and prototypes worked together: the requirements told us what to build, traceability confirmed coverage, and prototypes validated feasibility.
+
   \item What pain points did you experience during this deliverable, and how did you
         resolve them? \\[2mm]
         Video Stream Abstraction Module (made by Nvidia) was challenging because it
