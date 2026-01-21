@@ -1,7 +1,7 @@
 name: react-ci
 
 on:
-    pull_request:
+  pull_request:
     branches: main
     paths:
       - "src/react-app/**"
