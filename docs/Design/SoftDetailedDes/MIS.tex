@@ -3023,65 +3023,39 @@ the graduate attribute of Problem Analysis and Design.
 
 \begin{enumerate}
   \item What went well while writing this deliverable? \\[2mm]
-        What went well was that the requirements gave us a clear checklist for the Module Guide and the MIS. We could map each feature (arming/disarming, manual control, tracking, recording, downloading) to a small set of responsible modules, and then confirm the mapping again in the traceability tables. This made the document feel structured instead of random, because every section was written to support a requirement. \\[2mm]
-        Another thing that went well was using the “design for change” idea. By writing down anticipated changes (vision model updates and UI updates), it became easier to decide what each module should hide. For example, the CV Process Module hides model details and video input handling, while the UI modules hide page layout and user interaction. This helped us keep the interfaces stable and avoid spreading the same decision across multiple modules. \\[2mm]
-        The prototypes also helped a lot. Because performance requirements are strict (real-time video, 1080p 60fps, continuous output), we could not rely only on a “paper design.” Running small experiments with the Nvidia pipeline and the Jetson hardware gave us confidence that the chosen module boundaries are realistic. These experiments also made it easier to write the “Services” of each module in simple terms, because we understood what each module can reliably provide and what information should stay hidden behind the interface. \\[2mm]
-        Finally, peer review feedback was useful for improving clarity. It pushed us to write more explicit design decisions (for example, why we isolate worker processes and why the API Gateway is the single control surface). Overall, the deliverable went well because the requirements, traceability, and prototypes worked together: the requirements told us what to build, traceability confirmed coverage, and prototypes validated feasibility.
+        What went well was that the requirements gave us a clear checklist for the Module Guide and the MIS. We could map each feature (e.g., arming/disarming, manual control, tracking, recording, downloading) to a small set of responsible modules, and then confirm the mapping again in the traceability tables. This made the document feel structured instead of random, because every section was written to support a requirement. \\[2mm]
+        Another thing that went well was using the ``design for change'' idea. By writing down anticipated changes (e.g., vision model updates and UI updates), it became easier to decide what each module should hide. For example, the CV Process Module hides model details and video input handling, while the UI modules hide page layout and user interaction. This helped us keep the interfaces stable and avoid spreading the same decision across multiple modules. \\[2mm]
+        The prototypes also helped a lot. Because performance requirements are strict (e.g., real-time video, 1080p at 60~fps, continuous output), we could not rely only on a ``paper design.'' Running small experiments with the NVIDIA pipeline and the Jetson hardware gave us confidence that the chosen module boundaries are realistic. These experiments also made it easier to write the ``Services'' of each module in simple terms, because we understood what each module can reliably provide and what information should stay hidden behind the interface. \\[2mm]
+        Finally, peer review feedback was useful for improving clarity. It pushed us to write more explicit design decisions (e.g., why we isolate worker processes and why the API Gateway is the single control surface). Overall, the deliverable went well because the requirements, traceability, and prototypes worked together: the requirements told us what to build, traceability confirmed coverage, and prototypes validated feasibility.
 
   \item What pain points did you experience during this deliverable, and how did you
         resolve them? \\[2mm]
-        Video Stream Abstraction Module (made by Nvidia) was challenging because it
-        is extremely complex. Making it more complicated, we want to take advantage
-        of the hardware as much as possible to achieve our performance goals. A lot
-        of prototype experiments had to be run to make sure the module
-        decomposition in the MIS is actually feasable and is performant enough. On
-        the bright side, all the prototype code helped us understand the access
-        functions and semantics of each module better, that is what went well for
-        this deliverable.
+        The Video Stream Abstraction Module (provided by NVIDIA) was challenging because it is extremely complex. To make it more complicated, we also wanted to take advantage of the hardware as much as possible to achieve our performance goals (e.g., low-latency display and stable 1080p throughput). A lot of prototype experiments had to be run to make sure the module decomposition in the MIS is actually feasible and performant enough. On the bright side, the prototype code helped us understand the access routines and semantics of each module better (for example, which data needs to cross process boundaries and which details can be hidden behind the abstraction).
+
   \item Which of your design decisions stemmed from speaking to your client(s) or a
         proxy (e.g. your peers, stakeholders, potential users)? For those that were
         not, why, and where did they come from? \\[2mm]
-        A lot of the design decisions were made from the constraints set by the
-        Video Stream Abstraction Module. One of the design decision is to spawn
-        seperate threads for video processing and talk to them over IPC channels.
-        This is made because the video processing logic (made by Nvidia) tend to
-        crash and we need to isolate the fault to keep the citical parts of the
-        system stable. There are no design decisions stemmed from speaking to our
-        clients.
+        A lot of the design decisions came from constraints imposed by the Video Stream Abstraction Module. One key design decision was to spawn separate threads/processes for video processing and communicate over IPC channels. We made this choice because the video processing logic (from NVIDIA) can crash, and we need fault isolation to keep critical parts of the system stable (e.g., gimbal control and the API control surface). Most decisions did not come directly from speaking to clients; instead, they came from engineering constraints (performance and reliability), peer feedback (review comments), and lessons learned from prototypes (e.g., which components needed isolation to avoid cascading failures).
+
   \item While creating the design doc, what parts of your other documents (e.g.
-        requirements, hazard analysis, etc), it any, needed to be changed, and why? \\[2mm]
-        No other documents need to be changed, MIS implements all the requirements
-        perfectly.
+        requirements, hazard analysis, etc), if any, needed to be changed, and why? \\[2mm]
+        No other documents needed to be changed. The MIS remains consistent with the existing requirements and traceability tables (for example, each major feature has a clear module responsible for it, and the access routines map back to the required system behaviours).
+
   \item What are the limitations of your solution? Put another way, given unlimited
         resources, what could you do to make the project better? (LO\_ProbSolutions) \\[2mm]
-        In the current implementation, when the user tries to download a recording,
-        no new file is created on the backend, the requested recording is rendered
-        on the fly and sent to the browser. This simplifies implementation because
-        the entire render video \& download logic can be done in one HTTP request
-        and there is no presistant states or temporary files to manage.\\[2mm]
-        The problem is, because the video is generated on the fly, we don't know the
-        size of the video file ahead of the time, which means the browser won't be
-        able to show the download progress. This is bad for user exprience as the
-        user will have no idea how long will it take.\\[2mm]
-        If we have unlimited resources, we can implement a custom download logic in
-        the frontend that shows approximate progress based on the number of frames
-        rendered. We can even pre-render all the recordings when the backend has
-        idle processing power.
+        In the current implementation, when the user tries to download a recording, no new file is created on the backend; instead, the requested recording is rendered on the fly and streamed to the browser. This simplifies implementation because the entire render-and-download logic can be handled in one HTTP request and there is no persistent state or temporary files to manage.\\[2mm]
+        The problem is that because the video is generated on the fly, we do not know the file size ahead of time. This means the browser cannot show accurate download progress, which hurts user experience (for example, the user cannot estimate whether the download will take seconds or minutes).\\[2mm]
+        With unlimited resources, we could implement a custom download workflow in the frontend that shows approximate progress based on the number of frames rendered (e.g., ``frames rendered / total frames''). We could also pre-render recordings when the backend has idle processing power, so downloads become simple file transfers with known sizes and better progress reporting.
+
   \item Give a brief overview of other design solutions you considered. What are the
         benefits and tradeoffs of those other designs compared with the chosen design?
         From all the potential options, why did you select the documented design?
         (LO\_Explores)
         \begin{itemize}
-          \item Our initial design combined all video processing logic with all the critical
-                logic (e.g. gimbal control) into one process. This created instability, as
-                discussed in the response to question 3. We had to move them into separate
-                processes. We even seperated the computer vision logic from the display logic
-                into seperate processes, this is because we want to keep outputing video even
-                if the computer vision logic crashes.
-          \item We are using a simple custom database to store all the recordings. It leverages
-                the file system structure to index the data. A full-blown database was
-                considered but discarded due to the heavy resource utilization.
+          \item Our initial design combined all video processing logic with all critical logic (e.g., gimbal control) into one process. This created instability, as discussed in the response to question 3. We had to move them into separate processes. We even separated the computer vision logic from the display logic into separate processes; for example, we wanted to keep outputting video even if the computer vision logic crashes.
+          \item We are using a simple custom database to store all the recordings. It leverages the file system structure to index the data (e.g., one folder per recording with metadata and logs). A full-blown database was considered but discarded due to heavy resource utilization and operational overhead on the target hardware.
         \end{itemize}
 \end{enumerate}
+
 
 \end{document}
