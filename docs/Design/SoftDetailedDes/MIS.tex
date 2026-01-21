@@ -1331,7 +1331,6 @@ serial
 \end{itemize}
 
 
-
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
 
@@ -2313,52 +2312,94 @@ This module does not have any exported constants.
 
 This module does not have any exported access programs.
 
+% 21
 \subsection{Semantics}
 
 \subsubsection{State Variables}
 
-This module does not have any state variables.
+\begin{itemize}
+  \item last\_preview\_jpeg: bytes $|$ null (most recent preview image returned by the backend;
+        null if no preview has been received yet)
+  \item last\_status: \texttt{SystemStatus} $|$ null (most recent decoded status payload; null if none)
+  \item refresh\_interval\_ms: int (UI polling interval for requesting status/preview)
+\end{itemize}
 
-\wss{Not all modules will have state variables.  State variables give the module
-  a memory.}
+\noindent \textbf{State Invariant:}
+\begin{itemize}
+  \item last\_status = null $\Leftrightarrow$ last\_preview\_jpeg = null
+\end{itemize}
 
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item Screen (for showing the preview)
+  \item Screen (for showing the preview).
+  \item Network connection to the API Gateway Module (\mref{mAPI}).
 \end{itemize}
 
-\wss{This section is not necessary for all modules.  Its purpose is to capture
-  when the module has external interaction with the environment, such as for a
-  device driver, screen interface, keyboard, file, etc.}
-
+% 21.1
 \subsubsection{Assumptions}
 
-(TODO1)
-
-\wss{Try to minimize assumptions and anticipate programmer errors via
-  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+\begin{itemize}
+  \item The API Gateway Module (\mref{mAPI}) is reachable at the configured host/port.
+  \item The API endpoint \texttt{POST /api/status} (see \mref{mAPI}) returns a \texttt{SystemStatus} object whose
+        \texttt{preview} field is a JPEG-encoded image (bytes) compatible with the UI runtime.
+  \item The UI runtime can display a JPEG-encoded byte sequence on the screen and can execute periodic refresh events.
+\end{itemize}
 
 \subsubsection{Access Routine Semantics}
 
-(TODO - UI module, may not have exported access programs)
+\noindent init(refresh\_interval\_ms: int):
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Set \texttt{last\_preview\_jpeg} to null and \texttt{last\_status} to null.
+          \item Set \texttt{refresh\_interval\_ms} to the given value.
+          \item Begin periodic execution of \texttt{refresh()} every \texttt{refresh\_interval\_ms}.
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
 
-\wss{A module without environment variables or state variables is unlikely to
-  have a state transition.  In this case a state transition can only occur if
-  the module is changing the state of another module.}
+\noindent refresh():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item Call the API Gateway endpoint \texttt{POST /api/status} (see \mref{mAPI}).
+          \item If the request succeeds:
+                \begin{itemize}
+                  \item Set \texttt{last\_status} to the returned \texttt{SystemStatus}.
+                  \item Set \texttt{last\_preview\_jpeg} to \texttt{last\_status.preview}.
+                \end{itemize}
+          \item If the request fails (timeout/connection error):
+                \begin{itemize}
+                  \item Keep \texttt{last\_status} and \texttt{last\_preview\_jpeg} unchanged.
+                  \item Indicate in the UI that the preview may be stale.
+                \end{itemize}
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
 
-\wss{Modules rarely have both a transition and an output.  In most cases you
-  will have one or the other.}
+\noindent render():
+\begin{itemize}
+  \item transition:
+        \begin{itemize}
+          \item If \texttt{last\_preview\_jpeg} is not null, display the image on screen.
+          \item If \texttt{last\_preview\_jpeg} is null, display a placeholder (e.g., ``Waiting for preview'').
+          \item If \texttt{last\_status} is not null, display key telemetry fields (e.g., FPS, tracking state,
+                gimbal angles) alongside the preview.
+        \end{itemize}
+  \item output: None
+  \item exception: None
+\end{itemize}
 
 \subsubsection{Local Functions}
 
-(TODO)
+This module does not have any local functions.
 
-\wss{As appropriate} \wss{These functions are for the purpose of specification.
-  They are not necessarily something that is going to be implemented
-  explicitly.  Even if they are implemented, they are not exported; they only
-  have local scope.}
 
+
+%22
 \section{MIS of Manual Control Module (\mref{mManual})} \wss{Use labels for
   cross-referencing}
 
