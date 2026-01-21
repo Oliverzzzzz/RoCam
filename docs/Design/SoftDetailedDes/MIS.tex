@@ -33,6 +33,21 @@ urlcolor=cyan          % color of external links
 
 \usepackage{array}
 
+\usepackage{enumitem}
+\setlistdepth{9}
+
+\setlist[itemize,1]{label=$\bullet$}
+\setlist[itemize,2]{label=$\bullet$}
+\setlist[itemize,3]{label=$\bullet$}
+\setlist[itemize,4]{label=$\bullet$}
+\setlist[itemize,5]{label=$\bullet$}
+\setlist[itemize,6]{label=$\bullet$}
+\setlist[itemize,7]{label=$\bullet$}
+\setlist[itemize,8]{label=$\bullet$}
+\setlist[itemize,9]{label=$\bullet$}
+
+\renewlist{itemize}{itemize}{9}
+
 \externaldocument{../../SRS/SRS}
 
 \input{../../Comments}
@@ -137,21 +152,21 @@ this specification:
   \noindent
   \begin{tabular}{l l p{7.5cm}}
     \toprule
-    \textbf{Type Notation}    & \textbf{Mathematical Type} & \textbf{Description}                              \\
+    \textbf{Type Notation}    & \textbf{Mathematical Type} & \textbf{Description}                               \\
     \midrule
-    int                       & $\mathbb{Z}$               & 32-bit signed integer                             \\
-    float                     & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754) \\
-    f32                       & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754) \\
-    f64                       & $\mathbb{R}$               & 64-bit double-precision floating point (IEEE 754) \\
-    u64                       & $\mathbb{N}$               & 64-bit unsigned integer                           \\
-    bool                      & \{true, false\}            & boolean value (true or false)                     \\
-    str                       & sequence of char           & string (sequence of characters)                   \\
-    bytes                     & sequence of byte           & sequence of bytes (8-bit unsigned integers)       \\
-    null $|$ Type             & Type $\cup$ \{null\}       & optional/nullable type (union with null)          \\
-    'literal1' $|$ 'literal2' & \{'literal1', 'literal2'\} & union of string literals (enum-like type)         \\
-    Type[]                    & sequence of Type           & array or sequence of elements of type Type        \\
-    Optional[Type]            & Type $\cup$ \{null\}       & optional type (Python-style notation)             \\
-    Tuple[Type1, Type2]       & Type1 $\times$ Type2       & tuple containing values of Type1 and Type2        \\
+    int                       & $\mathbb{Z}$               & 32-bit signed integer.                             \\
+    float                     & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754). \\
+    f32                       & $\mathbb{R}$               & 32-bit single-precision floating point (IEEE 754). \\
+    f64                       & $\mathbb{R}$               & 64-bit double-precision floating point (IEEE 754). \\
+    u64                       & $\mathbb{N}$               & 64-bit unsigned integer.                           \\
+    bool                      & \{true, false\}            & Boolean value (true or false).                     \\
+    str                       & sequence of char           & String (sequence of characters).                   \\
+    bytes                     & sequence of byte           & Sequence of bytes (8-bit unsigned integers).       \\
+    null $|$ Type             & Type $\cup$ \{null\}       & Optional/nullable type (union with null).          \\
+    'literal1' $|$ 'literal2' & \{'literal1', 'literal2'\} & Union of string literals (enum-like type).         \\
+    Type[]                    & sequence of Type           & Array or sequence of elements of type Type.        \\
+    Optional[Type]            & Type $\cup$ \{null\}       & Optional type (Python-style notation).             \\
+    Tuple[Type1, Type2]       & Type1 $\times$ Type2       & Tuple containing values of Type1 and Type2.        \\
     \bottomrule
   \end{tabular}
 \end{center}
@@ -184,12 +199,12 @@ Coordinates are normalized (0.0 to 1.0).
 \begin{center}
   \begin{tabular}{p{4cm} p{3cm} p{8cm}}
     \toprule
-    \textbf{Field Name} & \textbf{Type}        & \textbf{Description}                                                                                                                                                                        \\
+    \textbf{Field Name} & \textbf{Type}                 & \textbf{Description}                                                                                                                                                                        \\
     \midrule
-    frame\_number       & int                  & Frame number of the current frame, every frame is numbered sequentially                                                                                                                     \\
-    average\_fps        & float                & Average frames per second over the last 60 frames                                                                                                                                           \\
-    preview             & bytes                & JPEG encoded preview of the current frame for the frontend. The frame is rotated 90 degrees counter-clockwise, the frontend needs to rotate it 90 degrees clockwise to display it correctly \\
-    bbox                & null $|$ BoundingBox & Bounding box of the rocket in the current frame, null if no rocket is found                                                                                                                 \\
+    frame\_number       & int                           & Frame number of the current frame, every frame is numbered sequentially                                                                                                                     \\
+    average\_fps        & float                         & Average frames per second over the last 60 frames                                                                                                                                           \\
+    preview             & bytes                         & JPEG encoded preview of the current frame for the frontend. The frame is rotated 90 degrees counter-clockwise, the frontend needs to rotate it 90 degrees clockwise to display it correctly \\
+    bbox                & null $|$ \texttt{BoundingBox} & Bounding box of the rocket in the current frame, null if no rocket is found                                                                                                                 \\
     \bottomrule
   \end{tabular}
 \end{center}
@@ -252,7 +267,7 @@ Empty structure with no fields.
     gimbal\_focal\_length\_mm   & float                             & Gimbal focal length in millimeters                              \\
     tracking\_state             & 'idle' $|$ 'armed' $|$ 'tracking' & Current tracking state                                          \\
     preview                     & bytes                             & Preview image data                                              \\
-    osd\_data                   & OSDData $|$ null                  & On-screen display data, null if not available                   \\
+    osd\_data                   & \texttt{OSDData} $|$ null         & On-screen display data, null if not available                   \\
     unix\_timestamp\_ms         & int                               & Unix timestamp in milliseconds                                  \\
     longitude                   & float $|$ null                    & Longitude coordinate, null if not available                     \\
     latitude                    & float $|$ null                    & Latitude coordinate, null if not available                      \\
@@ -330,9 +345,9 @@ cv\_process
 \subsubsection{Exported Constants}
 
 \begin{itemize}
-  \item WIDTH: width of the video feed (in pixels)
-  \item HEIGHT: height of the video feed (in pixels)
-  \item SHARED\_MEMORY\_PATH: path to the shared memory file
+  \item WIDTH: Width of the video feed (in pixels).
+  \item HEIGHT: Height of the video feed (in pixels).
+  \item SHARED\_MEMORY\_PATH: Path to the shared memory file.
 \end{itemize}
 
 \subsubsection{Exported Access Programs}
@@ -347,20 +362,16 @@ cv\_process
   \end{tabular}
 \end{center}
 
-The CV Process Module passes uncompressed frames to the Live Video Process
-Module via shared memory. This is done through the Video Stream Abstraction
-Module. The frame is transformed correctly and has OSD (on-screen display)
-already applied.
-
 \subsection{Semantics}
 
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item ipc connection to the CV Process Management Module
-  \item recording: null $|$ RecordingInfo (recording information, null if not
-        recording)
-  \item osd\_data: OSDData (OSD data for frame transformation and text rendering)
+  \item IPC connection to the CV Process Management Module (\mref{mCVManagement}).
+  \item recording: null $|$ \texttt{RecordingInfo} (recording information, null if not
+        recording).
+  \item osd\_data: \texttt{OSDData} (OSD data for frame transformation and text
+        rendering).
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -369,7 +380,7 @@ already applied.
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item External camera sensor
+  \item External camera sensor.
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -389,13 +400,15 @@ Camera is assumed to be connected and working properly.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item connect to the IPC server of the CV Process Management Module
-          \item start \texttt{pipeline()} in a background thread
-          \item For each message received from CV Process Management Module:
+          \item Connect to the IPC server of the CV Process Management Module
+                (\mref{mCVManagement}).
+          \item Start \texttt{pipeline()} in a background thread.
+          \item For each message received from CV Process Management Module
+                (\mref{mCVManagement}).
                 \begin{itemize}
-                  \item (if \texttt{RecordingInfo}): Set state variable \texttt{recording} to the recording info
-                  \item (if \texttt{StopRecording}): Set state variable \texttt{recording} to null
-                  \item (if \texttt{OSDData}): Set state variable \texttt{osd\_data} to the OSD data
+                  \item (if \texttt{RecordingInfo}): Set state variable \texttt{recording} to the recording info.
+                  \item (if \texttt{StopRecording}): Set state variable \texttt{recording} to null.
+                  \item (if \texttt{OSDData}): Set state variable \texttt{osd\_data} to the OSD data.
                 \end{itemize}
         \end{itemize}
   \item exception: None
@@ -414,29 +427,36 @@ Camera is assumed to be connected and working properly.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item For each frame from the camera:
+          \item For each frame from the camera.
                 \begin{itemize}
-                  \item Detect the rocket location in the frame
+                  \item Detect the rocket location in the frame.
                   \item (always):
                         \begin{itemize}
-                          \item Rotate the frame 90 degrees clockwise
+                          \item Rotate the frame 90 degrees clockwise.
                           \item Translate the frame by \texttt{osd\_data.translate\_x} and
-                                \texttt{osd\_data.translate\_y} pixels
-                          \item Scale the frame by \texttt{osd\_data.scale}
-                          \item Render the text from \texttt{osd\_data} over the frame
-                          \item Send the frame to the Live Video Process Module via shared memory
+                                \texttt{osd\_data.translate\_y} pixels.
+                          \item Scale the frame by \texttt{osd\_data.scale}.
+                          \item Render the text from \texttt{osd\_data} over the frame.
+                          \item Send the frame to the Live Video Process Module (\mref{mVideo}) via shared
+                                memory.
                         \end{itemize}
                   \item (if \texttt{recording}):
                         \begin{itemize}
-                          \item Append \texttt{osd\_data} to \texttt{recording.log\_path}
-                          \item Encode the frame and save to \texttt{recording.video\_path}
+                          \item Append \texttt{osd\_data} to \texttt{recording.log\_path}.
+                          \item Encode the frame and save to \texttt{recording.video\_path}.
                         \end{itemize}
                   \item (skip every 1 frame):
                         \begin{itemize}
-                          \item Downsample to 480p
-                          \item Encode the frame to JPEG
-                          \item Send the encoded frame along with the detected rocket location to the CV
-                                Process Management Module via IPC
+                          \item Downsample to 480p.
+                          \item Encode the frame to JPEG.
+                          \item Send \texttt{CVData} to the CV Process Management Module (\mref{mCVManagement})
+                                via IPC with the following fields:
+                                \begin{itemize}
+                                  \item \texttt{frame\_number}: The frame number.
+                                  \item \texttt{average\_fps}: The average FPS of the video.
+                                  \item \texttt{bbox}: The detected rocket location.
+                                  \item \texttt{preview}: base64 encoded preview JPEG image.
+                                \end{itemize}
                         \end{itemize}
                 \end{itemize}
         \end{itemize}
@@ -457,7 +477,7 @@ Camera is assumed to be connected and working properly.
 
 \subsection{Module}
 
-videoOut
+live\_video\_process
 
 \wss{Short name for the module}
 
@@ -478,9 +498,9 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name} & \textbf{In} & \textbf{Out}                & \textbf{Exceptions}                                             \\
+    \textbf{Name} & \textbf{In} & \textbf{Out}      & \textbf{Exceptions}                                                                       \\
     \hline
-    main          & -           & main function never returns & on exception, the process will log the error to stderr and exit \\
+    main          & -           & Runs indefinitely & No expected exceptions. If unexpected exception occurs, log the error to stderr and exit. \\
     \hline
   \end{tabular}
 \end{center}
@@ -497,7 +517,7 @@ This module does not have any state variables.
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item HDMI monitor connected to the Jetson (for displaying frames)
+  \item HDMI monitor connected to the Jetson (for displaying frames).
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -517,9 +537,9 @@ HDMI monitor is assumed to be connected and working properly.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item For each frame from the CV Process Module:
+          \item For each frame from the CV Process Module (\mref{mCV}).
                 \begin{itemize}
-                  \item Output the frame to the HDMI monitor
+                  \item Output the frame to the HDMI monitor.
                 \end{itemize}
         \end{itemize}
   \item exception: None
@@ -550,7 +570,7 @@ This module does not have any local functions.
 
 \subsection{Module}
 
-transcode
+transcode\_process
 
 \wss{Short name for the module}
 
@@ -569,11 +589,11 @@ This module does not have any exported constants.
 \subsubsection{Exported Access Programs}
 
 \begin{center}
-  \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
+  \begin{tabular}{p{3cm} p{5cm} p{3cm} p{3.5cm}}
     \hline
-    \textbf{Name} & \textbf{In}                                        & \textbf{Out} & \textbf{Exceptions}                                             \\
+    \textbf{Name} & \textbf{In}                                                         & \textbf{Out} & \textbf{Exceptions}                                                                       \\
     \hline
-    main          & recording: RecordingInfo, output\_video\_path: str & None         & on exception, the process will log the error to stderr and exit \\
+    main          & recording: \texttt{RecordingInfo} \newline output\_video\_path: str & None         & No expected exceptions. If unexpected exception occurs, log the error to stderr and exit. \\
     \hline
   \end{tabular}
 \end{center}
@@ -597,28 +617,31 @@ This module does not have any environment variables.
 
 \subsubsection{Assumptions}
 
-This module does not have any assumptions.
+\begin{itemize}
+  \item The provided \texttt{RecordingInfo} is valid.
+  \item The provided \texttt{output\_video\_path} is writable.
+\end{itemize}
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
 
 \subsubsection{Access Routine Semantics}
 
-\noindent main(recording: RecordingInfo, output\_video\_path: str):
+\noindent main(recording: \texttt{RecordingInfo}, output\_video\_path: str):
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Read the recorded video from \texttt{recording.video\_path}
-          \item Read the log from \texttt{recording.log\_path}
+          \item Read the recorded video from \texttt{recording.video\_path}.
+          \item Read the log from \texttt{recording.log\_path}.
           \item For each frame in the recorded video:
                 \begin{itemize}
-                  \item Find the corresponding OSDData from the log
-                  \item Rotate the frame 90 degrees clockwise
+                  \item Find the corresponding \texttt{OSDData} from the log.
+                  \item Rotate the frame 90 degrees clockwise.
                   \item Translate the frame by \texttt{osd\_data.translate\_x} and
-                        \texttt{osd\_data.translate\_y} pixels
-                  \item Scale the frame by \texttt{osd\_data.scale}
-                  \item Render the text from \texttt{osd\_data} over the frame
-                  \item Encode the frame as H.265 and save to \texttt{output\_video\_path}
+                        \texttt{osd\_data.translate\_y} pixels.
+                  \item Scale the frame by \texttt{osd\_data.scale}.
+                  \item Render the text from \texttt{osd\_data} over the frame.
+                  \item Encode the frame as H.265 and save to \texttt{output\_video\_path}.
                 \end{itemize}
         \end{itemize}
   \item exception: None
@@ -647,67 +670,9 @@ This module does not have any local functions.
 
 \wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
 
-\subsection{Module}
-
-Video Stream Abstraction
-
-\wss{Short name for the module}
-
-\subsection{Uses}
-
-\begin{itemize}
-  \item Nvidia Deepstream SDK library
-\end{itemize}
-
-\subsection{Syntax}
-
-\subsubsection{Exported Constants}
-
-This module does not have any exported constants.
-
-\subsubsection{Exported Access Programs}
-
 Nvidia Deepstream SDK is too complex to specify in this MIS, even if we only
-include the access programs we need. Its full documentation is available at
+include the functionalities we need. Its full documentation is available at
 \url{https://docs.nvidia.com/metropolis/deepstream/7.1/index.html}.
-
-\subsection{Semantics}
-
-\subsubsection{State Variables}
-
-This module does not have any state variables.
-
-\wss{Not all modules will have state variables.  State variables give the module
-  a memory.}
-
-\subsubsection{Environment Variables}
-
-This module does not have any environment variables.
-
-\wss{This section is not necessary for all modules.  Its purpose is to capture
-  when the module has external interaction with the environment, such as for a
-  device driver, screen interface, keyboard, file, etc.}
-
-\subsubsection{Assumptions}
-
-This module does not have any assumptions.
-
-\wss{Try to minimize assumptions and anticipate programmer errors via
-  exceptions, but for practical purposes assumptions are sometimes appropriate.}
-
-\subsubsection{Access Routine Semantics}
-
-This module's access routines are defined by the Nvidia Deepstream SDK
-documentation.
-
-\subsubsection{Local Functions}
-
-This module does not have any local functions.
-
-\wss{As appropriate} \wss{These functions are for the purpose of specification.
-  They are not necessarily something that is going to be implemented
-  explicitly.  Even if they are implemented, they are not exported; they only
-  have local scope.}
 
 \section{MIS of CV Process Management Module (\mref{mCVManagement})} \wss{Use labels for
   cross-referencing}
@@ -718,7 +683,7 @@ This module does not have any local functions.
 
 \subsection{Module}
 
-cvProcessManagement
+cv\_process\_management
 
 \wss{Short name for the module}
 
@@ -739,15 +704,15 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}    & \textbf{In}                                                                                              & \textbf{Out} & \textbf{Exceptions} \\
+    \textbf{Name}    & \textbf{In}                                                                                                       & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    start\_process   & on\_cv\_data: (cv\_data: CVData) $\rightarrow$ None, on\_process\_crash: (error: str) $\rightarrow$ None & -            & processStartError   \\
+    start\_process   & on\_cv\_data: (cv\_data: \texttt{CVData}) $\rightarrow$ None, on\_process\_crash: (error: str) $\rightarrow$ None & -            & processStartError   \\
     \hline
-    start\_recording & recording\_info: RecordingInfo                                                                           & -            & ipcError            \\
+    start\_recording & recording\_info: \texttt{RecordingInfo}                                                                           & -            & ipcError            \\
     \hline
-    stop\_recording  & -                                                                                                        & -            & ipcError            \\
+    stop\_recording  & -                                                                                                                 & -            & ipcError            \\
     \hline
-    set\_osd\_data   & osd\_data: OSDData                                                                                       & -            & ipcError            \\
+    set\_osd\_data   & osd\_data: \texttt{OSDData}                                                                                       & -            & ipcError            \\
     \hline
   \end{tabular}
 \end{center}
@@ -757,7 +722,7 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item ipc connection to the CV Process Module
+  \item IPC connection to the CV Process Module (\mref{mCV}).
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -780,39 +745,39 @@ This module does not have any assumptions.
 
 \subsubsection{Access Routine Semantics}
 
-\noindent start\_process(on\_cv\_data: (cv\_data: CVData) $\rightarrow$ None, on\_process\_crash: (error: str) $\rightarrow$ None):
+\noindent start\_process(on\_cv\_data: (cv\_data: \texttt{CVData}) $\rightarrow$ None, on\_process\_crash: (error: str) $\rightarrow$ None):
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Start an IPC server
-          \item Start the CV Process Module in a separate process
-          \item Wait for the CV Process Module to connect to the IPC server
-          \item Start the \texttt{receive\_cv\_data\_loop} in a background thread
+          \item Start an IPC server.
+          \item Start the CV Process Module (\mref{mCV}) in a separate process.
+          \item Wait for the CV Process Module (\mref{mCV}) to connect to the IPC server.
+          \item Start the \texttt{receive\_cv\_data\_loop} in a background thread.
         \end{itemize}
   \item output: None
   \item exception: processStartError
 \end{itemize}
 
-\noindent start\_recording(recording\_info: RecordingInfo):
+\noindent start\_recording(recording\_info: \texttt{RecordingInfo}):
 \begin{itemize}
-  \item transition: Send the recording info to the CV Process Module through the IPC
-        connection
+  \item transition: Send the recording info to the CV Process Module (\mref{mCV})
+        through the IPC connection.
   \item output: None
   \item exception: ipcError
 \end{itemize}
 
 \noindent stop\_recording():
 \begin{itemize}
-  \item transition: Send a stop recording message to the CV Process Module through the
-        IPC connection
+  \item transition: Send a stop recording message to the CV Process Module (\mref{mCV})
+        through the IPC connection.
   \item output: None
   \item exception: ipcError
 \end{itemize}
 
-\noindent set\_osd\_data(osd\_data: OSDData):
+\noindent set\_osd\_data(osd\_data: \texttt{OSDData}):
 \begin{itemize}
-  \item transition: Send the OSD data to the CV Process Module through the IPC
-        connection
+  \item transition: Send the OSD data to the CV Process Module (\mref{mCV}) through the
+        IPC connection.
   \item output: None
   \item exception: ipcError
 \end{itemize}
@@ -830,11 +795,11 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Loop forever:
+          \item Loop forever.
                 \begin{itemize}
-                  \item Receive a message from the IPC connection
-                  \item Call the \texttt{on\_cv\_data} callback with the CVData received
-                  \item If the IPC connection is closed or error occurs, exit the loop
+                  \item Receive a message from the IPC connection.
+                  \item Call the \texttt{on\_cv\_data} callback with the \texttt{CVData} received.
+                  \item If the IPC connection is closed or error occurs, exit the loop.
                 \end{itemize}
         \end{itemize}
   \item output: None
@@ -911,7 +876,7 @@ This module does not have any assumptions.
 
 \noindent start\_process():
 \begin{itemize}
-  \item transition: Run \texttt{run\_live\_video\_process()} in a background thread
+  \item transition: Run \texttt{run\_live\_video\_process()} in a background thread.
   \item output: None
   \item exception: processStartError
 \end{itemize}
@@ -929,10 +894,10 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Loop forever:
+          \item Loop forever.
                 \begin{itemize}
-                  \item Start the Live Video Process Module in a separate process
-                  \item Wait for the Live Video Process Module to exit
+                  \item Start the Live Video Process Module (\mref{mVideo}) in a separate process.
+                  \item Wait for the Live Video Process Module (\mref{mVideo}) to exit.
                 \end{itemize}
         \end{itemize}
   \item output: None
@@ -974,9 +939,9 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}    & \textbf{In}              & \textbf{Out}             & \textbf{Exceptions} \\
+    \textbf{Name}    & \textbf{In}                       & \textbf{Out}             & \textbf{Exceptions} \\
     \hline
-    start\_transcode & recording: RecordingInfo & output\_video\_pipe: str & processStartError   \\
+    start\_transcode & recording: \texttt{RecordingInfo} & output\_video\_pipe: str & processStartError   \\
     \hline
   \end{tabular}
 \end{center}
@@ -1007,13 +972,13 @@ This module does not have any assumptions.
 
 \subsubsection{Access Routine Semantics}
 
-\noindent start\_transcode(recording: RecordingInfo):
+\noindent start\_transcode(recording: \texttt{RecordingInfo}):
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item create a temporary unix pipe and save the path to \texttt{output\_video\_pipe}
-          \item Start the Transcode Process Module in a separate process with the given
-                recording and \texttt{output\_video\_pipe}
+          \item Create a temporary unix pipe and save the path to \texttt{output\_video\_pipe}.
+          \item Start the Transcode Process Module (\mref{mTranscode}) in a separate process
+                with the given recording and \texttt{output\_video\_pipe}.
         \end{itemize}
   \item output: output\_video\_pipe: str
   \item exception: processStartError
@@ -1065,11 +1030,11 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name} & \textbf{In}                       & \textbf{Out} & \textbf{Exceptions} \\
+    \textbf{Name} & \textbf{In}                                        & \textbf{Out} & \textbf{Exceptions} \\
     \hline
-    init          & gimbal: Gimbal Abstraction Module & -            & -                   \\
+    init          & gimbal: Gimbal Abstraction Module (\mref{mGimbal}) & -            & -                   \\
     \hline
-    step          & rocket\_bbox: BoundingBox         & -            & -                   \\
+    step          & rocket\_bbox: \texttt{BoundingBox}                 & -            & -                   \\
     \hline
   \end{tabular}
 \end{center}
@@ -1079,7 +1044,7 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item gimbal: Gimbal Abstraction Module
+  \item gimbal: Gimbal Abstraction Module (\mref{mGimbal})
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -1102,20 +1067,22 @@ This module does not have any assumptions.
 
 \subsubsection{Access Routine Semantics}
 
-\noindent init(gimbal: Gimbal Abstraction Module):
+\noindent init(gimbal: Gimbal Abstraction Module (\mref{mGimbal})):
 \begin{itemize}
-  \item transition: Set the \texttt{gimbal} state variable to the given gimbal
+  \item transition: Set the \texttt{gimbal} state variable to the given gimbal.
   \item output: None
   \item exception: -
 \end{itemize}
 
-\noindent step(rocket\_bbox: BoundingBox):
+\noindent step(rocket\_bbox: \texttt{BoundingBox}):
 \begin{itemize}
   \item transition:
         \begin{enumerate}
-          \item Retrieve the current gimbal angle from the Gimbal Abstraction Module.
+          \item Retrieve the current gimbal angle from the Gimbal Abstraction Module
+                (\mref{mGimbal}).
           \item Calculate the desired gimbal angle from \texttt{rocket\_bbox}.
-          \item Send the desired gimbal angle to the Gimbal Abstraction Module.
+          \item Send the desired gimbal angle to the Gimbal Abstraction Module
+                (\mref{mGimbal}).
         \end{enumerate}
   \item output: None
   \item exception: None
@@ -1193,7 +1160,7 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item Opened hardware serial port to the gimbal
+  \item Opened hardware serial port to the gimbal.
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -1220,71 +1187,73 @@ This module does not have any assumptions.
 
 \noindent connect(port: str, baudrate: int):
 \begin{itemize}
-  \item transition: opens the hardware serial port to the gimbal with the given port
-        and baudrate
+  \item transition: Opens the hardware serial port to the gimbal with the given port
+        and baudrate.
   \item output: None
   \item exception: serialOpenError
 \end{itemize}
 
 \noindent move\_deg(tilt: f32, pan: f32):
 \begin{itemize}
-  \item transition: sends the tilt and pan angles to the gimbal through the Serial
-        Abstraction Module (see the Gimbal Protocol doc for details)
+  \item transition: Sends the tilt and pan angles to the gimbal through the Serial
+        Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
   \item output: None
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent measure\_deg():
 \begin{itemize}
-  \item transition: retrieves the tilt and pan angle measurements from the gimbal
-        through the Serial Abstraction Module (see the Gimbal Protocol doc for details)
+  \item transition: Retrieves the tilt and pan angle measurements from the gimbal
+        through the Serial Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol
+        doc for details).
   \item output: (tilt: f32, pan: f32)
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent control\_arm\_led(enabled: bool):
 \begin{itemize}
-  \item transition: controls the arm LED on the gimbal through the Serial Abstraction
-        Module (see the Gimbal Protocol doc for details)
+  \item transition: Controls the arm LED on the gimbal through the Serial Abstraction
+        Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
   \item output: None
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent control\_status\_led(enabled: bool):
 \begin{itemize}
-  \item transition: controls the status LED on the gimbal through the Serial
-        Abstraction Module (see the Gimbal Protocol doc for details)
+  \item transition: Controls the status LED on the gimbal through the Serial
+        Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
   \item output: None
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent get\_gps\_data():
 \begin{itemize}
-  \item transition: retrieves GPS data from the gimbal through the Serial Abstraction
-        Module (see the Gimbal Protocol doc for details)
+  \item transition: Retrieves GPS data from the gimbal through the Serial Abstraction
+        Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
   \item output: (coordinates: Optional[Tuple[float, float]], timestamp: Optional[int])
         \begin{itemize}
-          \item If coordinates are unknown (NaN), coordinates is None
-          \item If timestamp is unknown (0), timestamp is None
-          \item Returns (None, None) if no GPS lock
-          \item Returns (None, timestamp) if time only (no coordinates)
-          \item Returns ((longitude, latitude), timestamp) if full GPS lock
+          \item If coordinates are unknown (NaN), coordinates is None.
+          \item If timestamp is unknown (0), timestamp is None.
+          \item Returns (None, None) if no GPS lock.
+          \item Returns (None, timestamp) if time only (no coordinates).
+          \item Returns ((longitude, latitude), timestamp) if full GPS lock.
         \end{itemize}
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent set\_focal\_length(focal\_length\_mm: f32):
 \begin{itemize}
-  \item transition: sets the camera focal length on the gimbal through the Serial
-        Abstraction Module (see the Gimbal Protocol doc for details)
+  \item transition: Sets the camera focal length on the gimbal through the Serial
+        Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for details).
   \item output: None
   \item exception: gimbalCommunicationError
 \end{itemize}
 
 \noindent get\_focal\_length():
 \begin{itemize}
-  \item transition: retrieves the current camera focal length from the gimbal through
-        the Serial Abstraction Module (see the Gimbal Protocol doc for details)
+  \item transition: Retrieves the current camera focal length from the gimbal through
+        the Serial Abstraction Module (\mref{mSerial}) (see the Gimbal Protocol doc for
+        details).
   \item output: focal\_length\_mm: f32
   \item exception: gimbalCommunicationError
 \end{itemize}
@@ -1319,7 +1288,7 @@ serial
 \subsection{Uses}
 
 \begin{itemize}
-  \item pyserial library module
+  \item pyserial library module.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1356,7 +1325,7 @@ This module does not have any state variables.
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item Hardware serial port
+  \item Hardware serial port.
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -1374,21 +1343,21 @@ This module does not have any assumptions.
 
 \noindent open\_port(port: str, baudrate: int):
 \begin{itemize}
-  \item transition: opens the hardware serial port with the given port and baudrate
+  \item transition: Opens the hardware serial port with the given port and baudrate.
   \item output: None
   \item exception: serialOpenError
 \end{itemize}
 
 \noindent send\_bytes(data: bytes):
 \begin{itemize}
-  \item transition: sends the given bytes to the hardware serial port
+  \item transition: Sends the given bytes to the hardware serial port.
   \item output: None
   \item exception: serialWriteError
 \end{itemize}
 
 \noindent receive\_bytes(num\_bytes: int):
 \begin{itemize}
-  \item transition: receives the given number of bytes from the hardware serial port
+  \item transition: Receives the given number of bytes from the hardware serial port.
   \item output: data: bytes
   \item exception: serialReadError
 \end{itemize}
@@ -1425,7 +1394,7 @@ jetson-stats
 \subsection{Uses}
 
 \begin{itemize}
-  \item jetson-stats library module
+  \item jetson-stats library module.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1464,7 +1433,7 @@ This module does not have any state variables.
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item The Jetson system
+  \item The Jetson system.
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
@@ -1482,28 +1451,28 @@ This module does not have any assumptions.
 
 \noindent get\_gpu\_utilization():
 \begin{itemize}
-  \item transition: retrieves the GPU utilization from the Jetson system
+  \item transition: Retrieves the GPU utilization from the Jetson system.
   \item output: utilization: float (0.0 to 100.0)
   \item exception: statusError
 \end{itemize}
 
 \noindent get\_cpu\_utilization():
 \begin{itemize}
-  \item transition: retrieves the CPU utilization from the Jetson system
+  \item transition: Retrieves the CPU utilization from the Jetson system.
   \item output: utilization: float (0.0 to 100.0)
   \item exception: statusError
 \end{itemize}
 
 \noindent get\_memory\_usage\_bytes():
 \begin{itemize}
-  \item transition: retrieves the memory usage from the Jetson system
+  \item transition: Retrieves the memory usage from the Jetson system.
   \item output: usage: \{used: int, total: int\} (in bytes)
   \item exception: statusError
 \end{itemize}
 
 \noindent get\_core\_temperature\_celsius():
 \begin{itemize}
-  \item transition: retrieves the core temperature from the Jetson system
+  \item transition: Retrieves the core temperature from the Jetson system.
   \item output: temperature: float (in Celsius)
   \item exception: statusError
 \end{itemize}
@@ -1552,23 +1521,23 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}          & \textbf{In}                        & \textbf{Out}                            & \textbf{Exceptions}    \\
+    \textbf{Name}          & \textbf{In}                        & \textbf{Out}                                     & \textbf{Exceptions}    \\
     \hline
-    init                   & base\_path: str                    & -                                       & -                      \\
+    init                   & base\_path: str                    & -                                                & -                      \\
     \hline
-    allocate\_recording    & -                                  & recording\_info: RecordingInfo          & recordingError         \\
+    allocate\_recording    & -                                  & recording\_info: \texttt{RecordingInfo}          & recordingError         \\
     \hline
-    read\_log\_by\_id      & recording\_id: str                 & log: list[OSDData] $|$ null             & -                      \\
+    read\_log\_by\_id      & recording\_id: str                 & log: list[\texttt{OSDData}] $|$ null             & -                      \\
     \hline
-    get\_recording\_by\_id & recording\_id: str                 & recording\_info: RecordingInfo $|$ null & -                      \\
+    get\_recording\_by\_id & recording\_id: str                 & recording\_info: \texttt{RecordingInfo} $|$ null & -                      \\
     \hline
-    list\_all\_recordings  & -                                  & recordings: list[RecordingInfo]         & -                      \\
+    list\_all\_recordings  & -                                  & recordings: list[\texttt{RecordingInfo}]         & -                      \\
     \hline
-    rename\_recording      & recording\_id: str, new\_name: str & -                                       & recordingNotFoundError \\
+    rename\_recording      & recording\_id: str, new\_name: str & -                                                & recordingNotFoundError \\
     \hline
-    delete\_recording      & recording\_id: str                 & -                                       & recordingNotFoundError \\
+    delete\_recording      & recording\_id: str                 & -                                                & recordingNotFoundError \\
     \hline
-    space\_usage\_bytes    & -                                  & \{used: int, total: int\} (in bytes)    & -                      \\
+    space\_usage\_bytes    & -                                  & \{used: int, total: int\} (in bytes)             & -                      \\
     \hline
   \end{tabular}
 \end{center}
@@ -1578,7 +1547,7 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item \texttt{base\_path}: base path for recording video and log files
+  \item \texttt{base\_path}: Base path for recording video and log files.
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -1603,7 +1572,7 @@ This module does not have any assumptions.
 
 \noindent init(base\_path: str):
 \begin{itemize}
-  \item transition: sets the \texttt{base\_path} state variable to the given base path
+  \item transition: Sets the \texttt{base\_path} state variable to the given base path.
   \item output: None
   \item exception: -
 \end{itemize}
@@ -1612,22 +1581,22 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Generate a new random ID \texttt{recording\_id} for the recording
-          \item Generate a name \texttt{Recording \{YYYY-MM-DD HH:MM:SS\}}
-          \item Create a folder under \texttt{base\_path} with the ID as the folder name
+          \item Generate a new random ID \texttt{recording\_id} for the recording.
+          \item Generate a name \texttt{Recording \{YYYY-MM-DD HH:MM:SS\}}.
+          \item Create a folder under \texttt{base\_path} with the ID as the folder name.
           \item Create a file \texttt{\{base\_path\}/\{recording\_id\}/meta.json} with the name
-                in the json
-          \item return recording info:
+                in the json.
+          \item Return recording info:
                 \begin{itemize}
-                  \item id: the generated ID
-                  \item name: the generated name
-                  \item start\_time: null
-                  \item duration\_seconds: null
-                  \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}
-                  \item log\_path: \texttt{\{base\_path\}/\{recording\_id\}/log.txt}
+                  \item id: The generated ID.
+                  \item name: The generated name.
+                  \item start\_time: null.
+                  \item duration\_seconds: null.
+                  \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}.
+                  \item log\_path: \texttt{\{base\_path\}/\{recording\_id\}/log.txt}.
                 \end{itemize}
         \end{itemize}
-  \item output: recording\_info: RecordingInfo
+  \item output: recording\_info: \texttt{RecordingInfo}
   \item exception: recordingError
 \end{itemize}
 
@@ -1635,20 +1604,20 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Check if file at \texttt{\{base\_path\}/\{recording\_id\}/log.txt} exists
+          \item Check if file at \texttt{\{base\_path\}/\{recording\_id\}/log.txt} exists.
           \item If it does:
                 \begin{itemize}
-                  \item Create an empty list \texttt{logs}
-                  \item For each line in the file:
+                  \item Create an empty list \texttt{logs}.
+                  \item For each line in the file.
                         \begin{itemize}
-                          \item Parse the line as json, as a \texttt{OSDData} object
-                          \item Append the \texttt{OSDData} object to the list
+                          \item Parse the line as json, as a \texttt{OSDData} object.
+                          \item Append the \texttt{OSDData} object to the list.
                         \end{itemize}
-                  \item Return \texttt{logs}
+                  \item Return \texttt{logs}.
                 \end{itemize}
-          \item If it does not, return null
+          \item If it does not, return null.
         \end{itemize}
-  \item output: log: list[OSDData] $|$ null
+  \item output: log: list[\texttt{OSDData}] $|$ null
   \item exception: -
 \end{itemize}
 
@@ -1656,26 +1625,26 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Check if folder at \texttt{\{base\_path\}/\{recording\_id\}} exists
+          \item Check if folder at \texttt{\{base\_path\}/\{recording\_id\}} exists.
           \item If it does, and both \texttt{video.avi}, \texttt{log.txt} and
                 \texttt{meta.json} exist:
                 \begin{itemize}
-                  \item \texttt{logs} = \texttt{read\_log\_by\_id(recording\_id)}
-                  \item return recording info:
+                  \item \texttt{logs} = \texttt{read\_log\_by\_id(recording\_id)}.
+                  \item Return recording info:
                         \begin{itemize}
-                          \item id: the given ID
-                          \item name: the name in the \texttt{meta.json}
-                          \item start\_time: convert the first \texttt{OSDData.unix\_timestamp\_ms} in
-                                \texttt{logs} to a string representation
-                          \item duration\_seconds: the difference between the last and first
-                                \texttt{OSDData.unix\_timestamp\_ms} in \texttt{logs} (in seconds)
-                          \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}
-                          \item log\_path: \texttt{\{base\_path\}/\{recording\_id\}/log.txt}
+                          \item id: The given ID.
+                          \item name: The name in the \texttt{meta.json}.
+                          \item start\_time: Convert the first \texttt{OSDData.unix\_timestamp\_ms} in
+                                \texttt{logs} to a string representation.
+                          \item duration\_seconds: The difference between the last and first
+                                \texttt{OSDData.unix\_timestamp\_ms} in \texttt{logs} (in seconds).
+                          \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}.
+                          \item log\_path: \texttt{\{base\_path\}/\{recording\_id\}/log.txt}.
                         \end{itemize}
                 \end{itemize}
-          \item If it does not, return null
+          \item If it does not, return null.
         \end{itemize}
-  \item output: recording\_info: RecordingInfo $|$ null
+  \item output: recording\_info: \texttt{RecordingInfo} $|$ null
   \item exception: recordingNotFoundError
 \end{itemize}
 
@@ -1683,15 +1652,15 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Create an empty list \texttt{recordings}
+          \item Create an empty list \texttt{recordings}.
           \item For each folder under \texttt{base\_path}:
                 \begin{itemize}
-                  \item \texttt{recording\_info} = \texttt{get\_recording\_by\_id(folder\_name)}
-                  \item If \texttt{recording\_info} is not null, append it to \texttt{recordings}
+                  \item \texttt{recording\_info} = \texttt{get\_recording\_by\_id(folder\_name)}.
+                  \item If \texttt{recording\_info} is not null, append it to \texttt{recordings}.
                 \end{itemize}
-          \item Return \texttt{recordings}
+          \item Return \texttt{recordings}.
         \end{itemize}
-  \item output: recordings: list[RecordingInfo]
+  \item output: recordings: list[\texttt{RecordingInfo}]
   \item exception: -
 \end{itemize}
 
@@ -1699,9 +1668,9 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Check if file at \texttt{\{base\_path\}/\{recording\_id\}/meta.json} exists
-          \item If it does, update the \texttt{name} field to the given new name
-          \item If it does not, return recordingNotFoundError
+          \item Check if file at \texttt{\{base\_path\}/\{recording\_id\}/meta.json} exists.
+          \item If it does, update the \texttt{name} field to the given new name.
+          \item If it does not, return recordingNotFoundError.
         \end{itemize}
   \item output: None
   \item exception: recordingNotFoundError
@@ -1709,7 +1678,7 @@ This module does not have any assumptions.
 
 \noindent delete\_recording(recording\_id: str):
 \begin{itemize}
-  \item transition: Delete the folder at \texttt{\{base\_path\}/\{recording\_id\}}
+  \item transition: Delete the folder at \texttt{\{base\_path\}/\{recording\_id\}}.
   \item output: None
   \item exception: recordingNotFoundError
 \end{itemize}
@@ -1788,7 +1757,7 @@ This module does not have any exported constants.
     \hline
     disarm              & -                   & -                        & -                      \\
     \hline
-    status              & -                   & SystemStatus             & -                      \\
+    status              & -                   & \texttt{SystemStatus}    & -                      \\
     \hline
     manual\_move        & direction: str      & -                        & -                      \\
     \hline
@@ -1808,16 +1777,18 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item cv\_process\_mng: CV Process Management Module
+  \item cv\_process\_mng: CV Process Management Module (\mref{mCVManagement})
   \item live\_video\_process\_mng: Live Video Process Management Module
+        (\mref{mVideoManagement})
   \item transcode\_process\_mng: Transcode Process Management Module
-  \item recording\_db: Recording Database Module
-  \item gimbal: Gimbal Abstraction Module
-  \item tracking: Tracking Module
-  \item system\_status: System Status Module
+        (\mref{mTranscodeManagement})
+  \item recording\_db: Recording Database Module (\mref{mRecord})
+  \item gimbal: Gimbal Abstraction Module (\mref{mGimbal})
+  \item tracking: Tracking Module (\mref{mTrack})
+  \item system\_status: System Status Module (\mref{mStatus})
   \item is\_armed: bool
-  \item cv\_data: CVData $|$ null
-  \item osd\_data: OSDData $|$ null
+  \item cv\_data: \texttt{CVData} $|$ null
+  \item osd\_data: \texttt{OSDData} $|$ null
   \item in\_progress\_recording\_id: str $|$ null (if not null, a recording is in
         progress)
 \end{itemize}
@@ -1846,15 +1817,15 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Start \texttt{update\_system\_time()} in a background thread
+          \item Start \texttt{update\_system\_time()} in a background thread.
           \item Call \texttt{cv\_process\_mng.start\_process(on\_cv\_data,
-                  on\_cv\_process\_crash)}
-          \item Call \texttt{live\_video\_process\_mng.start\_process()}
-          \item Call \texttt{recording\_db.init("/mnt/data/recordings")}
-          \item Call \texttt{gimbal.connect("/dev/ttyTHS1", 115200)}
-          \item Call \texttt{tracking.init(gimbal)}
-          \item Set \texttt{is\_armed} to false
-          \item Set \texttt{in\_progress\_recording\_id} to null
+                  on\_cv\_process\_crash)}.
+          \item Call \texttt{live\_video\_process\_mng.start\_process()}.
+          \item Call \texttt{recording\_db.init("/mnt/data/recordings")}.
+          \item Call \texttt{gimbal.connect("/dev/ttyTHS1", 115200)}.
+          \item Call \texttt{tracking.init(gimbal)}.
+          \item Set \texttt{is\_armed} to false.
+          \item Set \texttt{in\_progress\_recording\_id} to null.
         \end{itemize}
   \item output: None
   \item exception: -
@@ -1864,8 +1835,8 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Set \texttt{is\_armed} to true
-          \item Call \texttt{gimbal.control\_arm\_led(true)}
+          \item Set \texttt{is\_armed} to true.
+          \item Call \texttt{gimbal.control\_arm\_led(true)}.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -1875,8 +1846,8 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Set \texttt{is\_armed} to false
-          \item Call \texttt{gimbal.control\_arm\_led(false)}
+          \item Set \texttt{is\_armed} to false.
+          \item Call \texttt{gimbal.control\_arm\_led(false)}.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -1884,36 +1855,36 @@ This module does not have any environment variables.
 
 \noindent status():
 \begin{itemize}
-  \item transition: Return SystemStatus with the following fields:
+  \item transition: Return \texttt{SystemStatus} with the following fields:
         \begin{itemize}
-          \item average\_fps: \texttt{cv\_data.average\_fps}
-          \item gimbal\_tilt\_deg: from \texttt{gimbal.measure\_deg()}
-          \item gimbal\_pan\_deg: from \texttt{gimbal.measure\_deg()}
-          \item gimbal\_focal\_length\_mm: from \texttt{gimbal.get\_focal\_length()}
+          \item average\_fps: \texttt{cv\_data.average\_fps}.
+          \item gimbal\_tilt\_deg: From \texttt{gimbal.measure\_deg()}.
+          \item gimbal\_pan\_deg: From \texttt{gimbal.measure\_deg()}.
+          \item gimbal\_focal\_length\_mm: From \texttt{gimbal.get\_focal\_length()}.
           \item tracking\_state:
                 \begin{itemize}
-                  \item if \texttt{is\_armed} is false, return 'idle'
-                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null, return
-                        'tracking'
-                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is null, return
-                        'armed'
+                  \item If \texttt{is\_armed} is false, return 'idle'.
+                  \item If \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null, return
+                        'tracking'.
+                  \item If \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is null, return
+                        'armed'.
                 \end{itemize}
-          \item preview: \texttt{cv\_data.preview}
-          \item osd\_data: \texttt{osd\_data}
-          \item unix\_timestamp\_ms: get from system time
-          \item longitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (first
-                element of tuple if coordinates is not None, else null)
-          \item latitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (second
-                element of tuple if coordinates is not None, else null)
-          \item gpu\_utilization: from \texttt{system\_status.get\_gpu\_utilization()}
-          \item cpu\_utilization: from \texttt{system\_status.get\_cpu\_utilization()}
-          \item core\_temperature\_celsius: from
-                \texttt{system\_status.get\_core\_temperature\_celsius()}
-          \item memory\_usage\_bytes: from \texttt{system\_status.get\_memory\_usage\_bytes()}
-          \item disk\_usage\_bytes: from \texttt{recording\_db.space\_usage\_bytes()}
-          \item in\_progress\_recording\_id: \texttt{in\_progress\_recording\_id}
+          \item preview: \texttt{cv\_data.preview}.
+          \item osd\_data: \texttt{osd\_data}.
+          \item unix\_timestamp\_ms: Get from system time.
+          \item longitude: Extract from \texttt{gimbal.get\_gps\_data()} coordinates (first
+                element of tuple if coordinates is not None, else null).
+          \item latitude: Extract from \texttt{gimbal.get\_gps\_data()} coordinates (second
+                element of tuple if coordinates is not None, else null).
+          \item gpu\_utilization: From \texttt{system\_status.get\_gpu\_utilization()}.
+          \item cpu\_utilization: From \texttt{system\_status.get\_cpu\_utilization()}.
+          \item core\_temperature\_celsius: From
+                \texttt{system\_status.get\_core\_temperature\_celsius()}.
+          \item memory\_usage\_bytes: From \texttt{system\_status.get\_memory\_usage\_bytes()}.
+          \item disk\_usage\_bytes: From \texttt{recording\_db.space\_usage\_bytes()}.
+          \item in\_progress\_recording\_id: \texttt{in\_progress\_recording\_id}.
         \end{itemize}
-  \item output: SystemStatus
+  \item output: \texttt{SystemStatus}
   \item exception: None
 \end{itemize}
 
@@ -1921,15 +1892,15 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Get current gimbal angle from \texttt{gimbal.measure\_deg()}
-          \item Calculate the new gimbal angle based on the given direction
+          \item Get current gimbal angle from \texttt{gimbal.measure\_deg()}.
+          \item Calculate the new gimbal angle based on the given direction.
                 \begin{itemize}
-                  \item If direction is "up", new tilt is \texttt{current\_tilt + 10}
-                  \item If direction is "down", new tilt is \texttt{current\_tilt - 10}
-                  \item If direction is "left", new pan is \texttt{current\_pan - 10}
-                  \item If direction is "right", new pan is \texttt{current\_pan + 10}
+                  \item If direction is "up", new tilt is \texttt{current\_tilt + 10}.
+                  \item If direction is "down", new tilt is \texttt{current\_tilt - 10}.
+                  \item If direction is "left", new pan is \texttt{current\_pan - 10}.
+                  \item If direction is "right", new pan is \texttt{current\_pan + 10}.
                 \end{itemize}
-          \item Call \texttt{gimbal.move\_deg(new\_tilt, new\_pan)}
+          \item Call \texttt{gimbal.move\_deg(new\_tilt, new\_pan)}.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -1946,10 +1917,10 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item (if state \texttt{in\_progress\_recording\_id} is not null): return recordingError
-          \item let recording\_info = \texttt{recording\_db.allocate\_recording()}
-          \item Set state \texttt{in\_progress\_recording\_id} to \texttt{recording\_info.id}
-          \item Call \texttt{cv\_process\_mng.start\_recording(recording\_info)}
+          \item (if state \texttt{in\_progress\_recording\_id} is not null): Return recordingError.
+          \item Let recording\_info = \texttt{recording\_db.allocate\_recording()}.
+          \item Set state \texttt{in\_progress\_recording\_id} to \texttt{recording\_info.id}.
+          \item Call \texttt{cv\_process\_mng.start\_recording(recording\_info)}.
         \end{itemize}
   \item output: None
   \item exception: recordingError
@@ -1959,8 +1930,8 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Call \texttt{cv\_process\_mng.stop\_recording()}
-          \item Set state \texttt{in\_progress\_recording\_id} to null
+          \item Call \texttt{cv\_process\_mng.stop\_recording()}.
+          \item Set state \texttt{in\_progress\_recording\_id} to null.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -1970,13 +1941,13 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item (if state \texttt{in\_progress\_recording\_id} is not null): return recordingInProgressError
-          \item let recording\_info =
-                \texttt{recording\_db.get\_recording\_by\_id(recording\_id)}
-          \item (if recording\_info is null): return recordingNotFoundError
-          \item let output\_video\_pipe =
-                \texttt{transcode\_process\_mng.start\_transcode(recording\_info)}
-          \item Return \texttt{output\_video\_pipe}
+          \item (if state \texttt{in\_progress\_recording\_id} is not null): Return recordingInProgressError.
+          \item Let recording\_info =
+                \texttt{recording\_db.get\_recording\_by\_id(recording\_id)}.
+          \item (if recording\_info is null): Return recordingNotFoundError.
+          \item Let output\_video\_pipe =
+                \texttt{transcode\_process\_mng.start\_transcode(recording\_info)}.
+          \item Return \texttt{output\_video\_pipe}.
         \end{itemize}
   \item output: output\_video\_pipe: str
   \item exception: recordingNotFoundError, recordingInProgressError
@@ -1991,47 +1962,47 @@ This module does not have any environment variables.
 
 \subsubsection{Local Functions}
 
-\noindent create\_osd\_data(cv\_data: CVData):
+\noindent create\_osd\_data(cv\_data: \texttt{CVData}):
 \begin{itemize}
-  \item transition: Return the following OSDData object:
+  \item transition: Return the following \texttt{OSDData} object:
         \begin{itemize}
-          \item frame\_number: \texttt{cv\_data.frame\_number}
-          \item translate\_x, translate\_y, scale: calculated from \texttt{cv\_data.bbox} (if
+          \item frame\_number: \texttt{cv\_data.frame\_number}.
+          \item translate\_x, translate\_y, scale: Calculated from \texttt{cv\_data.bbox} (if
                 \texttt{cv\_data.bbox} is not null, such that when applied to the frame, the
                 rocket is centered and the height of the rocket is 75\% of the frame height; if
                 \texttt{cv\_data.bbox} is null, use default values: translate\_x = 0,
-                translate\_y = 0, scale = 1.0)
-          \item average\_fps: \texttt{cv\_data.average\_fps}
-          \item gimbal\_tilt\_deg: from \texttt{gimbal.measure\_deg()}
-          \item gimbal\_pan\_deg: from \texttt{gimbal.measure\_deg()}
-          \item gimbal\_focal\_length\_mm: from \texttt{gimbal.get\_focal\_length()}
-          \item device\_ip\_addresses: get from system network interfaces
-          \item unix\_timestamp\_ms: get from system time
+                translate\_y = 0, scale = 1.0).
+          \item average\_fps: \texttt{cv\_data.average\_fps}.
+          \item gimbal\_tilt\_deg: From \texttt{gimbal.measure\_deg()}.
+          \item gimbal\_pan\_deg: From \texttt{gimbal.measure\_deg()}.
+          \item gimbal\_focal\_length\_mm: From \texttt{gimbal.get\_focal\_length()}.
+          \item device\_ip\_addresses: Get from system network interfaces.
+          \item unix\_timestamp\_ms: Get from system time.
           \item tracking\_state:
                 \begin{itemize}
-                  \item if \texttt{is\_armed} is false, return 'idle'
-                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null, return
-                        'tracking'
-                  \item if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is null, return
-                        'armed'
+                  \item If \texttt{is\_armed} is false, return 'idle'.
+                  \item If \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null, return
+                        'tracking'.
+                  \item If \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is null, return
+                        'armed'.
                 \end{itemize}
-          \item longitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (first
-                element of tuple if coordinates is not None, else 0.0)
-          \item latitude: extract from \texttt{gimbal.get\_gps\_data()} coordinates (second
-                element of tuple if coordinates is not None, else 0.0)
+          \item longitude: Extract from \texttt{gimbal.get\_gps\_data()} coordinates (first
+                element of tuple if coordinates is not None, else 0.0).
+          \item latitude: Extract from \texttt{gimbal.get\_gps\_data()} coordinates (second
+                element of tuple if coordinates is not None, else 0.0).
         \end{itemize}
-  \item output: OSDData
+  \item output: \texttt{OSDData}
   \item exception: None
 \end{itemize}
 
-\noindent on\_cv\_data(cv\_data: CVData):
+\noindent on\_cv\_data(cv\_data: \texttt{CVData}):
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Set state variable \texttt{cv\_data} to the given CVData
-          \item Set state variable \texttt{osd\_data} to \texttt{create\_osd\_data(cv\_data)}
-          \item Run \texttt{cv\_process\_mng.set\_osd\_data(osd\_data)}
-          \item (if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null): Call \texttt{tracking.step(cv\_data.bbox)}
+          \item Set state variable \texttt{cv\_data} to the given \texttt{CVData}.
+          \item Set state variable \texttt{osd\_data} to \texttt{create\_osd\_data(cv\_data)}.
+          \item Run \texttt{cv\_process\_mng.set\_osd\_data(osd\_data)}.
+          \item (if \texttt{is\_armed} is true, and \texttt{cv\_data.bbox} is not null): Call \texttt{tracking.step(cv\_data.bbox)}.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2041,12 +2012,12 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Loop every 5 seconds:
+          \item Loop every 5 seconds.
                 \begin{itemize}
-                  \item Call \texttt{gimbal.get\_gps\_data()}
+                  \item Call \texttt{gimbal.get\_gps\_data()}.
                   \item If the timestamp is not None, set the system time to the timestamp and break
-                        the loop
-                \end{itemize}
+                        the loop.
+                \end{itemize}.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2056,13 +2027,13 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Log the error to stderr
+          \item Log the error to stderr.
           \item Call \texttt{cv\_process\_mng.start\_process(on\_cv\_data,
-                  on\_cv\_process\_crash)}
+                  on\_cv\_process\_crash)}.
           \item (if state \texttt{in\_progress\_recording\_id} is not null):
                 \begin{itemize}
-                  \item Set state \texttt{in\_progress\_recording\_id} to null
-                  \item Call \texttt{start\_recording()}
+                  \item Set state \texttt{in\_progress\_recording\_id} to null.
+                  \item Call \texttt{start\_recording()}.
                 \end{itemize}
         \end{itemize}
   \item output: None
@@ -2116,7 +2087,7 @@ This module does not have any exported constants.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item state\_management: State Management Module
+  \item state\_management: State Management Module (\mref{mState})
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -2145,9 +2116,9 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item \texttt{state\_management.init()}
-          \item Start a HTTP server
-          \item Respond to all HTTP requests forever
+          \item \texttt{state\_management.init()}.
+          \item Start a HTTP server.
+          \item Respond to all HTTP requests forever.
         \end{itemize}
   \item output: None
   \item exception: None
@@ -2157,7 +2128,7 @@ This module does not have any assumptions.
 
 \noindent POST /api/status:
 \begin{itemize}
-  \item transition: Return \texttt{state\_management.status()}
+  \item transition: Return \texttt{state\_management.status()}.
   \item output: StatusResponse JSON
   \item exception: None
 \end{itemize}
@@ -2167,8 +2138,8 @@ This module does not have any assumptions.
   \item transition:
         \begin{itemize}
           \item Parse request body to get \texttt{direction} (must be one of: "up", "down",
-                "left", "right")
-          \item Call \texttt{state\_management.manual\_move(direction)}
+                "left", "right").
+          \item Call \texttt{state\_management.manual\_move(direction)}.
         \end{itemize}
   \item output: EmptyResponse JSON
   \item exception: None
@@ -2178,8 +2149,8 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Parse request body to get \texttt{tilt} and \texttt{pan} (both numbers)
-          \item Call \texttt{state\_management.manual\_move\_to(tilt, pan)}
+          \item Parse request body to get \texttt{tilt} and \texttt{pan} (both numbers).
+          \item Call \texttt{state\_management.manual\_move\_to(tilt, pan)}.
         \end{itemize}
   \item output: EmptyResponse JSON
   \item exception: None
@@ -2194,7 +2165,7 @@ This module does not have any assumptions.
 
 \noindent POST /api/arm:
 \begin{itemize}
-  \item transition: Call \texttt{state\_management.arm()}
+  \item transition: Call \texttt{state\_management.arm()}.
   \item output: EmptyResponse JSON
   \item exception: None
 \end{itemize}
@@ -2208,7 +2179,7 @@ This module does not have any assumptions.
 
 \noindent POST /api/recordings/start:
 \begin{itemize}
-  \item transition: Call \texttt{state\_management.start\_recording()}
+  \item transition: Call \texttt{state\_management.start\_recording()}.
   \item output: RecordingStatusResponse JSON
   \item exception: recordingError (if recording already in progress)
 \end{itemize}
@@ -2223,7 +2194,7 @@ This module does not have any assumptions.
 \noindent GET /api/recordings:
 \begin{itemize}
   \item transition: Return
-        \texttt{state\_management.recording\_db.list\_all\_recordings()}
+        \texttt{state\_management.recording\_db.list\_all\_recordings()}.
   \item output: RecordingListResponse JSON
   \item exception: None
 \end{itemize}
@@ -2231,7 +2202,7 @@ This module does not have any assumptions.
 \noindent DELETE /api/recordings/\{recordingId\}:
 \begin{itemize}
   \item transition: Call
-        \texttt{state\_management.recording\_db.delete\_recording(recordingId)}
+        \texttt{state\_management.recording\_db.delete\_recording(recordingId)}.
   \item output: EmptyResponse JSON
   \item exception: recordingNotFoundError (returns 404 HTTP status)
 \end{itemize}
@@ -2240,9 +2211,9 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Parse request body to get \texttt{new\_name} (string)
+          \item Parse request body to get \texttt{new\_name} (string).
           \item Call \texttt{state\_management.recording\_db.rename\_recording(recordingId,
-                  new\_name)}
+                  new\_name)}.
         \end{itemize}
   \item output: EmptyResponse JSON
   \item exception: recordingNotFoundError (returns 404 HTTP status)
@@ -2252,10 +2223,10 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item let output\_video\_pipe =
-                \texttt{state\_management.download\_recording(recordingId)}
+          \item Let output\_video\_pipe =
+                \texttt{state\_management.download\_recording(recordingId)}.
           \item Stream the file at \texttt{output\_video\_pipe} as binary data with
-                Content-Type: video/mp4
+                Content-Type: video/mp4.
         \end{itemize}
   \item output: Binary video file stream
   \item exception: recordingNotFoundError (returns 404 HTTP status)
@@ -2452,7 +2423,7 @@ This module does not have any exported access programs
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item recording list
+  \item Recording list.
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -2528,7 +2499,7 @@ This module does not have any exported access programs
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item configuration settings
+  \item Configuration settings.
 \end{itemize}
 
 \wss{Not all modules will have state variables.  State variables give the module
@@ -2537,7 +2508,7 @@ This module does not have any exported access programs
 \subsubsection{Environment Variables}
 
 \begin{itemize}
-  \item (for managing configuration settings)
+  \item (For managing configuration settings).
 \end{itemize}
 
 \wss{This section is not necessary for all modules.  Its purpose is to capture
