@@ -1713,6 +1713,7 @@ This module does not have any local functions.
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
+% 19
 \section{MIS of State Management Module (\mref{mState})} \wss{Use labels for
   cross-referencing}
 
@@ -1720,6 +1721,7 @@ This module does not have any local functions.
 
 \wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
 
+% 19.1
 \subsection{Module}
 
 stateManagement
@@ -1796,6 +1798,7 @@ This module does not have any exported constants.
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
 
+% 19.4.2
 \subsubsection{Environment Variables}
 
 This module does not have any environment variables.
@@ -1804,9 +1807,26 @@ This module does not have any environment variables.
   when the module has external interaction with the environment, such as for a
   device driver, screen interface, keyboard, file, etc.}
 
+% 19.4.3
 \subsubsection{Assumptions}
 
-(TODO)
+\begin{itemize}
+  \item Dependent modules satisfy their advertised interfaces: process management modules can
+        start/stop their processes and report failure via their exceptions/callbacks; hardware
+        abstraction modules either perform the requested action or raise the documented exception.
+  \item CV data arrival is asynchronous. Before the first CV update is received, status-related
+        fields derived from \texttt{cv\_data} may be unavailable (represented by null) and must be
+        handled by callers.
+  \item Time synchronization from GPS may not be available at startup; the system continues to
+        operate using local time until a valid GPS timestamp is obtained.
+  \item At most one recording session may be active at a time; this is represented by
+        \texttt{in\_progress\_recording\_id} being non-null.
+  \item Manual control commands and tracking commands are not issued concurrently in a way that
+        violates the Gimbal Abstraction Module interface (i.e., gimbal commands are serialized at
+        the abstraction boundary).
+\end{itemize}
+
+
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
