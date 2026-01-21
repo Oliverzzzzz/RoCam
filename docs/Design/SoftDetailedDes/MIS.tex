@@ -1323,10 +1323,14 @@ serial
 \end{center}
 
 \subsection{Semantics}
-
 \subsubsection{State Variables}
+\begin{itemize}
+  \item port\_handle: PortHandle $|$ null (null iff no port is open)
+  \item port\_name: str $|$ null
+  \item baudrate: int $|$ null
+\end{itemize}
 
-This module does not have any state variables.
+
 
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
@@ -1342,8 +1346,12 @@ This module does not have any state variables.
   device driver, screen interface, keyboard, file, etc.}
 
 \subsubsection{Assumptions}
+\begin{itemize}
+  \item The given \texttt{port} refers to a valid OS serial device path/name and the device is physically connected.
+  \item The caller invokes \texttt{open\_port} successfully before calling \texttt{send\_bytes} or \texttt{receive\_bytes}.
+\end{itemize}
 
-This module does not have any assumptions.
+
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
