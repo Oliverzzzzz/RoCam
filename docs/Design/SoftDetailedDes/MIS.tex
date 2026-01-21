@@ -1272,6 +1272,7 @@ This module does not have any assumptions.
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
+% 16
 \section{MIS of Serial Abstraction Module (\mref{mSerial})} \wss{Use labels for
   cross-referencing}
 
@@ -1293,9 +1294,17 @@ serial
 
 \subsection{Syntax}
 
+% 16.3.1
 \subsubsection{Exported Constants}
 
-(TODO)
+\begin{itemize}
+  \item DEFAULT\_BAUDRATE: Default baudrate used when the caller does not provide one.
+  \item READ\_TIMEOUT\_MS: Maximum time to wait for incoming bytes before a read is considered failed.
+  \item MAX\_FRAME\_SIZE\_BYTES: Upper bound on a single read/write transaction size to prevent
+        unbounded buffering.
+  \item IO\_RETRY\_COUNT: Maximum number of retries for transient I/O failures before raising an exception.
+\end{itemize}
+
 
 \subsubsection{Exported Access Programs}
 
@@ -1378,6 +1387,7 @@ This module does not have any local functions.
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
+% 17
 \section{MIS of System Status Module (\mref{mStatus})} \wss{Use labels for
   cross-referencing}
 
@@ -2316,7 +2326,7 @@ This module does not have any state variables.
 
 \subsubsection{Assumptions}
 
-(TODO)
+(TODO1)
 
 \wss{Try to minimize assumptions and anticipate programmer errors via
   exceptions, but for practical purposes assumptions are sometimes appropriate.}
