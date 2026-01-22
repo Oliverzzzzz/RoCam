@@ -95,7 +95,7 @@ This section records information for easy reference.
 
 \section{Introduction}
 
-Decomposing a system into modules awa is a commonly accepted approach to
+Decomposing a system into modules as is a commonly accepted approach to
 developing software. A module is a work assignment for a programmer or
 programming team~\citep{ParnasEtAl1984}. We advocate a decomposition based on
 the principle of information hiding~\citep{Parnas1972a}. This principle
@@ -104,7 +104,7 @@ represent likely future changes. Design for change is valuable in SC, where
 modifications are frequent, especially during initial development as the
 solution space is explored.
 
-Our design follows the rules layed out by \citet{ParnasEtAl1984}, as follows:
+Our design follows the rules laid out by \citet{ParnasEtAl1984}, as follows:
 \begin{itemize}
   \item System details that are likely to change independently should be the secrets of
         separate modules.
@@ -159,7 +159,7 @@ require changing the one module that hides the associated decision. The
 approach adapted here is called design for change.
 
 \begin{description}
-  \item[\refstepcounter{acnum} \actheacnum \label{acCV}:] The computer vision model. Frequent changes to the vision model might be required to adapt the system to new deployment envirouments.
+  \item[\refstepcounter{acnum} \actheacnum \label{acCV}:] The computer vision model. Frequent changes to the vision model might be required to adapt the system to new deployment environments.
   \item[\refstepcounter{acnum} \actheacnum \label{acUI}:] The user interface. The user interface may need to be updated based on the feedback of our customers during the field test.
 \end{description}
 
@@ -178,7 +178,7 @@ decisions will be changed.
 
 \begin{description}
   \item[\refstepcounter{ucnum} \uctheucnum \label{ucHW}:]
-        The hardware platform. The system relys hardware acceleration for running the
+        The hardware platform. The system relies hardware acceleration for running the
         computer vision model, encoding, and video output. Changing the hardware
         platform may require refactoring all the related algorithms.
   \item[\refstepcounter{ucnum} \uctheucnum \label{ucRocket}:]
@@ -409,7 +409,7 @@ The jetson module contains all the code that runs on the Nvidia Jetson.
 \begin{description}
   \item[Secrets:] \leavevmode
         \begin{itemize}
-          \item How to retreive and process the video feed from camera
+          \item How to retrieve and process the video feed from camera
           \item Computer vision algorithms
           \item How to start/stop recording
         \end{itemize}
@@ -429,7 +429,7 @@ The jetson module contains all the code that runs on the Nvidia Jetson.
 \begin{description}
   \item[Secrets:] \leavevmode
         \begin{itemize}
-          \item How to stablize and overlay text to the live video feed
+          \item How to stabilize and overlay text to the live video feed
           \item How to handle CV process crashes
           \item How to output video to HDMI
         \end{itemize}
@@ -546,8 +546,8 @@ system state.
 \subsection{System Status Module (\mref{mStatus})}
 
 \begin{description}
-  \item[Secrets:] How to retreive various system status
-  \item[Services:] Provide various system status (e.g. GPU ultilization, core
+  \item[Secrets:] How to retrieve various system status
+  \item[Services:] Provide various system status (e.g. GPU utilization, core
         temperature)
   \item[Implemented By:] pip package jetson-stats
   \item[Type of Module:] Library
