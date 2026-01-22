@@ -3176,6 +3176,72 @@ This module does not have any exported access programs.
   \item $1 \le backend\_port \le 65535$
 \end{itemize}
 
+\subsubsection{Formal Specification (LO\_SpecMath)}
+
+\noindent\textbf{Abstract State.}
+Let the abstract state be:
+\[
+S \triangleq (host, port, interval, step, sel)
+\]
+where
+\[
+host \in Str,\quad
+port \in \mathbb{N},\quad
+interval \in \mathbb{N},\quad
+step \in \mathbb{R},\quad
+sel \in \textit{RecId} \cup \{\bot\}.
+\]
+
+\noindent\textbf{State Invariants.}
+\[
+I_1:\ interval > 0
+\qquad
+I_2:\ step > 0
+\qquad
+I_3:\ 1 \le port \le 65535
+\]
+
+\noindent\textbf{Auxiliary Predicate.}
+\[
+valid(host,port,interval,step) \triangleq
+(host \neq ``'') \land (1 \le port \le 65535) \land (interval \in \mathbb{N} \land interval>0) \land (step \in \mathbb{R} \land step>0)
+\]
+
+\noindent\textbf{Abstract Persistence Store.}
+Assume an abstract key-value store:
+\[
+store \in (Str \rightharpoonup Str)
+\]
+that persists across restarts.
+
+\noindent\textbf{Transition Schemas (Pre/Post).}
+
+\noindent\underline{\texttt{load\_settings}}:
+\[
+\{\, true \,\}\ load\_settings\ \{\, 
+host' = store(``backend\_host'') \text{ or default } ``localhost'',\ \ldots \,\}
+\]
+(Each setting loads from \texttt{store} if present, otherwise uses the documented default.)
+
+\noindent\underline{\texttt{save\_settings}}:
+\[
+\{\, true \,\}\ save\_settings\ \{\, store' = store \oplus \{ 
+``backend\_host''\mapsto host,\ ``backend\_port''\mapsto str(port),\ ``refresh\_interval''\mapsto str(interval),\ ``move\_step''\mapsto str(step) \}\,\}
+\]
+
+\noindent\underline{\texttt{apply\_settings(h,p,i,s)}}:
+\[
+\{\, valid(h,p,i,s) \,\}\ apply\_settings(h,p,i,s)\ \{\, host'=h \land port'=p \land interval'=i \land step'=s \,\}
+\]
+If \(valid(h,p,i,s)\) is false, state does not change (and UI shows error).
+
+\noindent\underline{\texttt{set\_selected\_recording(id)}}:
+\[
+\{\, true \,\}\ set\_selected\_recording(id)\ \{\, sel' = id \,\}
+\]
+where \(id \in \textit{RecId} \cup \{\bot\}\).
+
+
 \subsubsection{Environment Variables}
 
 \begin{itemize}
