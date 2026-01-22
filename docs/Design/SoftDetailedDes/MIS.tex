@@ -1097,60 +1097,61 @@ This module does not have any exported constants.
 \noindent\textbf{Abstract State.}
 Let the abstract state be:
 \[
-S \triangleq (g)
+  S \triangleq (g)
 \]
 where
 \[
-g \in \textit{GimbalHandle} \cup \{\bot\}.
+  g \in \textit{GimbalHandle} \cup \{\bot\}.
 \]
 
 \noindent\textbf{State Invariant.}
 \[
-I_1:\ g = \bot \ \Leftrightarrow\ \text{module not initialized}
+  I_1:\ g = \bot \ \Leftrightarrow\ \text{module not initialized}
 \]
 
 \noindent\textbf{Auxiliary Predicates and Functions.}
 
 \noindent Bounding boxes are normalized:
 \[
-\text{validBBox}(b) \triangleq
-(0 \le b.\text{left} \le 1)\ \land\ (0 \le b.\text{top} \le 1)\ \land\ (0 \le b.\text{width} \le 1)\ \land\ (0 \le b.\text{height} \le 1)\ \land\ (b.\text{left} + b.\text{width} \le 1)\ \land\ (b.\text{top} + b.\text{height} \le 1).
+  \text{validBBox}(b) \triangleq
+  (0 \le b.\text{left} \le 1)\ \land\ (0 \le b.\text{top} \le 1)\ \land\ (0 \le b.\text{width} \le 1)\ \land\ (0 \le b.\text{height} \le 1)\ \land\ (b.\text{left} + b.\text{width} \le 1)\ \land\ (b.\text{top} + b.\text{height} \le 1).
 \]
 
 \noindent Define the bbox center and height:
 \[
-cx(b) \triangleq b.\text{left} + \frac{b.\text{width}}{2}, \qquad
-cy(b) \triangleq b.\text{top} + \frac{b.\text{height}}{2}, \qquad
-h(b) \triangleq b.\text{height}.
+  cx(b) \triangleq b.\text{left} + \frac{b.\text{width}}{2}, \qquad
+  cy(b) \triangleq b.\text{top} + \frac{b.\text{height}}{2}, \qquad
+  h(b) \triangleq b.\text{height}.
 \]
 
 \noindent The desired visual objective is:
 \[
-cx(b) = 0.5,\quad cy(b) = 0.5,\quad h(b) = 0.5.
+  cx(b) = 0.5,\quad cy(b) = 0.5,\quad h(b) = 0.5.
 \]
 
 \noindent We abstract the control law that converts a bbox and current gimbal state into a command (using $\theta$ for tilt and $\phi$ for pan):
 \[
-\text{controlLaw}(b, \theta, \phi, f) = (\theta_d, \phi_d, f_d)
+  \text{controlLaw}(b, \theta, \phi, f) = (\theta_d, \phi_d, f_d)
 \]
-with the intent that applying $(\theta_d, \phi_d, f_d)$ reduces the error in $(cx(b), cy(b), h(b))$ toward $(0.5, 0.5, 0.5)$.
+with the intent that applying $(\theta_d, \phi_d, f_d)$ reduces the error in
+$(cx(b), cy(b), h(b))$ toward $(0.5, 0.5, 0.5)$.
 
 \noindent\textbf{Transition Schemas (Pre/Post).}
 
 \noindent\underline{\texttt{init(gimbal)}}:
 \[
-\{\, g = \bot \,\}\ \text{init}(gimbal)\ \{\, g' = gimbal \,\}
+  \{\, g = \bot \,\}\ \text{init}(gimbal)\ \{\, g' = gimbal \,\}
 \]
 
 \noindent\underline{\texttt{step(b)}}:
 \[
-\{\, g \neq \bot \land \text{validBBox}(b) \,\}\ \text{step}(b)\ \{
-\begin{array}{l}
-(\theta, \phi) = g.\text{measure\_deg}() \ \land\ f = g.\text{get\_focal\_length}() \ \land\\
-(\theta_d, \phi_d, f_d) = \text{controlLaw}(b, \theta, \phi, f) \ \land\\
-g.\text{move\_deg}(\theta_d, \phi_d)\ \land\ g.\text{set\_focal\_length}(f_d)
-\end{array}
-\}
+  \{\, g \neq \bot \land \text{validBBox}(b) \,\}\ \text{step}(b)\ \{
+  \begin{array}{l}
+    (\theta, \phi) = g.\text{measure\_deg}() \ \land\ f = g.\text{get\_focal\_length}() \ \land \\
+    (\theta_d, \phi_d, f_d) = \text{controlLaw}(b, \theta, \phi, f) \ \land                     \\
+    g.\text{move\_deg}(\theta_d, \phi_d)\ \land\ g.\text{set\_focal\_length}(f_d)
+  \end{array}
+  \}
 \]
 
 \noindent If any gimbal call fails, \texttt{GimbalError} is raised.
@@ -1695,48 +1696,48 @@ This module does not have any exported constants.
 \noindent\textbf{Abstract State.}
 Let the abstract state be:
 \[
-S \triangleq (bp, recs, logs)
+  S \triangleq (bp, recs, logs)
 \]
 where
 \[
-bp \in Str \cup \{\bot\},
-\quad
-recs \in (\textit{RecId} \rightharpoonup \textit{RecMeta}),
-\quad
-logs \in (\textit{RecId} \rightharpoonup seq(OSDData)).
+  bp \in Str \cup \{\bot\},
+  \quad
+  recs \in (\textit{RecId} \rightharpoonup \textit{RecMeta}),
+  \quad
+  logs \in (\textit{RecId} \rightharpoonup seq(OSDData)).
 \]
 Here, \(\rightharpoonup\) is a partial function (finite map).
 
 \noindent\textbf{RecMeta structure.}
 \[
-\textit{RecMeta} \triangleq (name, videoPath, logPath)
+  \textit{RecMeta} \triangleq (name, videoPath, logPath)
 \]
 with
 \[
-name \in Str,\quad videoPath \in Str,\quad logPath \in Str.
+  name \in Str,\quad videoPath \in Str,\quad logPath \in Str.
 \]
 
 \noindent\textbf{State Invariants.}
 \[
-I_1:\ bp = \bot \Rightarrow dom(recs)=\emptyset \land dom(logs)=\emptyset
+  I_1:\ bp = \bot \Rightarrow dom(recs)=\emptyset \land dom(logs)=\emptyset
 \]
 \[
-I_2:\ dom(logs) \subseteq dom(recs)
+  I_2:\ dom(logs) \subseteq dom(recs)
 \]
 \[
-I_3:\ \forall id \in dom(recs):\ recs(id).videoPath = bp \mathbin{+\!\!+} ``/'' \mathbin{+\!\!+} id \mathbin{+\!\!+} ``/video.avi''
+  I_3:\ \forall id \in dom(recs):\ recs(id).videoPath = bp \mathbin{+\!\!+} ``/'' \mathbin{+\!\!+} id \mathbin{+\!\!+} ``/video.avi''
 \]
 \[
-I_4:\ \forall id \in dom(recs):\ recs(id).logPath = bp \mathbin{+\!\!+} ``/'' \mathbin{+\!\!+} id \mathbin{+\!\!+} ``/log.txt''
+  I_4:\ \forall id \in dom(recs):\ recs(id).logPath = bp \mathbin{+\!\!+} ``/'' \mathbin{+\!\!+} id \mathbin{+\!\!+} ``/log.txt''
 \]
 (\(+\!\!+\) denotes string concatenation.)
 
 \noindent\textbf{Auxiliary Functions.}
 \[
-freshId(recs) \triangleq \text{an } id \in \textit{RecId} \text{ such that } id \notin dom(recs).
+  freshId(recs) \triangleq \text{an } id \in \textit{RecId} \text{ such that } id \notin dom(recs).
 \]
 \[
-defaultName(t) \triangleq ``Recording\ '' \mathbin{+\!\!+} t
+  defaultName(t) \triangleq ``Recording\ '' \mathbin{+\!\!+} t
 \]
 where \(t\) is a timestamp string.
 
@@ -1744,59 +1745,59 @@ where \(t\) is a timestamp string.
 
 \noindent\underline{\texttt{init(base\_path)}}:
 \[
-\{\, true \,\}\ init(p)\ \{\, bp' = p \land recs'=\emptyset \land logs'=\emptyset \,\}
+  \{\, true \,\}\ init(p)\ \{\, bp' = p \land recs'=\emptyset \land logs'=\emptyset \,\}
 \]
 
 \noindent\underline{\texttt{allocate\_recording()}} (may raise \texttt{recordingError}):
 \[
-\{\, bp \neq \bot \,\}\ allocate\_recording()\ \{
-\begin{array}{l}
-id = freshId(recs) \ \land \\
-recs' = recs \oplus \{ id \mapsto (defaultName(now),\ bp++``/''++id++``/video.avi'',\ bp++``/''++id++``/log.txt'') \} \ \land \\
-logs' = logs \oplus \{ id \mapsto \langle \rangle \}
-\end{array}
-\}
+  \{\, bp \neq \bot \,\}\ allocate\_recording()\ \{
+  \begin{array}{l}
+    id = freshId(recs) \ \land                                                                                                    \\
+    recs' = recs \oplus \{ id \mapsto (defaultName(now),\ bp++``/''++id++``/video.avi'',\ bp++``/''++id++``/log.txt'') \} \ \land \\
+    logs' = logs \oplus \{ id \mapsto \langle \rangle \}
+  \end{array}
+  \}
 \]
 If \(bp=\bot\), \texttt{recordingError} may be raised.
 
 \noindent\underline{\texttt{read\_log\_by\_id(id)}} (observation):
 \[
-read\_log\_by\_id(id) =
-\begin{cases}
-logs(id) & \text{if } id \in dom(logs)\\
-\bot & \text{otherwise}
-\end{cases}
+  read\_log\_by\_id(id) =
+  \begin{cases}
+    logs(id) & \text{if } id \in dom(logs) \\
+    \bot     & \text{otherwise}
+  \end{cases}
 \]
 
 \noindent\underline{\texttt{get\_recording\_by\_id(id)}} (observation):
 \[
-get\_recording\_by\_id(id) =
-\begin{cases}
-\textit{RecordingInfo from } recs(id)\ \text{and } logs(id) & \text{if } id \in dom(recs)\\
-\bot & \text{otherwise}
-\end{cases}
+  get\_recording\_by\_id(id) =
+  \begin{cases}
+    \textit{RecordingInfo from } recs(id)\ \text{and } logs(id) & \text{if } id \in dom(recs) \\
+    \bot                                                        & \text{otherwise}
+  \end{cases}
 \]
 
 \noindent\underline{\texttt{list\_all\_recordings()}} (observation):
 \[
-list\_all\_recordings() = [\ get\_recording\_by\_id(id)\ |\ id \in dom(recs)\ ]
+  list\_all\_recordings() = [\ get\_recording\_by\_id(id)\ |\ id \in dom(recs)\ ]
 \]
 
 \noindent\underline{\texttt{rename\_recording(id,newName)}}:
 \[
-\{\, id \in dom(recs) \,\}\ rename\_recording(id,n)\ \{\, recs'(id).name = n \land \forall j\neq id:\ recs'(j)=recs(j) \,\}
+  \{\, id \in dom(recs) \,\}\ rename\_recording(id,n)\ \{\, recs'(id).name = n \land \forall j\neq id:\ recs'(j)=recs(j) \,\}
 \]
 If \(id \notin dom(recs)\), raise \texttt{recordingNotFoundError}.
 
 \noindent\underline{\texttt{delete\_recording(id)}}:
 \[
-\{\, id \in dom(recs) \,\}\ delete\_recording(id)\ \{\, recs' = recs \setminus \{id\} \land logs' = logs \setminus \{id\} \,\}
+  \{\, id \in dom(recs) \,\}\ delete\_recording(id)\ \{\, recs' = recs \setminus \{id\} \land logs' = logs \setminus \{id\} \,\}
 \]
 If \(id \notin dom(recs)\), raise \texttt{recordingNotFoundError}.
 
 \noindent\underline{\texttt{space\_usage\_bytes()}} (observation):
 \[
-space\_usage\_bytes() = (used,total)
+  space\_usage\_bytes() = (used,total)
 \]
 where \(used,total \in \mathbb{N}\) summarize storage usage under \(bp\).
 
@@ -2062,65 +2063,66 @@ where
 
 \noindent\textbf{State Invariants.}
 \[
-I_1:\ (cv=\bot)\ \Leftrightarrow\ (osd=\bot)
+  I_1:\ (cv=\bot)\ \Leftrightarrow\ (osd=\bot)
 \]
 \[
-I_2:\ recId \neq \bot \Rightarrow armed=\texttt{true}
+  I_2:\ recId \neq \bot \Rightarrow armed=\texttt{true}
 \]
 (Recording implies the system is armed.)
 
 \noindent\textbf{Derived Function (Tracking State).}
 \[
-trackingState(armed, cv) \triangleq
-\begin{cases}
-\texttt{`idle'} & \text{if } armed = \texttt{false}\\
-\texttt{`armed'} & \text{if } armed = \texttt{true} \land (cv=\bot \lor cv.bbox=\bot)\\
-\texttt{`tracking'} & \text{if } armed = \texttt{true} \land cv\neq\bot \land cv.bbox\neq\bot
-\end{cases}
+  trackingState(armed, cv) \triangleq
+  \begin{cases}
+    \texttt{`idle'}     & \text{if } armed = \texttt{false}                                       \\
+    \texttt{`armed'}    & \text{if } armed = \texttt{true} \land (cv=\bot \lor cv.bbox=\bot)      \\
+    \texttt{`tracking'} & \text{if } armed = \texttt{true} \land cv\neq\bot \land cv.bbox\neq\bot
+  \end{cases}
 \]
 
 \noindent\textbf{Auxiliary Functions.}
 \[
-createOSD(cv) \triangleq \text{the OSDData computed from cv and current device telemetry}
+  createOSD(cv) \triangleq \text{the OSDData computed from cv and current device telemetry}
 \]
 \[
-freshRec(recDb) \triangleq \text{a new recording id allocated by } recording\_db.allocate\_recording()
+  freshRec(recDb) \triangleq \text{a new recording id allocated by } recording\_db.allocate\_recording()
 \]
 
 \noindent\textbf{Transition Schemas (Pre/Post).}
 
 \noindent\underline{\texttt{arm}}:
 \[
-\{\, true \,\}\ arm\ \{\, armed'=\texttt{true} \land cv'=cv \land osd'=osd \land recId'=recId \,\}
+  \{\, true \,\}\ arm\ \{\, armed'=\texttt{true} \land cv'=cv \land osd'=osd \land recId'=recId \,\}
 \]
 
 \noindent\underline{\texttt{disarm}}:
 \[
-\{\, recId=\bot \,\}\ disarm\ \{\, armed'=\texttt{false} \land cv'=cv \land osd'=osd \land recId'=\bot \,\}
+  \{\, recId=\bot \,\}\ disarm\ \{\, armed'=\texttt{false} \land cv'=cv \land osd'=osd \land recId'=\bot \,\}
 \]
-If \(recId\neq\bot\), disarm is either disallowed or must first stop recording (your implementation chooses the policy; keep interface consistent).
+If \(recId\neq\bot\), disarm is either disallowed or must first stop recording
+(your implementation chooses the policy; keep interface consistent).
 
 \noindent\underline{\texttt{start\_recording}} (may raise \texttt{recordingError}):
 \[
-\{\, recId=\bot \,\}\ start\_recording\ \{\, recId' \neq \bot \land armed'=\texttt{true} \,\}
+  \{\, recId=\bot \,\}\ start\_recording\ \{\, recId' \neq \bot \land armed'=\texttt{true} \,\}
 \]
 \[
-\{\, recId\neq\bot \,\}\ start\_recording\ \text{raises } recordingError
+  \{\, recId\neq\bot \,\}\ start\_recording\ \text{raises } recordingError
 \]
 
 \noindent\underline{\texttt{stop\_recording}}:
 \[
-\{\, true \,\}\ stop\_recording\ \{\, recId'=\bot \,\}
+  \{\, true \,\}\ stop\_recording\ \{\, recId'=\bot \,\}
 \]
 
 \noindent\underline{\texttt{on\_cv\_data(d)}}:
 \[
-\{\, true \,\}\ on\_cv\_data(d)\ \{\, cv'=d \land osd'=createOSD(d) \land armed'=armed \land recId'=recId \,\}
+  \{\, true \,\}\ on\_cv\_data(d)\ \{\, cv'=d \land osd'=createOSD(d) \land armed'=armed \land recId'=recId \,\}
 \]
 
 \noindent\underline{\texttt{status()}} (observation):
 \[
-status(S) = SystemStatus(\ldots,\ tracking\_state := trackingState(armed, cv),\ \ldots)
+  status(S) = SystemStatus(\ldots,\ tracking\_state := trackingState(armed, cv),\ \ldots)
 \]
 
 % 19.4.2
@@ -3179,36 +3181,36 @@ This module does not have any exported access programs.
 \noindent\textbf{Abstract State.}
 Let the abstract state be:
 \[
-S \triangleq (host, port, interval, step, sel)
+  S \triangleq (host, port, interval, step, sel)
 \]
 where
 \[
-host \in Str,\quad
-port \in \mathbb{N},\quad
-interval \in \mathbb{N},\quad
-step \in \mathbb{R},\quad
-sel \in \textit{RecId} \cup \{\bot\}.
+  host \in Str,\quad
+  port \in \mathbb{N},\quad
+  interval \in \mathbb{N},\quad
+  step \in \mathbb{R},\quad
+  sel \in \textit{RecId} \cup \{\bot\}.
 \]
 
 \noindent\textbf{State Invariants.}
 \[
-I_1:\ interval > 0
-\qquad
-I_2:\ step > 0
-\qquad
-I_3:\ 1 \le port \le 65535
+  I_1:\ interval > 0
+  \qquad
+  I_2:\ step > 0
+  \qquad
+  I_3:\ 1 \le port \le 65535
 \]
 
 \noindent\textbf{Auxiliary Predicate.}
 \[
-valid(host,port,interval,step) \triangleq
-(host \neq ``'') \land (1 \le port \le 65535) \land (interval \in \mathbb{N} \land interval>0) \land (step \in \mathbb{R} \land step>0)
+  valid(host,port,interval,step) \triangleq
+  (host \neq ``'') \land (1 \le port \le 65535) \land (interval \in \mathbb{N} \land interval>0) \land (step \in \mathbb{R} \land step>0)
 \]
 
 \noindent\textbf{Abstract Persistence Store.}
 Assume an abstract key-value store:
 \[
-store \in (Str \rightharpoonup Str)
+  store \in (Str \rightharpoonup Str)
 \]
 that persists across restarts.
 
@@ -3216,29 +3218,28 @@ that persists across restarts.
 
 \noindent\underline{\texttt{load\_settings}}:
 \[
-\{\, true \,\}\ load\_settings\ \{\, 
-host' = store(``backend\_host'') \text{ or default } ``localhost'',\ \ldots \,\}
+  \{\, true \,\}\ load\_settings\ \{\,
+  host' = store(``backend\_host'') \text{ or default } ``localhost'',\ \ldots \,\}
 \]
 (Each setting loads from \texttt{store} if present, otherwise uses the documented default.)
 
 \noindent\underline{\texttt{save\_settings}}:
 \[
-\{\, true \,\}\ save\_settings\ \{\, store' = store \oplus \{ 
-``backend\_host''\mapsto host,\ ``backend\_port''\mapsto str(port),\ ``refresh\_interval''\mapsto str(interval),\ ``move\_step''\mapsto str(step) \}\,\}
+  \{\, true \,\}\ save\_settings\ \{\, store' = store \oplus \{
+  ``backend\_host''\mapsto host,\ ``backend\_port''\mapsto str(port),\ ``refresh\_interval''\mapsto str(interval),\ ``move\_step''\mapsto str(step) \}\,\}
 \]
 
 \noindent\underline{\texttt{apply\_settings(h,p,i,s)}}:
 \[
-\{\, valid(h,p,i,s) \,\}\ apply\_settings(h,p,i,s)\ \{\, host'=h \land port'=p \land interval'=i \land step'=s \,\}
+  \{\, valid(h,p,i,s) \,\}\ apply\_settings(h,p,i,s)\ \{\, host'=h \land port'=p \land interval'=i \land step'=s \,\}
 \]
 If \(valid(h,p,i,s)\) is false, state does not change (and UI shows error).
 
 \noindent\underline{\texttt{set\_selected\_recording(id)}}:
 \[
-\{\, true \,\}\ set\_selected\_recording(id)\ \{\, sel' = id \,\}
+  \{\, true \,\}\ set\_selected\_recording(id)\ \{\, sel' = id \,\}
 \]
 where \(id \in \textit{RecId} \cup \{\bot\}\).
-
 
 \subsubsection{Environment Variables}
 
