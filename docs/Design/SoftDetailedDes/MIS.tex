@@ -1961,7 +1961,6 @@ This module does not have any local functions.
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-% 19
 %19
 \section{MIS of State Management Module (\mref{mState})} \wss{Use labels for
   cross-referencing}
@@ -2050,7 +2049,7 @@ This module does not have any exported constants.
 \subsubsection{Formal Specification (LO\_SpecMath)}
 
 \noindent\textbf{Abstract State.}
-Let the abstract state of this module be:
+Let the abstract state be:
 \[
 S \triangleq (armed, cv, osd, recId)
 \]
@@ -2064,15 +2063,14 @@ recId \in \textit{RecId} \cup \{\bot\}.
 
 \noindent\textbf{State Invariants.}
 \[
-I_1:\ \ (cv = \bot) \Leftrightarrow (osd = \bot)
+I_1:\ (cv=\bot)\ \Leftrightarrow\ (osd=\bot)
 \]
 \[
-I_2:\ \ recId \neq \bot \Rightarrow armed = \texttt{true} \ \lor \ armed = \texttt{false}
+I_2:\ recId \neq \bot \Rightarrow armed=\texttt{true}
 \]
-% (I2 is intentionally weak; you can replace with something stronger if desired.)
+(Recording implies the system is armed.)
 
 \noindent\textbf{Derived Function (Tracking State).}
-Define:
 \[
 trackingState(armed, cv) \triangleq
 \begin{cases}
@@ -2082,39 +2080,48 @@ trackingState(armed, cv) \triangleq
 \end{cases}
 \]
 
+\noindent\textbf{Auxiliary Functions.}
+\[
+createOSD(cv) \triangleq \text{the OSDData computed from cv and current device telemetry}
+\]
+\[
+freshRec(recDb) \triangleq \text{a new recording id allocated by } recording\_db.allocate\_recording()
+\]
+
 \noindent\textbf{Transition Schemas (Pre/Post).}
 
 \noindent\underline{\texttt{arm}}:
 \[
-\{\, true \,\}\ \ arm\ \ \{\, armed' = \texttt{true} \land cv' = cv \land osd' = osd \land recId' = recId \,\}
+\{\, true \,\}\ arm\ \{\, armed'=\texttt{true} \land cv'=cv \land osd'=osd \land recId'=recId \,\}
 \]
 
 \noindent\underline{\texttt{disarm}}:
 \[
-\{\, true \,\}\ \ disarm\ \ \{\, armed' = \texttt{false} \land cv' = cv \land osd' = osd \land recId' = recId \,\}
+\{\, recId=\bot \,\}\ disarm\ \{\, armed'=\texttt{false} \land cv'=cv \land osd'=osd \land recId'=\bot \,\}
 \]
+If \(recId\neq\bot\), disarm is either disallowed or must first stop recording (your implementation chooses the policy; keep interface consistent).
 
 \noindent\underline{\texttt{start\_recording}} (may raise \texttt{recordingError}):
 \[
-\{\, recId = \bot \,\}\ \ start\_recording\ \ \{\, recId' \neq \bot \,\}
+\{\, recId=\bot \,\}\ start\_recording\ \{\, recId' \neq \bot \land armed'=\texttt{true} \,\}
 \]
 \[
-\{\, recId \neq \bot \,\}\ \ start\_recording\ \ \text{raises } recordingError
+\{\, recId\neq\bot \,\}\ start\_recording\ \text{raises } recordingError
 \]
 
 \noindent\underline{\texttt{stop\_recording}}:
 \[
-\{\, true \,\}\ \ stop\_recording\ \ \{\, recId' = \bot \,\}
+\{\, true \,\}\ stop\_recording\ \{\, recId'=\bot \,\}
 \]
 
-\noindent\underline{\texttt{status}} (pure observation):
+\noindent\underline{\texttt{on\_cv\_data(d)}}:
+\[
+\{\, true \,\}\ on\_cv\_data(d)\ \{\, cv'=d \land osd'=createOSD(d) \land armed'=armed \land recId'=recId \,\}
+\]
+
+\noindent\underline{\texttt{status()}} (observation):
 \[
 status(S) = SystemStatus(\ldots,\ tracking\_state := trackingState(armed, cv),\ \ldots)
-\]
-
-\noindent\underline{\texttt{on\_cv\_data}} (event handler):
-\[
-\{\, true \,\}\ \ on\_cv\_data(d)\ \ \{\, cv' = d \land osd' = createOSD(d) \,\}
 \]
 
 
