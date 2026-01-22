@@ -239,63 +239,146 @@ responsible modules and interfaces.
 
 \subsection{Design Decisions Traced to SRS Requirements}
 
-\begin{itemize}
-  \item \textbf{Single control surface via REST API (\mref{mAPI}):}
-        All operator actions and status queries are mediated by the API Gateway.
-        This supports remote operation over a local network (SCR-3) and keeps the UI
-        decoupled from backend implementation details (FR-10, FR-6, FR-11, FR-12).
+This section records key architectural decisions made to satisfy the SRS.
+For each decision, we summarize the intent, the modules responsible for the
+decision, and the traced SRS requirement identifiers.
 
-  \item \textbf{Explicit state machine and safe transitions (\mref{mState}):}
-        System modes (idle/armed/tracking/recording) are owned by State Management.
-        Manual override to leave armed/tracking is enforced through state transitions
-        (SCR-1), and arming occurs only by explicit user command (SCR-4). This ensures
-        predictable behavior for core workflows (FR-4, FR-5, FR-6).
+\begin{description}
 
-  \item \textbf{Validated command path for hardware safety (\mref{mAPI}, \mref{mManual}, \mref{mGimbal}):}
-        User inputs are validated before gimbal actuation to prevent invalid commands
-        (IR-1). Manual control is only available in idle state (FR-6), while the
-        tracking loop issues motion commands autonomously (FR-2, FR-7).
+  \item[\textbf{DD-1: Single control surface via REST API}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} All operator commands and status queries are mediated by a single
+          API Gateway. The UI does not directly access Jetson processes or hardware.
+    \item \textbf{Rationale:} A single, stable interface supports remote operation over a local
+          network and isolates UI changes from backend changes. It also provides one place to
+          enforce validation, authorization, and consistent error handling.
+    \item \textbf{Modules:} \mref{mAPI} (primary), \mref{mUI} (client), \mref{mState} (state/query source)
+    \item \textbf{SRS Trace:} SCR-3; FR-6, FR-10, FR-11, FR-12
+  \end{itemize}
 
-  \item \textbf{Process separation for real-time performance (\mref{mCV}, \mref{mVideo}, \mref{mTranscode}):}
-        Vision/tracking, live output, and transcoding are separated into worker
-        processes to protect throughput and latency. This supports sustained handling
-        of 1080p 60fps (SLR-2) and continuous live output (SLR-3), while preventing
-        offline work (transcode) from degrading tracking responsiveness.
+  \item[\textbf{DD-2: Explicit state machine with safe transitions}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} System operation is modeled as explicit modes (e.g., Disarmed/Armed/Tracking/Recording),
+          with all transitions owned and validated by the State Management module.
+    \item \textbf{Rationale:} A centralized state machine prevents invalid mode combinations, makes
+          safety constraints enforceable, and provides predictable behavior for core workflows.
+          Manual override is treated as a controlled transition rather than ad-hoc interruption.
+    \item \textbf{Modules:} \mref{mState} (primary), \mref{mControl} (enforces/propagates), \mref{mAPI} (transition entry point)
+    \item \textbf{SRS Trace:} SCR-1, SCR-4; FR-4, FR-5, FR-6
+  \end{itemize}
 
-  \item \textbf{Dedicated worker supervision (\mref{mControl}, \mref{mCVManagement}, \mref{mVideoManagement}, \mref{mTranscodeManagement}):}
-        Control/management modules start/stop and monitor workers so failures can be
-        reported and recovered cleanly, supporting error visibility (RFR-1) and safe
-        behavior on unrecoverable faults (RFR-2).
+  \item[\textbf{DD-3: Validated command path for hardware safety}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} All gimbal motion commands (manual or automatic) pass through a validated
+          command path before actuation (range checks, rate limiting, and state checks).
+    \item \textbf{Rationale:} Hardware actuation is safety-critical. Validation prevents invalid or unsafe
+          commands (e.g., out-of-range angles) and ensures manual control is only available in permitted
+          modes while tracking commands remain autonomous during tracking.
+    \item \textbf{Modules:} \mref{mAPI} (validation entry), \mref{mState} (mode gating), \mref{mGimbal} (actuation),
+          \mref{mManual} (manual input), \mref{mTrack} (automatic commands)
+    \item \textbf{SRS Trace:} IR-1; FR-2, FR-6, FR-7
+  \end{itemize}
 
-  \item \textbf{Offline-first operation (\mref{mAPI}, \mref{mUI}, \mref{mRecord}):}
-        The system is designed to operate without public internet access (RFR-3, AS-1)
-        and exposes all functions over a local network only (SCR-3).
+  \item[\textbf{DD-4: Process separation for real-time performance}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} Vision/tracking, live output, and offline transcoding are separated into
+          dedicated worker processes.
+    \item \textbf{Rationale:} Separating CPU/GPU-heavy workloads prevents offline work (e.g., transcode)
+          from degrading tracking responsiveness. It also allows independent scheduling and failure isolation
+          to maintain sustained throughput for 1080p 60 fps operation and continuous output.
+    \item \textbf{Modules:} \mref{mCV}, \mref{mVideo}, \mref{mTranscode} (worker processes), \mref{mStream} (stream abstraction)
+    \item \textbf{SRS Trace:} SLR-2, SLR-3
+  \end{itemize}
 
-  \item \textbf{Recording + management as first-class workflow (\mref{mRecordMng}, \mref{mRecord}, \mref{mTranscode}):}
-        Recording and associated logs are initiated from the UI (FR-11) and stored with
-        metadata to support listing/deleting/downloading (FR-12). Separating record and
-        transcode aligns with performance goals (SLR-2/SLR-3) and supports post-flight
-        review use cases (PUC 5).
+  \item[\textbf{DD-5: Dedicated worker supervision and recovery}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} Worker lifecycles (start/stop/health monitoring/restart) are managed by explicit
+          management modules under the Control Process.
+    \item \textbf{Rationale:} Supervising workers improves robustness and observability: failures can be detected,
+          surfaced to the operator, and recovered when possible; unrecoverable faults trigger safe behavior.
+    \item \textbf{Modules:} \mref{mControl} (orchestration), \mref{mCVManagement}, \mref{mVideoManagement}, \mref{mTranscodeManagement}
+    \item \textbf{SRS Trace:} RFR-1, RFR-2
+  \end{itemize}
 
-  \item \textbf{HDMI live output pipeline (\mref{mStream}, \mref{mVideo}):}
-        The live output path is treated as a required interface to adjacent systems via
-        HDMI (INT-1). The stream abstraction localizes encoder/pipeline choices while
-        ensuring consistent output format (SLR-3).
+  \item[\textbf{DD-6: Offline-first operation on local network}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} RoCam operates without public internet access; all control and status exchange
+          occurs over the local network through the API.
+    \item \textbf{Rationale:} Field deployments may lack reliable internet. Offline-first design improves reliability,
+          reduces external dependencies, and aligns with the remote-operation constraint over LAN.
+    \item \textbf{Modules:} \mref{mAPI}, \mref{mUI} (LAN client), \mref{mState} (local status), \mref{mRecord} (local storage)
+    \item \textbf{SRS Trace:} RFR-3, AS-1; SCR-3
+  \end{itemize}
 
-  \item \textbf{Auditable operations (\mref{mState}, \mref{mRecord}, \mref{mAPI}):}
-        User actions (arm/disarm, manual moves, record start/stop, delete/download) are
-        logged with timestamps to satisfy audit requirements (AUR-1) and to support
-        troubleshooting and analysis.
+  \item[\textbf{DD-7: Recording and recording management as a first-class workflow}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} Recording is initiated from the UI and stored with metadata to support listing,
+          downloading, and deletion; transcoding is performed asynchronously from tracking.
+    \item \textbf{Rationale:} Recording is a primary operational requirement and must not degrade real-time tracking.
+          Separating recording storage/metadata from transcoding supports post-flight review while preserving real-time performance.
+    \item \textbf{Modules:} \mref{mRecordMng} (UI workflow), \mref{mRecord} (metadata/files), \mref{mCV} (capture),
+          \mref{mTranscode} (offline conversion), \mref{mAPI} (endpoints)
+    \item \textbf{SRS Trace:} FR-11, FR-12; SLR-2, SLR-3
+  \end{itemize}
 
-\end{itemize}
+  \item[\textbf{DD-8: HDMI live output via stream abstraction}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} The live output pipeline is treated as a required external interface and is implemented
+          through a stream abstraction module to isolate encoder/pipeline choices.
+    \item \textbf{Rationale:} Treating HDMI output as an explicit interface ensures compatibility with adjacent systems.
+          Encapsulation makes it easier to swap pipeline configurations without changing higher-level logic.
+    \item \textbf{Modules:} \mref{mStream} (abstraction), \mref{mVideo} (output process), \mref{mJetson} (platform)
+    \item \textbf{SRS Trace:} INT-1; SLR-3
+  \end{itemize}
+
+  \item[\textbf{DD-9: Auditable operator actions and system events}] \leavevmode
+  \begin{itemize}
+    \item \textbf{Decision:} Operator actions and key system events (state transitions, record start/stop,
+          file deletion/download) are logged with timestamps and relevant metadata.
+    \item \textbf{Rationale:} Audit logs support post-flight analysis, troubleshooting, and accountability.
+          Centralizing logging through state/record management ensures consistency across features.
+    \item \textbf{Modules:} \mref{mState} (state/action events), \mref{mRecord} (recording events/files), \mref{mAPI} (request context)
+    \item \textbf{SRS Trace:} AUR-1
+  \end{itemize}
+
+\end{description}
+
 
 \subsection{Traceability Conventions}
 
-In the traceability tables, each SRS requirement (FR/SLR/SCR/IR/AUR/INT) is
-mapped to the modules responsible for implementing and verifying it. Where
-requirements are cross-cutting (e.g., SCR-3 remote operation, RFR-1 error
-reporting), they are intentionally traced to both interface modules (UI/API)
-and the backend modules that provide the underlying behavior.
+In the traceability tables, each SRS requirement identifier (e.g.,
+FR, SLR, SCR, IR, AUR, INT, RFR, PAR, AR/SR, EZ/PI/UPR/LR, EPE, RR, CR, AS)
+is mapped to the module(s) responsible for implementing and supporting that
+requirement.
+
+The conventions used are:
+
+\begin{itemize}
+  \item \textbf{Implementation responsibility:} A requirement is traced to the
+        \emph{leaf module(s)} that implement the required behavior. Container
+        modules (e.g., \mref{mJetson}, \mref{mControl}, \mref{mUI}) may appear
+        only when the requirement is inherently system-level or spans multiple
+        leaf modules.
+
+  \item \textbf{Primary vs.\ supporting modules:} When one module is the main
+        owner of the behavior (e.g., \mref{mState} for mode transitions), it is
+        listed first. Additional modules are included when they provide
+        essential support (e.g., UI initiation, API mediation, hardware
+        actuation, storage).
+
+  \item \textbf{Cross-cutting requirements:} Requirements that affect multiple
+        parts of the system (e.g., SCR-3 remote operation, RFR-1 error reporting,
+        auditability AUR-1) are intentionally traced to both:
+        (i) the \emph{interface modules} that expose the behavior (UI/API), and
+        (ii) the \emph{backend modules} that realize the underlying functionality.
+
+  \item \textbf{Verification intent:} Traced modules are expected to provide
+        the artifacts needed to verify the requirement (e.g., unit tests for
+        pure logic modules, integration tests for API/UI interactions, and
+        end-to-end tests for performance and operational requirements).
+
+\end{itemize}
+
 
 \wss{The intention of this section is to document decisions that are made
   ``between'' the requirements and the design.  To satisfy some requirements,
