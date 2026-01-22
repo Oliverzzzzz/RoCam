@@ -911,9 +911,9 @@ The Operator Interface API Protocol is specified at:
 
 \wss{If appropriate}
 
-\section{Timeline}
+\section{Timeline} \label{SecTimeline}
 
-% >>> added: short, rubric-aligned preface, while keeping details in the link
+% >>> rubric-aligned preface (keep your link)
 This project tracks a module-level implementation schedule for Rev 0, including
 task ownership and lightweight verification checkpoints to build confidence in
 the integrated system. The authoritative and up-to-date plan (tasks, assignees,
@@ -924,8 +924,101 @@ dependencies, and status) is maintained in GitHub Projects:
 \url{https://github.com/orgs/SpaceY-Labs/projects/2}
 \medskip
 
-% >>> added: a single sentence that explicitly says everything is in the link
-All detailed timeline information is provided in the link above.
+% >>> IMPORTANT: the PDF still needs an in-document timeline snapshot (rubric)
+% Simple tables only (no tabularx)
+
+\subsection{Rev 0 Timeline Snapshot}
+
+\subsubsection{Phase 1: Core Interfaces and State Backbone}
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{2.6cm}|p{5.2cm}|p{6.2cm}|}
+\hline
+\textbf{Dates} & \textbf{Modules} & \textbf{Deliverables / Checks} \\
+\hline
+Jan 21--Jan 24 &
+\mref{mSerial}, \mref{mGimbal} &
+Serial I/O wrapper + gimbal command/telemetry API (pan/tilt setpoint, readback);
+bounds/rate checks; bench test with dummy commands. \\
+\hline
+Jan 22--Jan 26 &
+\mref{mState} &
+Define modes + valid transitions (Disarmed/Armed/Tracking/Recording);
+unit tests for transition validity. \\
+\hline
+Jan 23--Jan 28 &
+\mref{mAPI} &
+Implement core REST endpoints (status, state transitions, manual control,
+record start/stop, recordings list/download/delete); basic contract tests
+vs endpoint spec. \\
+\hline
+\end{tabular}
+\caption{Phase 1 schedule (snapshot). Owners and latest status are maintained in GitHub Projects.}
+\label{TblTimelineP1}
+\end{table}
+
+\subsubsection{Phase 2: Runtime Pipelines and UI Workflows}
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{2.6cm}|p{5.2cm}|p{6.2cm}|}
+\hline
+\textbf{Dates} & \textbf{Modules} & \textbf{Deliverables / Checks} \\
+\hline
+Jan 24--Jan 30 &
+\mref{mCV} &
+CV worker: camera ingest, detection output format, preview stream output,
+recording start/stop hooks; smoke test on sample clip. \\
+\hline
+Jan 25--Feb 01 &
+\mref{mTrack} &
+Tracking logic: detection$\rightarrow$gimbal angles; clamp/rate limit; integrate
+with \mref{mState} gating; offline replay test on saved detections. \\
+\hline
+Jan 26--Feb 02 &
+\mref{mVideo}, \mref{mStream} &
+Live output pipeline: overlay telemetry, HDMI output path, handle CV worker
+restart signaling; sustained live output demo. \\
+\hline
+Jan 27--Feb 03 &
+\mref{mRecord}, \mref{mTranscode} &
+Recording metadata DB + file indexing; transcode job (async) with optional overlay;
+create$\rightarrow$transcode$\rightarrow$playback check. \\
+\hline
+Jan 24--Feb 04 &
+\mref{mPreview}, \mref{mManual}, \mref{mRecordMng}, \mref{mConfig} &
+UI workflows: preview display, manual D-pad control with telemetry, recording
+management (list/download/delete), basic configuration UI; end-to-end UI$\leftrightarrow$API tests. \\
+\hline
+\end{tabular}
+\caption{Phase 2 schedule (snapshot). Owners and latest status are maintained in GitHub Projects.}
+\label{TblTimelineP2}
+\end{table}
+
+\subsubsection{Phase 3: Orchestration, Recovery, and Integrated Demo}
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{2.6cm}|p{5.2cm}|p{6.2cm}|}
+\hline
+\textbf{Dates} & \textbf{Modules} & \textbf{Deliverables / Checks} \\
+\hline
+Feb 02--Feb 06 &
+\mref{mControl}, \mref{mCVManagement}, \mref{mVideoManagement}, \mref{mTranscodeManagement} &
+Worker supervision: start/stop, health monitoring, restart, status surfaced to UI;
+fault-injection check (kill worker$\rightarrow$recover). \\
+\hline
+Feb 05--Feb 08 &
+System-level &
+Integrated demo script: Disarmed manual aim$\rightarrow$Arm$\rightarrow$Track$\rightarrow$Record$\rightarrow$Download/Review;
+final checklist run. \\
+\hline
+\end{tabular}
+\caption{Phase 3 schedule (snapshot). Owners and latest status are maintained in GitHub Projects.}
+\label{TblTimelineP3}
+\end{table}
+
 
 \bibliographystyle {plainnat}
 \bibliography{../../../refs/References}
