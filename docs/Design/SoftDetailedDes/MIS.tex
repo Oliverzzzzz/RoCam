@@ -256,7 +256,7 @@ Coordinates are normalized (0.0 to 1.0).
     gimbal\_pan\_deg          & float                             & Text to be rendered on the frame                          \\
     gimbal\_focal\_length\_mm & float                             & Text to be rendered on the frame                          \\
     device\_ip\_addresses     & str[]                             & Text to be rendered on the frame                          \\
-    unix\_timestamp\_ms       & int                               & Text to be rendered on the frame                          \\
+    timestamp\_ms       & int                               & Text to be rendered on the frame                          \\
     tracking\_state           & 'idle' $|$ 'armed' $|$ 'tracking' & Text to be rendered on the frame                          \\
     longitude                 & float                             & Longitude coordinate                                      \\
     latitude                  & float                             & Latitude coordinate                                       \\
@@ -299,7 +299,7 @@ Empty structure with no fields.
     tracking\_state             & 'idle' $|$ 'armed' $|$ 'tracking' & Current tracking state                                          \\
     preview                     & bytes                             & Preview image data                                              \\
     osd\_data                   & \texttt{OSDData} $|$ null         & On-screen display data, null if not available                   \\
-    unix\_timestamp\_ms         & int                               & System time in milliseconds                                     \\
+    timestamp\_ms         & int                               & System time in milliseconds                                     \\
     longitude                   & float $|$ null                    & Longitude coordinate, null if not available                     \\
     latitude                    & float $|$ null                    & Latitude coordinate, null if not available                      \\
     gpu\_utilization            & float                             & GPU utilization percentage (0.0 to 100.0)                       \\
@@ -982,7 +982,7 @@ This module does not have any exported constants.
     \hline
     \textbf{Name}    & \textbf{In}                       & \textbf{Out}             & \textbf{Exceptions} \\
     \hline
-    start\_transcode & recording: \texttt{RecordingInfo} & output\_video\_pipe: str & -                   \\
+    start\_transcode & recording: \texttt{RecordingInfo} & output\_video\_stream: str & -                   \\
     \hline
   \end{tabular}
 \end{center}
@@ -1020,11 +1020,11 @@ This module does not have any environment variables.
   \item transition:
         \begin{itemize}
           \item Create a temporary output stream and save the path to
-                \texttt{output\_video\_pipe}.
+                \texttt{output\_video\_stream}.
           \item Start the Transcode Process Module (\mref{mTranscode}) in a separate process
-                with the given recording and \texttt{output\_video\_pipe}.
+                with the given recording and \texttt{output\_video\_stream}.
         \end{itemize}
-  \item output: output\_video\_pipe: str
+  \item output: output\_video\_stream: str
   \item exception: None
 \end{itemize}
 
@@ -1885,10 +1885,10 @@ This module does not have any assumptions.
                         \begin{itemize}
                           \item id: The given ID.
                           \item name: The name in the \texttt{meta.json}.
-                          \item start\_time: Convert the first \texttt{OSDData.unix\_timestamp\_ms} in
+                          \item start\_time: Convert the first \texttt{OSDData.timestamp\_ms} in
                                 \texttt{logs} to a string representation.
                           \item duration\_seconds: The difference between the last and first
-                                \texttt{OSDData.unix\_timestamp\_ms} in \texttt{logs} (in seconds).
+                                \texttt{OSDData.timestamp\_ms} in \texttt{logs} (in seconds).
                           \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}.
                           \item log\_path: \texttt{\{base\_path\}/\{recording\_id\}/log.txt}.
                         \end{itemize}
@@ -2020,7 +2020,7 @@ This module does not have any exported constants.
     \hline
     stop\_recording     & -                   & -                        & -                      \\
     \hline
-    download\_recording & recording\_id: str  & output\_video\_pipe: str & recordingNotFoundError \\
+    download\_recording & recording\_id: str  & output\_video\_stream: str & recordingNotFoundError \\
     \hline
   \end{tabular}
 \end{center}
@@ -2220,7 +2220,7 @@ This module does not have any environment variables.
                 \end{itemize}
           \item preview: \texttt{cv\_data.preview}.
           \item osd\_data: \texttt{osd\_data}.
-          \item unix\_timestamp\_ms: Get from system time.
+          \item timestamp\_ms: Get from system time.
           \item longitude: Extract from \texttt{gimbal.get\_gps\_data()} coordinates (first
                 element of tuple if coordinates is not None, else null).
           \item latitude: Extract from \texttt{gimbal.get\_gps\_data()} coordinates (second
@@ -2294,11 +2294,11 @@ This module does not have any environment variables.
           \item Let recording\_info =
                 \texttt{recording\_db.get\_recording\_by\_id(recording\_id)}.
           \item (if recording\_info is null): Return recordingNotFoundError.
-          \item Let output\_video\_pipe =
+          \item Let output\_video\_stream =
                 \texttt{transcode\_process\_mng.start\_transcode(recording\_info)}.
-          \item Return \texttt{output\_video\_pipe}.
+          \item Return \texttt{output\_video\_stream}.
         \end{itemize}
-  \item output: output\_video\_pipe: str
+  \item output: output\_video\_stream: str
   \item exception: recordingNotFoundError, recordingInProgressError
 \end{itemize}
 
@@ -2326,7 +2326,7 @@ This module does not have any environment variables.
           \item gimbal\_pan\_deg: From \texttt{gimbal.measure\_deg()}.
           \item gimbal\_focal\_length\_mm: From \texttt{gimbal.get\_focal\_length()}.
           \item device\_ip\_addresses: Get from system network interfaces.
-          \item unix\_timestamp\_ms: Get from system time.
+          \item timestamp\_ms: Get from system time.
           \item tracking\_state:
                 \begin{itemize}
                   \item If \texttt{is\_armed} is false, return 'idle'.
@@ -2575,9 +2575,9 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Let output\_video\_pipe =
+          \item Let output\_video\_stream =
                 \texttt{state\_management.download\_recording(recordingId)}.
-          \item Stream the file at \texttt{output\_video\_pipe} as binary data with
+          \item Stream the file at \texttt{output\_video\_stream} as binary data with
                 Content-Type: video/mp4.
         \end{itemize}
   \item output: Binary video file stream
