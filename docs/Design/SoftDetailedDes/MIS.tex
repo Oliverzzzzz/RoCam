@@ -256,7 +256,7 @@ Coordinates are normalized (0.0 to 1.0).
     gimbal\_pan\_deg          & float                             & Text to be rendered on the frame                          \\
     gimbal\_focal\_length\_mm & float                             & Text to be rendered on the frame                          \\
     device\_ip\_addresses     & str[]                             & Text to be rendered on the frame                          \\
-    timestamp\_ms       & int                               & Text to be rendered on the frame                          \\
+    timestamp\_ms             & int                               & Text to be rendered on the frame                          \\
     tracking\_state           & 'idle' $|$ 'armed' $|$ 'tracking' & Text to be rendered on the frame                          \\
     longitude                 & float                             & Longitude coordinate                                      \\
     latitude                  & float                             & Latitude coordinate                                       \\
@@ -299,7 +299,7 @@ Empty structure with no fields.
     tracking\_state             & 'idle' $|$ 'armed' $|$ 'tracking' & Current tracking state                                          \\
     preview                     & bytes                             & Preview image data                                              \\
     osd\_data                   & \texttt{OSDData} $|$ null         & On-screen display data, null if not available                   \\
-    timestamp\_ms         & int                               & System time in milliseconds                                     \\
+    timestamp\_ms               & int                               & System time in milliseconds                                     \\
     longitude                   & float $|$ null                    & Longitude coordinate, null if not available                     \\
     latitude                    & float $|$ null                    & Latitude coordinate, null if not available                      \\
     gpu\_utilization            & float                             & GPU utilization percentage (0.0 to 100.0)                       \\
@@ -980,7 +980,7 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}    & \textbf{In}                       & \textbf{Out}             & \textbf{Exceptions} \\
+    \textbf{Name}    & \textbf{In}                       & \textbf{Out}               & \textbf{Exceptions} \\
     \hline
     start\_transcode & recording: \texttt{RecordingInfo} & output\_video\_stream: str & -                   \\
     \hline
@@ -1885,8 +1885,8 @@ This module does not have any assumptions.
                         \begin{itemize}
                           \item id: The given ID.
                           \item name: The name in the \texttt{meta.json}.
-                          \item start\_time: Convert the first \texttt{OSDData.timestamp\_ms} in
-                                \texttt{logs} to a string representation.
+                          \item start\_time: Convert the first \texttt{OSDData.timestamp\_ms} in \texttt{logs}
+                                to a string representation.
                           \item duration\_seconds: The difference between the last and first
                                 \texttt{OSDData.timestamp\_ms} in \texttt{logs} (in seconds).
                           \item video\_path: \texttt{\{base\_path\}/\{recording\_id\}/video.avi}.
@@ -2002,23 +2002,23 @@ This module does not have any exported constants.
 \begin{center}
   \begin{tabular}{p{3cm} p{4cm} p{4cm} p{3.5cm}}
     \hline
-    \textbf{Name}       & \textbf{In}         & \textbf{Out}             & \textbf{Exceptions}    \\
+    \textbf{Name}       & \textbf{In}         & \textbf{Out}               & \textbf{Exceptions}    \\
     \hline
-    init                & -                   & -                        & -                      \\
+    init                & -                   & -                          & -                      \\
     \hline
-    arm                 & -                   & -                        & -                      \\
+    arm                 & -                   & -                          & -                      \\
     \hline
-    disarm              & -                   & -                        & -                      \\
+    disarm              & -                   & -                          & -                      \\
     \hline
-    status              & -                   & \texttt{SystemStatus}    & -                      \\
+    status              & -                   & \texttt{SystemStatus}      & -                      \\
     \hline
-    manual\_move        & direction: str      & -                        & -                      \\
+    manual\_move        & direction: str      & -                          & -                      \\
     \hline
-    manual\_move\_to    & tilt: f32, pan: f32 & -                        & -                      \\
+    manual\_move\_to    & tilt: f32, pan: f32 & -                          & -                      \\
     \hline
-    start\_recording    & -                   & -                        & -                      \\
+    start\_recording    & -                   & -                          & -                      \\
     \hline
-    stop\_recording     & -                   & -                        & -                      \\
+    stop\_recording     & -                   & -                          & -                      \\
     \hline
     download\_recording & recording\_id: str  & output\_video\_stream: str & recordingNotFoundError \\
     \hline
