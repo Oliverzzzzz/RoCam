@@ -663,20 +663,6 @@ requirements and between the modules and the anticipated changes.
   \label{TblRT}
 \end{table}
 
-% M1: Jetson Module (\mref{mJetson})
-% M2: Gimbal Abstraction Module (\mref{mGimbal})
-% M3: Computer Vision Module (\mref{mCV})
-% M4: Tracking Module (\mref{mTrack})
-% M5: Output Video Module (\mref{mVideo}) 
-% M6: Recording Module (\mref{mRecord})
-% M7: State Management Module (\mref{mState})
-% M8: API Gateway Module (\mref{mAPI})
-% M9: UI Module (\mref{mUI})
-% M10: Preview Module (\mref{mPreview})
-% M11: Manual Control Module (\mref{mManual})
-% M12: Recording Management Module (\mref{mRecordMng})
-% M13: Configuration Module (\mref{mConfig})
-
 \begin{table}[H]
   \centering
   \begin{tabular}{p{0.15\textwidth} p{0.75\textwidth}}
@@ -856,8 +842,6 @@ because they use modules from the lower levels.
   \label{FigUH}
 \end{figure}
 
-%\section*{References}
-
 \section{User Interfaces}
 
 The system provides a single-page web interface for the operator. This web UI
@@ -873,7 +857,6 @@ and real-time gimbal pose telemetry, including \textit{Tilt} and \textit{Pan}
 angles. The top-right corner includes \textit{Fullscreen} for better field
 visibility and an \textit{Emergency Stop} control for safety-critical shutdown.
 
-% ---- Image 1: overview screenshot ----
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../../Images/rocam_ui_overview.png}
@@ -892,7 +875,6 @@ control logic running on the Jetson. The UI continuously updates the displayed
 gimbal angles so the emphasizes to the operator the immediate effect of each
 command.
 
-% ---- Image 2: disarmed/manual control screenshot ----
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../../Images/rocam_ui_disarmed.png}
@@ -931,13 +913,19 @@ The Operator Interface API Protocol is specified at:
 
 \section{Timeline}
 
-\wss{Schedule of tasks and who is responsible}
+% >>> added: short, rubric-aligned preface, while keeping details in the link
+This project tracks a module-level implementation schedule for Rev 0, including
+task ownership and lightweight verification checkpoints to build confidence in
+the integrated system. The authoritative and up-to-date plan (tasks, assignees,
+dependencies, and status) is maintained in GitHub Projects:
 
-\wss{You can point to GitHub if this information is included there}
+\medskip
+\noindent\textbf{RoCam Rev 0 Timeline (GitHub Projects):}
+\url{https://github.com/orgs/SpaceY-Labs/projects/2}
+\medskip
 
-For timeline management, we use GitHub Projects. The timeline for implementing
-each of the modules can be found at
-\url{https://github.com/orgs/SpaceY-Labs/projects/2}.
+% >>> added: a single sentence that explicitly says everything is in the link
+All detailed timeline information is provided in the link above.
 
 \bibliographystyle {plainnat}
 \bibliography{../../../refs/References}
