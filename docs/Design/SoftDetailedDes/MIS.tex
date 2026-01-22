@@ -77,8 +77,8 @@ urlcolor=cyan          % color of external links
   \midrule
   Nov. 10, 2025       & Rev -1        & Initial Draft            \\
   Nov. 16, 2025       & -             & Fix Peer Review Comments \\
-  Jan. 19, 2025       & Rev 0        & Team Work                \\
-  Jan. 21, 2025       & Rev 0        & Team Review               \\
+  Jan. 19, 2025       & Rev 0         & Team Work                \\
+  Jan. 21, 2025       & Rev 0         & Team Review              \\
   \bottomrule
 \end{tabularx}
 
@@ -299,7 +299,7 @@ Empty structure with no fields.
     tracking\_state             & 'idle' $|$ 'armed' $|$ 'tracking' & Current tracking state                                          \\
     preview                     & bytes                             & Preview image data                                              \\
     osd\_data                   & \texttt{OSDData} $|$ null         & On-screen display data, null if not available                   \\
-    unix\_timestamp\_ms         & int                               & System time in milliseconds                                  \\
+    unix\_timestamp\_ms         & int                               & System time in milliseconds                                     \\
     longitude                   & float $|$ null                    & Longitude coordinate, null if not available                     \\
     latitude                    & float $|$ null                    & Latitude coordinate, null if not available                      \\
     gpu\_utilization            & float                             & GPU utilization percentage (0.0 to 100.0)                       \\
@@ -676,7 +676,8 @@ This module does not have any environment variables.
                         \texttt{osd\_data.translate\_y} pixels.
                   \item Scale the frame by \texttt{osd\_data.scale}.
                   \item Render the text from \texttt{osd\_data} over the frame.
-                  \item Encode the frame in a compressed video format and save to \texttt{output\_video\_path}.
+                  \item Encode the frame in a compressed video format and save to
+                        \texttt{output\_video\_path}.
                 \end{itemize}
         \end{itemize}
   \item exception: None
@@ -1018,7 +1019,8 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Create a temporary output stream and save the path to \texttt{output\_video\_pipe}.
+          \item Create a temporary output stream and save the path to
+                \texttt{output\_video\_pipe}.
           \item Start the Transcode Process Module (\mref{mTranscode}) in a separate process
                 with the given recording and \texttt{output\_video\_pipe}.
         \end{itemize}
