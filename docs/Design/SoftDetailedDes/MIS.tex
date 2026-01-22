@@ -77,7 +77,8 @@ urlcolor=cyan          % color of external links
   \midrule
   Nov. 10, 2025       & Rev -1        & Initial Draft            \\
   Nov. 16, 2025       & -             & Fix Peer Review Comments \\
-  Jan. 19, 2025       & Rev -0        & Tean Work                \\
+  Jan. 19, 2025       & Rev 0         & Team Work                \\
+  Jan. 21, 2025       & Rev 0         & Team Review              \\
   \bottomrule
 \end{tabularx}
 
@@ -105,7 +106,6 @@ See SRS Documentation at:
     HDMI                  & High-Definition Multimedia Interface. A digital interface standard for transmitting uncompressed video and audio data.                                               \\
     HTTP                  & Hypertext Transfer Protocol. A protocol used for transmitting data over the internet, commonly used for web APIs.                                                    \\
     IPC                   & Inter-Process Communication. A mechanism for exchanging data between separate processes, typically using message passing or shared memory.                           \\
-    JSON                  & JavaScript Object Notation. A lightweight data-interchange format used for API request and response payloads.                                                        \\
     LED                   & Light Emitting Diode. A semiconductor light source used for status indicators and displays.                                                                          \\
     MIS                   & Module Interface Specification. This document type that specifies the interfaces and behaviors of software modules.                                                  \\
     OSD                   & On-Screen Display. Textual or graphical information overlaid on video frames, such as telemetry data.                                                                \\
@@ -299,7 +299,7 @@ Empty structure with no fields.
     tracking\_state             & 'idle' $|$ 'armed' $|$ 'tracking' & Current tracking state                                          \\
     preview                     & bytes                             & Preview image data                                              \\
     osd\_data                   & \texttt{OSDData} $|$ null         & On-screen display data, null if not available                   \\
-    unix\_timestamp\_ms         & int                               & Unix timestamp in milliseconds                                  \\
+    unix\_timestamp\_ms         & int                               & System time in milliseconds                                     \\
     longitude                   & float $|$ null                    & Longitude coordinate, null if not available                     \\
     latitude                    & float $|$ null                    & Latitude coordinate, null if not available                      \\
     gpu\_utilization            & float                             & GPU utilization percentage (0.0 to 100.0)                       \\
@@ -488,7 +488,7 @@ Camera is assumed to be connected and working properly.
                                   \item \texttt{frame\_number}: The frame number.
                                   \item \texttt{average\_fps}: The average FPS of the video.
                                   \item \texttt{bbox}: The detected rocket location.
-                                  \item \texttt{preview}: base64 encoded preview JPEG image.
+                                  \item \texttt{preview}: encoded preview JPEG image.
                                 \end{itemize}
                         \end{itemize}
                 \end{itemize}
@@ -676,7 +676,8 @@ This module does not have any environment variables.
                         \texttt{osd\_data.translate\_y} pixels.
                   \item Scale the frame by \texttt{osd\_data.scale}.
                   \item Render the text from \texttt{osd\_data} over the frame.
-                  \item Encode the frame as H.265 and save to \texttt{output\_video\_path}.
+                  \item Encode the frame in a compressed video format and save to
+                        \texttt{output\_video\_path}.
                 \end{itemize}
         \end{itemize}
   \item exception: None
@@ -1018,7 +1019,8 @@ This module does not have any environment variables.
 \begin{itemize}
   \item transition:
         \begin{itemize}
-          \item Create a temporary unix pipe and save the path to \texttt{output\_video\_pipe}.
+          \item Create a temporary output stream and save the path to
+                \texttt{output\_video\_pipe}.
           \item Start the Transcode Process Module (\mref{mTranscode}) in a separate process
                 with the given recording and \texttt{output\_video\_pipe}.
         \end{itemize}
@@ -2479,7 +2481,7 @@ This module does not have any assumptions.
 \noindent POST /api/status:
 \begin{itemize}
   \item transition: Return \texttt{state\_management.status()}.
-  \item output: StatusResponse JSON
+  \item output: StatusResponse payload
   \item exception: None
 \end{itemize}
 
@@ -2491,7 +2493,7 @@ This module does not have any assumptions.
                 "left", "right").
           \item Call \texttt{state\_management.manual\_move(direction)}.
         \end{itemize}
-  \item output: EmptyResponse JSON
+  \item output: EmptyResponse payload
   \item exception: None
 \end{itemize}
 
@@ -2502,42 +2504,42 @@ This module does not have any assumptions.
           \item Parse request body to get \texttt{tilt} and \texttt{pan} (both numbers).
           \item Call \texttt{state\_management.manual\_move\_to(tilt, pan)}.
         \end{itemize}
-  \item output: EmptyResponse JSON
+  \item output: EmptyResponse payload
   \item exception: None
 \end{itemize}
 
 \noindent POST /api/gimbal/home:
 \begin{itemize}
   \item transition: Call \texttt{state\_management.manual\_move\_to(0.0, 0.0)}
-  \item output: EmptyResponse JSON
+  \item output: EmptyResponse payload
   \item exception: None
 \end{itemize}
 
 \noindent POST /api/arm:
 \begin{itemize}
   \item transition: Call \texttt{state\_management.arm()}.
-  \item output: EmptyResponse JSON
+  \item output: EmptyResponse payload
   \item exception: None
 \end{itemize}
 
 \noindent POST /api/disarm:
 \begin{itemize}
   \item transition: Call \texttt{state\_management.disarm()}
-  \item output: EmptyResponse JSON
+  \item output: EmptyResponse payload
   \item exception: None
 \end{itemize}
 
 \noindent POST /api/recordings/start:
 \begin{itemize}
   \item transition: Call \texttt{state\_management.start\_recording()}.
-  \item output: RecordingStatusResponse JSON
+  \item output: RecordingStatusResponse payload
   \item exception: recordingError (if recording already in progress)
 \end{itemize}
 
 \noindent POST /api/recordings/stop:
 \begin{itemize}
   \item transition: Call \texttt{state\_management.stop\_recording()}
-  \item output: RecordingStatusResponse JSON
+  \item output: RecordingStatusResponse payload
   \item exception: None
 \end{itemize}
 
@@ -2545,7 +2547,7 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition: Return
         \texttt{state\_management.recording\_db.list\_all\_recordings()}.
-  \item output: RecordingListResponse JSON
+  \item output: RecordingListResponse payload
   \item exception: None
 \end{itemize}
 
@@ -2553,7 +2555,7 @@ This module does not have any assumptions.
 \begin{itemize}
   \item transition: Call
         \texttt{state\_management.recording\_db.delete\_recording(recordingId)}.
-  \item output: EmptyResponse JSON
+  \item output: EmptyResponse payload
   \item exception: recordingNotFoundError (returns 404 HTTP status)
 \end{itemize}
 
@@ -2565,7 +2567,7 @@ This module does not have any assumptions.
           \item Call \texttt{state\_management.recording\_db.rename\_recording(recordingId,
                   new\_name)}.
         \end{itemize}
-  \item output: EmptyResponse JSON
+  \item output: EmptyResponse payload
   \item exception: recordingNotFoundError (returns 404 HTTP status)
 \end{itemize}
 
