@@ -3410,14 +3410,78 @@ the graduate attribute of Problem Analysis and Design.
         drops mid-download or the process crashes, the user must restart from the beginning, and the
         system cannot reuse partial work.\\[2mm]
 
-        With unlimited resources, we would improve this by separating ``render'' from ``download'':
-        (1) implement an asynchronous job queue that pre-renders recordings into stored MP4 artifacts
-        (or renders in the background when the Jetson is idle), (2) provide progress reporting based
-        on frames processed / total frames with estimated time remaining, (3) serve downloads as file
-        transfers with known size to enable accurate progress bars and resume/range requests, and (4)
-        add caching and concurrency controls so repeated requests do not trigger repeated rendering.
+        Since our tech stack covers both hardware and software, with unlimited resources, we would improve this by separating ``render'' from ``download'':
+        \begin{itemize}
+        \item (1) Asynchronous render pipeline (pre-render artifacts).
+        \begin{itemize}
+            \item Software: Introduce a job queue (e.g., a lightweight worker + persistent job state) where a
+                download request enqueues a ``render MP4'' job instead of rendering inline. Store the
+                rendered MP4 as an artifact per recording (with versioning tied to OSD settings), and expose
+                job status (queued/running/failed/done) via an API endpoint.
+            \item Hardware: Offload rendering to a dedicated worker (separate process and resource group),
+                and run it when the Jetson is idle or under a defined utilization threshold (CPU/GPU/DLA).
+                With more resources, dedicate a second compute node (another Jetson or a small edge GPU box)
+                purely for rendering to prevent contention with real-time tracking.
+        \end{itemize}
+
+        \item (2) Accurate progress and ETA reporting.
+        \begin{itemize}
+            \item Software: Track progress as ``frames processed / total frames'' (or ``segments completed'')
+                and compute ETA using an exponential moving average of render throughput. Stream progress
+                to the UI via WebSocket/SSE and show clear states (rendering vs transferring).
+            \item Hardware: Use hardware-accelerated decode/encode (NVDEC/NVENC) when available to stabilize
+                throughput, producing more predictable ETA. If budget allows, add faster storage (NVMe) to
+                reduce I/O stalls that make progress estimates noisy.
+        \end{itemize}
+
+        \item (3) File-based downloads with known size and resumability.
+        \begin{itemize}
+            \item Software: Serve completed MP4 artifacts as standard file transfers with known
+                \texttt{Content-Length}, and enable HTTP range requests for resume. Optionally split output
+                into fixed-duration segments during rendering, then mux at the end, so partial results can
+                be reused after failures.
+            \item Hardware: Increase storage capacity to keep rendered artifacts (and optional segments)
+                without forcing aggressive cleanup. If needed, add a small NAS or external SSD for
+                artifact storage so the Jetson's local disk is not a bottleneck.
+        \end{itemize}
+
+        \item (4) Caching, deduplication, and concurrency controls.
+        \begin{itemize}
+            \item Software: Cache artifacts keyed by (recording id, OSD configuration hash, encoder settings)
+                so repeated requests do not re-render. Add per-user/per-system concurrency limits, priority
+                (interactive requests first), and backpressure to protect real-time tracking. Implement
+                cleanup policies (LRU/TTL) and metrics (queue time, render time, failures).
+            \item Hardware: With more resources, allocate guaranteed CPU cores/GPU time slices (or run the
+                renderer on a separate device) so caching and job spikes never degrade tracking latency.
+                Add more RAM to reduce swapping and improve stability under concurrent workloads.
+        \end{itemize}
+        \end{itemize}
+
         These changes would improve user experience, scalability, and system stability while keeping
         real-time tracking performance predictable.
+
+
+        \begin{table}[H]
+        \centering
+        \small
+        \setlength{\tabcolsep}{3pt}
+        \renewcommand{\arraystretch}{1.1}
+        \begin{tabular}{p{2.9cm} p{3.5cm} p{3.6cm}}
+            \toprule
+            \textbf{Limitation} & \textbf{Impact} & \textbf{Improve} \\
+            \midrule
+            Unknown output size & No reliable progress & Pre-render MP4 artifacts \\
+            On-demand streaming & One request does all work & Separate render vs download \\
+            Sync on critical path & Competes with tracking & Async job queue; render when idle \\
+            Load scales with length & Long videos overload CPU/GPU & Concurrency limits; caching \\
+            No resumability & Restart after drop/crash & Stored files; HTTP range/resume \\
+            Weak fault tolerance & Partial work is lost & Retries + checkpoints (by segments) \\
+            \bottomrule
+        \end{tabular}
+        \end{table}
+
+
+
 
 
     \item Give a brief overview of other design solutions you considered. What are the
@@ -3483,7 +3547,27 @@ the graduate attribute of Problem Analysis and Design.
                         reduces storage and bookkeeping, and we documented it as a known limitation
                         with a clear upgrade path if resources allow.
                 \end{itemize}
+
+                \begin{table}[H]
+                \centering
+                \small
+                \setlength{\tabcolsep}{3pt}
+                \renewcommand{\arraystretch}{1.1}
+                \begin{tabular}{p{3.0cm} p{3.6cm} p{3.6cm}}
+                    \toprule
+                    \textbf{Option} & \textbf{Benefit} & \textbf{Tradeoff} \\
+                    \midrule
+                    One process & Simple, low overhead & Crash can take down all \\
+                    CV + display together & Fewer processes & CV crash stops video \\
+                    Full database & Better queries & Too heavy to run/maintain \\
+                    Pre-render downloads & Fast + resumable & More storage + complexity \\
+                    \bottomrule
+                \end{tabular}
+                \end{table}
+
         \end{itemize}
+
+        
 
 \end{enumerate}
 
