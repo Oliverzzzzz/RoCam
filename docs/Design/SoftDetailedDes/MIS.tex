@@ -1691,6 +1691,116 @@ This module does not have any exported constants.
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
 
+\subsubsection{Formal Specification (LO\_SpecMath)}
+
+\noindent\textbf{Abstract State.}
+Let the abstract state be:
+\[
+S \triangleq (bp, recs, logs)
+\]
+where
+\[
+bp \in Str \cup \{\bot\},
+\quad
+recs \in (\textit{RecId} \rightharpoonup \textit{RecMeta}),
+\quad
+logs \in (\textit{RecId} \rightharpoonup seq(OSDData)).
+\]
+Here, \(\rightharpoonup\) is a partial function (finite map).
+
+\noindent\textbf{RecMeta structure.}
+\[
+\textit{RecMeta} \triangleq (name, videoPath, logPath)
+\]
+with
+\[
+name \in Str,\quad videoPath \in Str,\quad logPath \in Str.
+\]
+
+\noindent\textbf{State Invariants.}
+\[
+I_1:\ bp = \bot \Rightarrow dom(recs)=\emptyset \land dom(logs)=\emptyset
+\]
+\[
+I_2:\ dom(logs) \subseteq dom(recs)
+\]
+\[
+I_3:\ \forall id \in dom(recs):\ recs(id).videoPath = bp \mathbin{+\!\!+} ``/'' \mathbin{+\!\!+} id \mathbin{+\!\!+} ``/video.avi''
+\]
+\[
+I_4:\ \forall id \in dom(recs):\ recs(id).logPath = bp \mathbin{+\!\!+} ``/'' \mathbin{+\!\!+} id \mathbin{+\!\!+} ``/log.txt''
+\]
+(\(+\!\!+\) denotes string concatenation.)
+
+\noindent\textbf{Auxiliary Functions.}
+\[
+freshId(recs) \triangleq \text{an } id \in \textit{RecId} \text{ such that } id \notin dom(recs).
+\]
+\[
+defaultName(t) \triangleq ``Recording\ '' \mathbin{+\!\!+} t
+\]
+where \(t\) is a timestamp string.
+
+\noindent\textbf{Transition Schemas (Pre/Post).}
+
+\noindent\underline{\texttt{init(base\_path)}}:
+\[
+\{\, true \,\}\ init(p)\ \{\, bp' = p \land recs'=\emptyset \land logs'=\emptyset \,\}
+\]
+
+\noindent\underline{\texttt{allocate\_recording()}} (may raise \texttt{recordingError}):
+\[
+\{\, bp \neq \bot \,\}\ allocate\_recording()\ \{
+\begin{array}{l}
+id = freshId(recs) \ \land \\
+recs' = recs \oplus \{ id \mapsto (defaultName(now),\ bp++``/''++id++``/video.avi'',\ bp++``/''++id++``/log.txt'') \} \ \land \\
+logs' = logs \oplus \{ id \mapsto \langle \rangle \}
+\end{array}
+\}
+\]
+If \(bp=\bot\), \texttt{recordingError} may be raised.
+
+\noindent\underline{\texttt{read\_log\_by\_id(id)}} (observation):
+\[
+read\_log\_by\_id(id) =
+\begin{cases}
+logs(id) & \text{if } id \in dom(logs)\\
+\bot & \text{otherwise}
+\end{cases}
+\]
+
+\noindent\underline{\texttt{get\_recording\_by\_id(id)}} (observation):
+\[
+get\_recording\_by\_id(id) =
+\begin{cases}
+\textit{RecordingInfo from } recs(id)\ \text{and } logs(id) & \text{if } id \in dom(recs)\\
+\bot & \text{otherwise}
+\end{cases}
+\]
+
+\noindent\underline{\texttt{list\_all\_recordings()}} (observation):
+\[
+list\_all\_recordings() = [\ get\_recording\_by\_id(id)\ |\ id \in dom(recs)\ ]
+\]
+
+\noindent\underline{\texttt{rename\_recording(id,newName)}}:
+\[
+\{\, id \in dom(recs) \,\}\ rename\_recording(id,n)\ \{\, recs'(id).name = n \land \forall j\neq id:\ recs'(j)=recs(j) \,\}
+\]
+If \(id \notin dom(recs)\), raise \texttt{recordingNotFoundError}.
+
+\noindent\underline{\texttt{delete\_recording(id)}}:
+\[
+\{\, id \in dom(recs) \,\}\ delete\_recording(id)\ \{\, recs' = recs \setminus \{id\} \land logs' = logs \setminus \{id\} \,\}
+\]
+If \(id \notin dom(recs)\), raise \texttt{recordingNotFoundError}.
+
+\noindent\underline{\texttt{space\_usage\_bytes()}} (observation):
+\[
+space\_usage\_bytes() = (used,total)
+\]
+where \(used,total \in \mathbb{N}\) summarize storage usage under \(bp\).
+
 \subsubsection{Environment Variables}
 
 This module does not have any environment variables.
