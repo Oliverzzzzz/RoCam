@@ -76,7 +76,7 @@ urlcolor=cyan          % color of external links
   \midrule
   Nov. 10, 2025       & Rev -1        & Initial Draft            \\
   Nov. 16, 2025       & -             & Fix Peer Review Comments \\
-  Jan. 19, 2025       & Rev -0        & Tean Work \\
+  Jan. 19, 2025       & Rev -0        & Tean Work                \\
   \bottomrule
 \end{tabularx}
 
@@ -2121,7 +2121,7 @@ This module does not have any environment variables.
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-  % 20
+% 20
 
 \section{MIS of API Gateway Module (\mref{mAPI})} \wss{Use labels for
   cross-referencing}
@@ -2324,7 +2324,7 @@ This module does not have any assumptions.
   explicitly.  Even if they are implemented, they are not exported; they only
   have local scope.}
 
-  %21
+%21
 
 \section{MIS of Preview Module (\mref{mPreview})} \wss{Use labels for
   cross-referencing}
@@ -2662,11 +2662,11 @@ This module does not have any exported access programs.
 \subsubsection{State Variables}
 
 \begin{itemize}
-  \item The current set of recordings available to the user (may be empty if not yet retrieved).
+  \item The current set of recordings available to the user (may be empty if not yet
+        retrieved).
   \item The currently selected recording (may be none).
   \item The status of the most recent backend interaction (success/failure).
 \end{itemize}
-
 
 \noindent \textbf{State Invariant:}
 \begin{itemize}
@@ -3057,10 +3057,17 @@ the graduate attribute of Problem Analysis and Design.
         From all the potential options, why did you select the documented design?
         (LO\_Explores)
         \begin{itemize}
-          \item Our initial design combined all video processing logic with all critical logic (e.g., gimbal control) into one process. This created instability, as discussed in the response to question 3. We had to move them into separate processes. We even separated the computer vision logic from the display logic into separate processes; for example, we wanted to keep outputting video even if the computer vision logic crashes.
-          \item We are using a simple custom database to store all the recordings. It leverages the file system structure to index the data (e.g., one folder per recording with metadata and logs). A full-blown database was considered but discarded due to heavy resource utilization and operational overhead on the target hardware.
+          \item Our initial design combined all video processing logic with all critical logic
+                (e.g., gimbal control) into one process. This created instability, as discussed
+                in the response to question 3. We had to move them into separate processes. We
+                even separated the computer vision logic from the display logic into separate
+                processes; for example, we wanted to keep outputting video even if the computer
+                vision logic crashes.
+          \item We are using a simple custom database to store all the recordings. It leverages
+                the file system structure to index the data (e.g., one folder per recording
+                with metadata and logs). A full-blown database was considered but discarded due
+                to heavy resource utilization and operational overhead on the target hardware.
         \end{itemize}
 \end{enumerate}
-
 
 \end{document}
