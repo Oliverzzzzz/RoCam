@@ -3387,28 +3387,104 @@ the graduate attribute of Problem Analysis and Design.
         requirements, hazard analysis, etc), if any, needed to be changed, and why? \\[2mm]
         No other documents needed to be changed. The MIS remains consistent with the existing requirements and traceability tables (for example, each major feature has a clear module responsible for it, and the access routines map back to the required system behaviours).
 
-  \item What are the limitations of your solution? Put another way, given unlimited
+    \item What are the limitations of your solution? Put another way, given unlimited
         resources, what could you do to make the project better? (LO\_ProbSolutions) \\[2mm]
-        In the current implementation, when the user tries to download a recording, no new file is created on the backend; instead, the requested recording is rendered on the fly and streamed to the browser. This simplifies implementation because the entire render-and-download logic can be handled in one HTTP request and there is no persistent state or temporary files to manage.\\[2mm]
-        The problem is that because the video is generated on the fly, we do not know the file size ahead of time. This means the browser cannot show accurate download progress, which hurts user experience (for example, the user cannot estimate whether the download will take seconds or minutes).\\[2mm]
-        With unlimited resources, we could implement a custom download workflow in the frontend that shows approximate progress based on the number of frames rendered (e.g., ``frames rendered / total frames''). We could also pre-render recordings when the backend has idle processing power, so downloads become simple file transfers with known sizes and better progress reporting.
+        One limitation is our recording download pipeline. In the current implementation, when the
+        user requests a download, the backend does not create a new output file in advance; instead,
+        it re-renders the recording on demand (reading the raw video and log, applying the OSD
+        transforms, and streaming the resulting MP4 to the browser in a single HTTP request). This
+        design is simple and avoids managing persistent state or temporary files, but it introduces
+        several drawbacks.\\[2mm]
 
-  \item Give a brief overview of other design solutions you considered. What are the
+        First, because the output is produced as a stream, the system typically cannot provide an
+        accurate Content-Length up front. As a result, the browser cannot show reliable download
+        progress, and users cannot estimate whether a download will take seconds or minutes.\\[2mm]
+
+        Second, the work is performed synchronously on the critical path of a user request. Rendering
+        is CPU/GPU intensive and can compete with real-time tracking workloads, causing unpredictable
+        latency and reduced responsiveness during downloads. If multiple users request downloads, the
+        backend can become overloaded since rendering time scales with the recording duration and
+        resolution.\\[2mm]
+
+        Third, the current approach has limited fault tolerance and resumability. If the connection
+        drops mid-download or the process crashes, the user must restart from the beginning, and the
+        system cannot reuse partial work.\\[2mm]
+
+        With unlimited resources, we would improve this by separating ``render'' from ``download'':
+        (1) implement an asynchronous job queue that pre-renders recordings into stored MP4 artifacts
+        (or renders in the background when the Jetson is idle), (2) provide progress reporting based
+        on frames processed / total frames with estimated time remaining, (3) serve downloads as file
+        transfers with known size to enable accurate progress bars and resume/range requests, and (4)
+        add caching and concurrency controls so repeated requests do not trigger repeated rendering.
+        These changes would improve user experience, scalability, and system stability while keeping
+        real-time tracking performance predictable.
+
+
+    \item Give a brief overview of other design solutions you considered. What are the
         benefits and tradeoffs of those other designs compared with the chosen design?
         From all the potential options, why did you select the documented design?
         (LO\_Explores)
         \begin{itemize}
-          \item Our initial design combined all video processing logic with all critical logic
-                (e.g., gimbal control) into one process. This created instability, as discussed
-                in the response to question 3. We had to move them into separate processes. We
-                even separated the computer vision logic from the display logic into separate
-                processes; for example, we wanted to keep outputting video even if the computer
-                vision logic crashes.
-          \item We are using a simple custom database to store all the recordings. It leverages
-                the file system structure to index the data (e.g., one folder per recording
-                with metadata and logs). A full-blown database was considered but discarded due
-                to heavy resource utilization and operational overhead on the target hardware.
+            \item Single-process architecture (all video, CV, API, and gimbal control in one process).
+                \begin{itemize}
+                    \item Benefits: simplest implementation and deployment; no IPC overhead; shared
+                        in-memory data is easy (no serialization); potentially slightly lower latency
+                        for passing frames and detections between components.
+                    \item Tradeoffs: poor fault isolation (a crash in the NVIDIA/video pipeline can take
+                        down gimbal control and the API); harder to keep real-time control responsive
+                        under heavy video load; debugging is harder because failures cascade through
+                        the same process; reliability is constrained by the least stable subsystem.
+                    \item Why we did not choose it: our prototypes showed the video stack is the most
+                        crash-prone/complex component, and we cannot risk losing control or the UI when
+                        that happens. We therefore separated critical control logic from video/CV into
+                        separate processes to isolate failures and keep the system recoverable.
+                \end{itemize}
+
+            \item Alternative process boundaries (CV + display in one worker process, or display driven
+                directly by the CV process rather than a dedicated Live Video process).
+                \begin{itemize}
+                    \item Benefits: fewer processes/threads to manage; fewer IPC channels; simpler
+                        supervision logic; slightly less overhead.
+                    \item Tradeoffs: reduced resilience (a CV crash would also stop HDMI output); tighter
+                        coupling between detection and rendering; harder to maintain continuous video
+                        output during CV restarts; less flexibility to change display behaviour without
+                        touching CV.
+                    \item Why we did not choose it: we wanted continuous video output even if detection
+                        fails, and we wanted to be able to restart CV independently. Splitting CV and
+                        display keeps the operator feedback loop alive during CV recovery.
+                \end{itemize}
+
+            \item Full database for recordings (e.g., SQLite/PostgreSQL) instead of a file-system-backed
+                recording store.
+                \begin{itemize}
+                    \item Benefits: stronger querying and indexing (search by time, duration, metadata);
+                        transactional updates; easier concurrent access; improved integrity checks and
+                        schema evolution.
+                    \item Tradeoffs: higher CPU/RAM/storage overhead on the Jetson; additional deployment
+                        and maintenance complexity; more failure modes (DB corruption/migrations);
+                        operational burden that is disproportionate to our simple access patterns.
+                    \item Why we did not choose it: our workload is lightweight (list, rename, delete,
+                        read logs by id), and the file-based layout already provides a natural index
+                        (one directory per recording). The custom store meets requirements with lower
+                        resource use and less operational risk on the target hardware.
+                \end{itemize}
+
+            \item Pre-rendered downloads (generate MP4 artifacts at record-time or as background jobs)
+                instead of on-demand rendering and streaming.
+                \begin{itemize}
+                    \item Benefits: known file sizes for accurate download progress; faster downloads
+                        (simple file transfer); supports resume/range requests; less compute on the
+                        critical path of a user request.
+                    \item Tradeoffs: higher storage consumption (extra rendered copies); longer time to
+                        finalize a recording; background job scheduling and cleanup complexity; must
+                        handle partial renders and failures.
+                    \item Why we did not choose it: we prioritized a simpler end-to-end pipeline and
+                        minimized persistent artifacts during early iterations. The on-demand approach
+                        reduces storage and bookkeeping, and we documented it as a known limitation
+                        with a clear upgrade path if resources allow.
+                \end{itemize}
         \end{itemize}
+
 \end{enumerate}
 
 \end{document}
