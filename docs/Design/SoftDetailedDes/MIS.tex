@@ -2051,14 +2051,14 @@ This module does not have any exported constants.
 \noindent\textbf{Abstract State.}
 Let the abstract state be:
 \[
-S \triangleq (armed, cv, osd, recId)
+  S \triangleq (armed, cv, osd, recId)
 \]
 where
 \[
-armed \in \mathbb{B},\quad
-cv \in CVData \cup \{\bot\},\quad
-osd \in OSDData \cup \{\bot\},\quad
-recId \in \textit{RecId} \cup \{\bot\}.
+  armed \in \mathbb{B},\quad
+  cv \in CVData \cup \{\bot\},\quad
+  osd \in OSDData \cup \{\bot\},\quad
+  recId \in \textit{RecId} \cup \{\bot\}.
 \]
 
 \noindent\textbf{State Invariants.}
@@ -2123,7 +2123,6 @@ If \(recId\neq\bot\), disarm is either disallowed or must first stop recording (
 \[
 status(S) = SystemStatus(\ldots,\ tracking\_state := trackingState(armed, cv),\ \ldots)
 \]
-
 
 % 19.4.2
 \subsubsection{Environment Variables}
