@@ -1855,6 +1855,77 @@ This module does not have any exported constants.
 \wss{Not all modules will have state variables.  State variables give the module
   a memory.}
 
+\subsubsection{Formal Specification (LO\_SpecMath)}
+
+\noindent\textbf{Abstract State.}
+Let the abstract state of this module be:
+\[
+S \triangleq (armed, cv, osd, recId)
+\]
+where
+\[
+armed \in \mathbb{B},\quad
+cv \in CVData \cup \{\bot\},\quad
+osd \in OSDData \cup \{\bot\},\quad
+recId \in \textit{RecId} \cup \{\bot\}.
+\]
+
+\noindent\textbf{State Invariants.}
+\[
+I_1:\ \ (cv = \bot) \Leftrightarrow (osd = \bot)
+\]
+\[
+I_2:\ \ recId \neq \bot \Rightarrow armed = \texttt{true} \ \lor \ armed = \texttt{false}
+\]
+% (I2 is intentionally weak; you can replace with something stronger if desired.)
+
+\noindent\textbf{Derived Function (Tracking State).}
+Define:
+\[
+trackingState(armed, cv) \triangleq
+\begin{cases}
+\texttt{`idle'} & \text{if } armed = \texttt{false}\\
+\texttt{`armed'} & \text{if } armed = \texttt{true} \land (cv=\bot \lor cv.bbox=\bot)\\
+\texttt{`tracking'} & \text{if } armed = \texttt{true} \land cv\neq\bot \land cv.bbox\neq\bot
+\end{cases}
+\]
+
+\noindent\textbf{Transition Schemas (Pre/Post).}
+
+\noindent\underline{\texttt{arm}}:
+\[
+\{\, true \,\}\ \ arm\ \ \{\, armed' = \texttt{true} \land cv' = cv \land osd' = osd \land recId' = recId \,\}
+\]
+
+\noindent\underline{\texttt{disarm}}:
+\[
+\{\, true \,\}\ \ disarm\ \ \{\, armed' = \texttt{false} \land cv' = cv \land osd' = osd \land recId' = recId \,\}
+\]
+
+\noindent\underline{\texttt{start\_recording}} (may raise \texttt{recordingError}):
+\[
+\{\, recId = \bot \,\}\ \ start\_recording\ \ \{\, recId' \neq \bot \,\}
+\]
+\[
+\{\, recId \neq \bot \,\}\ \ start\_recording\ \ \text{raises } recordingError
+\]
+
+\noindent\underline{\texttt{stop\_recording}}:
+\[
+\{\, true \,\}\ \ stop\_recording\ \ \{\, recId' = \bot \,\}
+\]
+
+\noindent\underline{\texttt{status}} (pure observation):
+\[
+status(S) = SystemStatus(\ldots,\ tracking\_state := trackingState(armed, cv),\ \ldots)
+\]
+
+\noindent\underline{\texttt{on\_cv\_data}} (event handler):
+\[
+\{\, true \,\}\ \ on\_cv\_data(d)\ \ \{\, cv' = d \land osd' = createOSD(d) \,\}
+\]
+
+
 % 19.4.2
 \subsubsection{Environment Variables}
 
