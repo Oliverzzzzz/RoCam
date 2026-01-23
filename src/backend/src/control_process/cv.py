@@ -37,7 +37,7 @@ class CVProcess:
         # thus, no clean up code is required for this subprocess
         # TODO: not the case, does not clean up when the control process quits before connect to shmsink
         self._p = subprocess.Popen(
-            ["python3", os.path.join(os.path.dirname(__file__), "src", "main.py"), "cv"],
+            ["python3", "src/main.py", "cv"],
         )
         # logger.warning("Manually start the CV process now!")
 
@@ -140,7 +140,7 @@ class VideoPipeline:
         )
 
         self._shader = self._pipeline.get_by_name("shader")
-        self._shader.set_property('fragment', open("shader.frag").read())
+        self._shader.set_property('fragment', open(os.path.join(os.path.dirname(__file__), "shader.frag")).read())
         self._shader.set_property('uniforms',
                                   Gst.Structure.new_from_string(
                                       "uniforms, tx=(float)0.0, ty=(float)0.0, scale=(float)1.0"))

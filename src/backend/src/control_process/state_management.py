@@ -1,14 +1,15 @@
 import logging
 
-from cv import VideoPipeline
 from common.ipc import BoundingBox, CVData
-from gimbal import GimbalSerial
-from preview import MjpegFrameReceiver
+from control_process.cv import VideoPipeline
+from control_process.gimbal import GimbalSerial
+from control_process.preview import MjpegFrameReceiver
+from control_process.tracking import Tracking
 import base64
 import time
 from dataclasses import dataclass
 
-from tracking import Tracking
+
 
 logger = logging.getLogger(__name__)
 

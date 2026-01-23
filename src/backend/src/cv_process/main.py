@@ -1,5 +1,7 @@
 import os
 
+from common.utils import set_scheduler_fifo
+
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
 
 import gi
@@ -146,7 +148,7 @@ def main():
         t. !
         nvvideoconvert !
         mux.sink_0 nvstreammux name=mux width=1920 height=1080 live-source=1 batch-size=1 !
-        nvinfer name=infer config-file-path=pgie_config.txt !
+        nvinfer name=infer config-file-path={os.path.join(os.path.dirname(__file__), "pgie_config.txt")} !
         fakesink sync=false
         
         t. !
@@ -179,6 +181,5 @@ def main():
 
 
 def start_cv_process():
-    
-
+    set_scheduler_fifo(40)
     main()
