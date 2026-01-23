@@ -1,12 +1,11 @@
 import os
 import time
+import logging
 
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
 
 import threading
-from cv_process import ipc
-from cv_process.ipc import create_rocam_ipc_server, CVData
-from utils import *
+from common.ipc import create_rocam_ipc_server, CVData
 import subprocess
 import atexit
 import signal
@@ -17,7 +16,6 @@ import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import GLib, Gst
 
-sys.modules["ipc"] = ipc
 logger = logging.getLogger(__name__)
 
 
@@ -38,11 +36,10 @@ class CVProcess:
         # because shmsink in the subprocess will stop the pipeline in the subprocess when shmsrc stops
         # thus, no clean up code is required for this subprocess
         # TODO: not the case, does not clean up when the control process quits before connect to shmsink
-        # self._p = subprocess.Popen(
-        #     ["python3", os.path.join(os.path.dirname(__file__), "cv_process", "main.py")],
-        #     cwd=os.path.join(os.path.dirname(__file__), "cv_process"),
-        # )
-        logger.warning("Manually start the CV process now!")
+        self._p = subprocess.Popen(
+            ["python3", os.path.join(os.path.dirname(__file__), "src", "main.py"), "cv"],
+        )
+        # logger.warning("Manually start the CV process now!")
 
         logger.info("Waiting for CV process to initialize.....")
         self._conn = self._ipc_server.accept()

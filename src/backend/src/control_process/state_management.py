@@ -1,7 +1,7 @@
 import logging
 
 from cv import VideoPipeline
-from cv_process.ipc import BoundingBox, CVData
+from common.ipc import BoundingBox, CVData
 from gimbal import GimbalSerial
 from preview import MjpegFrameReceiver
 import base64
