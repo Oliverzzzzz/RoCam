@@ -2,5 +2,4 @@ __pycache__
 venv
 env
 .idea
-pipeline.dot
-pipeline.png
+*pipeline.png

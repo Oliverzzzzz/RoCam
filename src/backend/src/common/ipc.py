@@ -1,7 +1,10 @@
+import os
+import logging
 from multiprocessing.connection import Client, Listener
 from dataclasses import dataclass
 from typing import Optional
 
+logger = logging.getLogger("ipc")
 
 # coordinates are normalized (0.0 to 1.0)
 @dataclass
@@ -29,15 +32,35 @@ class BoundingBox:
 
 @dataclass
 class CVData:
-    pts_s: float
+    pts_ns: int
     fps: float
     bounding_box: Optional[BoundingBox]
 
+@dataclass
+class PreviewData:
+    pts_ns: int
+    frame: bytes
 
-def create_rocam_ipc_server():
-    return Listener(('localhost', 5000))
+@dataclass
+class RecordingInfo:
+    video_path: str
+    log_path: str
+
+@dataclass
+class StopRecording:
+    pass
+
+def create_rocam_ipc_server(socket_path: str):
+    # Clean up stale socket file from previous runs
+    if os.path.exists(socket_path):
+        os.remove(socket_path)
+    return Listener(socket_path)
 
 
 # Will block until connected to the server
-def create_rocam_ipc_client():
-    return Client(('localhost', 5000))
+def create_rocam_ipc_client(socket_path: str):
+    try:
+        return Client(socket_path)
+    except Exception as e:
+        logger.error(f"Failed to connect to IPC server: {e}")
+        exit(1)

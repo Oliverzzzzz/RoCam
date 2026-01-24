@@ -1,5 +1,11 @@
 import os
+import subprocess
+import threading
 import netifaces
+import gi
+
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst  # noqa: E402
 
 def set_scheduler_fifo(priority: int):
     """
@@ -60,3 +66,12 @@ def ip4_addresses():
             addrs.append(info[netifaces.AF_INET][0]['addr'])
 
     return addrs
+
+def save_gst_pipeline_png(pipeline: Gst.Element, pipeline_name: str):
+    Gst.debug_bin_to_dot_file(pipeline, Gst.DebugGraphDetails.ALL, pipeline_name)  # pyright: ignore[reportArgumentType]
+    
+    def generate_png_and_cleanup():
+        subprocess.run(["dot", "-Tpng", f"{pipeline_name}.dot", "-o", f"{pipeline_name}.png"])
+        os.remove(f"{pipeline_name}.dot")
+    
+    threading.Thread(target=generate_png_and_cleanup, daemon=True).start()

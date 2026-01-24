@@ -61,7 +61,7 @@ class CVProcess:
 # should be the same as the values in cv_process/main.py
 WIDTH = 1920
 HEIGHT = 1080
-SOCKET_PATH = '/tmp/rocam-video'
+VIDEO_SOCKET_PATH = '/tmp/rocam-video'
 
 
 class VideoPipeline:
@@ -83,7 +83,7 @@ class VideoPipeline:
             input-selector name=selector sync-streams=true sync-mode=1 !
             tee name=t
 
-            shmsrc name=shmsrc socket-path={SOCKET_PATH} is-live=true do-timestamp=true !
+            shmsrc name=shmsrc socket-path={VIDEO_SOCKET_PATH} is-live=true do-timestamp=true !
             video/x-raw,format=RGBA,width=(int){WIDTH},height=(int){HEIGHT},framerate=(fraction)60/1 !
             queue name=shm-queue leaky=1 max-size-buffers=2 !
             selector.sink_0
