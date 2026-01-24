@@ -1,15 +1,25 @@
 import os
 import time
+import json
 import pyds
 import threading
+from dataclasses import asdict
 
 import logging
 from common.utils import save_gst_pipeline_png, set_scheduler_fifo
-from common.ipc import create_rocam_ipc_client, BoundingBox, CVData, PreviewData, RecordingInfo, StopRecording
+from common.ipc import (
+    OSDData,
+    create_rocam_ipc_client,
+    BoundingBox,
+    CVData,
+    PreviewData,
+    RecordingInfo,
+    StopRecording,
+)
 
 import gi
 
-gi.require_version('Gst', '1.0')
+gi.require_version("Gst", "1.0")
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
 from gi.repository import GLib, Gst  # pyright: ignore[reportMissingModuleSource]
 
@@ -17,15 +27,17 @@ logger = logging.getLogger("cv_process")
 
 WIDTH = 1920
 HEIGHT = 1080
-VIDEO_SOCKET_PATH = '/tmp/rocam-video'
-CV_SOCKET_PATH = '/tmp/rocam-cv'
+VIDEO_SOCKET_PATH = "/tmp/rocam-video"
+CV_SOCKET_PATH = "/tmp/rocam-cv"
 ipc_client = None
 pipeline = None
 recording_lock = threading.Lock()
+log_file = None
 
 
 _fps_last_time = time.perf_counter()
 _fps_time_list = [0.0]
+
 
 def inference_stop_probe(pad, info, u_data):
     global _fps_last_time
@@ -79,7 +91,7 @@ def inference_stop_probe(pad, info, u_data):
                     left=bbox.left / WIDTH,
                     top=bbox.top / HEIGHT,
                     width=bbox.width / WIDTH,
-                    height=bbox.height / HEIGHT
+                    height=bbox.height / HEIGHT,
                 )
             try:
                 l_obj = l_obj.next
@@ -94,17 +106,21 @@ def inference_stop_probe(pad, info, u_data):
     if ipc_client:
         try:
             if bounding_box and bounding_box.conf > 0.2:
-                ipc_client.send(CVData(
-                    pts_ns=pts_ns,
-                    fps=avg_fps,
-                    bounding_box=bounding_box.get_rotate_90_deg(),
-                ))
+                ipc_client.send(
+                    CVData(
+                        pts_ns=pts_ns,
+                        fps=avg_fps,
+                        bounding_box=bounding_box.get_rotate_90_deg(),
+                    )
+                )
             else:
-                ipc_client.send(CVData(
-                    pts_ns=pts_ns,
-                    fps=avg_fps,
-                    bounding_box=None,
-                ))
+                ipc_client.send(
+                    CVData(
+                        pts_ns=pts_ns,
+                        fps=avg_fps,
+                        bounding_box=None,
+                    )
+                )
         except Exception as e:
             logger.error(f"Failed to send CVData: {e}")
             exit(1)
@@ -132,10 +148,7 @@ def preview_sink_callback(sink):
     try:
         if ipc_client:
             try:
-                ipc_client.send(PreviewData(
-                    pts_ns=pts_ns,
-                    frame=bytes(map_info.data)
-                ))
+                ipc_client.send(PreviewData(pts_ns=pts_ns, frame=bytes(map_info.data)))
             except Exception as e:
                 logger.error(f"Failed to send PreviewData: {e}")
                 exit(1)
@@ -145,68 +158,78 @@ def preview_sink_callback(sink):
     return Gst.FlowReturn.OK
 
 
-def start_recording(video_path: str):
+def start_recording(video_path: str, log_path: str):
     global pipeline
+    global log_file
     with recording_lock:
         if not pipeline:
             return
-        
+
         recording_queue = pipeline.get_by_name("recording-queue")  # pyright: ignore[reportAttributeAccessIssue]
         old_sink = pipeline.get_by_name("recording-sink")  # pyright: ignore[reportAttributeAccessIssue]
-        
+
         if not recording_queue or not old_sink:
             logger.error("Could not find recording-queue or recording-sink")
             return
-        
+
         # Check if already recording (avimux exists means we're recording)
         if pipeline.get_by_name("avimux"):  # pyright: ignore[reportAttributeAccessIssue]
             logger.warning("Already recording")
             return
-        
+
         logger.info(f"Starting recording to {video_path}")
         
+        # Open log file for JSONL writing
+        log_file = open(log_path, "w")
+
         # Remove old fakesink
         recording_queue.unlink(old_sink)
         old_sink.set_state(Gst.State.NULL)
         pipeline.remove(old_sink)  # pyright: ignore[reportAttributeAccessIssue]
-        
+
         # Create and add avimux and filesink
         new_avimux = Gst.ElementFactory.make("avimux", "avimux")
         new_sink = Gst.ElementFactory.make("filesink", "recording-sink")
         assert new_avimux and new_sink
         new_sink.set_property("location", video_path)
-        
+
         pipeline.add(new_avimux)  # pyright: ignore[reportAttributeAccessIssue]
         pipeline.add(new_sink)  # pyright: ignore[reportAttributeAccessIssue]
         recording_queue.link(new_avimux)
         new_avimux.link(new_sink)
         new_avimux.sync_state_with_parent()
         new_sink.sync_state_with_parent()
-        
+
         logger.info("Recording started")
 
 
 def stop_recording():
     global pipeline
+    global log_file
     with recording_lock:
         if not pipeline:
             return
-        
+
         recording_queue = pipeline.get_by_name("recording-queue")  # pyright: ignore[reportAttributeAccessIssue]
         old_avimux = pipeline.get_by_name("avimux")  # pyright: ignore[reportAttributeAccessIssue]
         old_sink = pipeline.get_by_name("recording-sink")  # pyright: ignore[reportAttributeAccessIssue]
-        
+
         if not recording_queue or not old_sink:
             logger.error("Could not find recording-queue or recording-sink")
             return
-        
+
         # Check if not recording (no avimux means not recording)
         if not old_avimux:
             logger.warning("Not currently recording")
             return
-        
+
         logger.info("Stopping recording")
         
+        # Close log file
+        if log_file:
+            log_file.close()
+            log_file = None
+
         # Unlink and remove avimux + filesink - setting avimux to NULL finalizes the file
         recording_queue.unlink(old_avimux)
         old_avimux.unlink(old_sink)
@@ -214,28 +237,77 @@ def stop_recording():
         old_sink.set_state(Gst.State.NULL)
         pipeline.remove(old_avimux)  # pyright: ignore[reportAttributeAccessIssue]
         pipeline.remove(old_sink)  # pyright: ignore[reportAttributeAccessIssue]
-        
+
         # Create and add just fakesink (no avimux needed when not recording)
         new_sink = Gst.ElementFactory.make("fakesink", "recording-sink")
         assert new_sink
-        
+
         pipeline.add(new_sink)  # pyright: ignore[reportAttributeAccessIssue]
         recording_queue.link(new_sink)
         new_sink.sync_state_with_parent()
-        
+
         logger.info("Recording stopped")
+
+
+def update_osd(msg: OSDData):
+    global osd
+    global shader
+
+    osd.set_property("text", f"{round(msg.average_fps)}")
+    shader.set_property(
+        "uniforms",
+        Gst.Structure.new_from_string(
+            f"uniforms, tx=(float){msg.translate_x}, ty=(float){msg.translate_y}, scale=(float){msg.scale}"
+        ),
+    )
+
+osd_data_list: list[OSDData] = []
+
+
+def shader_probe(pad, info, u_data):
+    global osd_data_list
+
+    gst_buffer = info.get_buffer()
+    if not gst_buffer:
+        return Gst.PadProbeReturn.OK
+
+    pts_ns = gst_buffer.pts
+
+    # Find OSDData with matching pts_ns
+    matching_osd = None
+    for osd_data in osd_data_list:
+        if osd_data.pts_ns == pts_ns:
+            matching_osd = osd_data
+            break
+
+    if matching_osd:
+        update_osd(matching_osd)
+    else:
+        logger.warning(f"No OSDData found for pts_ns={pts_ns}")
+
+    return Gst.PadProbeReturn.OK
 
 
 def ipc_command_listener():
     global ipc_client
+    global log_file
     assert ipc_client
     while True:
         try:
             msg = ipc_client.recv()
             if isinstance(msg, RecordingInfo):
-                start_recording(msg.video_path)
+                start_recording(msg.video_path, msg.log_path)
             elif isinstance(msg, StopRecording):
                 stop_recording()
+            elif isinstance(msg, OSDData):
+                osd_data_list.append(msg)
+                if len(osd_data_list) > 10:
+                    osd_data_list.pop(0)
+                # Write OSD data to log file if recording
+                if log_file:
+                    json.dump(asdict(msg), log_file)
+                    log_file.write("\n")
+                    log_file.flush()
         except EOFError:
             logger.info("IPC connection closed")
             break
@@ -243,6 +315,8 @@ def ipc_command_listener():
 
 def main():
     global pipeline
+    global osd
+    global shader
 
     Gst.init(None)
 
@@ -332,17 +406,23 @@ def main():
     preview_sink = pipeline.get_by_name("preview-sink")  # pyright: ignore[reportAttributeAccessIssue]
     preview_sink.connect("new-sample", preview_sink_callback)
 
+    shader = pipeline.get_by_name("shader")  # pyright: ignore[reportAttributeAccessIssue]
+    shader_sink_pad = shader.get_static_pad("sink")
+    shader_sink_pad.add_probe(Gst.PadProbeType.BUFFER, shader_probe, 0)
+    shader.set_property(
+        "fragment", open(os.path.join(os.path.dirname(__file__), "shader.frag")).read()
+    )
+    shader.set_property(
+        "uniforms",
+        Gst.Structure.new_from_string(
+            "uniforms, tx=(float)0.0, ty=(float)0.0, scale=(float)1.0"
+        ),
+    )
+
+    osd = pipeline.get_by_name("osd")  # pyright: ignore[reportAttributeAccessIssue]
+
     logger.info("Starting pipeline")
     pipeline.set_state(Gst.State.PLAYING)
-
-
-    # def test_thread():
-    #     time.sleep(1)
-    #     start_recording("test.avi")
-    #     time.sleep(5)
-    #     stop_recording()
-
-    # threading.Thread(target=test_thread, daemon=True).start()
 
     try:
         loop.run()

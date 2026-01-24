@@ -2,7 +2,7 @@ import os
 import logging
 from multiprocessing.connection import Client, Listener
 from dataclasses import dataclass
-from typing import Optional
+from typing import Literal, Optional
 
 logger = logging.getLogger("ipc")
 
@@ -35,6 +35,22 @@ class CVData:
     pts_ns: int
     fps: float
     bounding_box: Optional[BoundingBox]
+
+@dataclass
+class OSDData:
+    pts_ns: int
+    translate_x: float
+    translate_y: float
+    scale: float
+    average_fps: float
+    gimbal_tilt_deg: float
+    gimbal_pan_deg: float
+    gimbal_focal_length_mm: float
+    device_ip_addresses: list[str]
+    timestamp_ms: int
+    tracking_state: Literal["idle", "armed", "tracking"]
+    longitude: float
+    latitude: float
 
 @dataclass
 class PreviewData:
