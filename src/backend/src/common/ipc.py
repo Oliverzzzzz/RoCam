@@ -4,7 +4,7 @@ from multiprocessing.connection import Client, Listener
 from dataclasses import dataclass
 from typing import Literal, Optional
 
-logger = logging.getLogger("ipc")
+logger = logging.getLogger(__name__)
 
 # coordinates are normalized (0.0 to 1.0)
 @dataclass

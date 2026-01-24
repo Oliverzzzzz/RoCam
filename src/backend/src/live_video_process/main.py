@@ -15,7 +15,7 @@ gi.require_version("Gst", "1.0")
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
 from gi.repository import GLib, Gst  # pyright: ignore[reportMissingModuleSource]
 
-logger = logging.getLogger("live_video_process")
+logger = logging.getLogger(__name__)
 
 LIVE_VIDEO_SOCKET_PATH = "/tmp/rocam-live-video"
 
@@ -28,6 +28,9 @@ class LiveVideoProcess:
 
         pipeline_desc = f"""
             input-selector name=selector sync-streams=true sync-mode=1 !
+            queue leaky=1 max-size-buffers=2 !
+            nvvideoconvert !
+            nvdrmvideosink name=drm-sink sync=false set-mode=1
 
             shmsrc name=shmsrc socket-path={VIDEO_SOCKET_PATH} is-live=true do-timestamp=true !
             video/x-raw,format=RGBA,width=(int){WIDTH},height=(int){HEIGHT},framerate=(fraction)60/1 !
@@ -38,10 +41,6 @@ class LiveVideoProcess:
             video/x-raw,format=RGBA,width=(int){WIDTH},height=(int){HEIGHT},framerate=(fraction)60/1 !
             queue name=test-queue leaky=1 max-size-buffers=2 !
             selector.sink_1
-           
-            queue leaky=1 max-size-buffers=2 !
-            nvvideoconvert !
-            nvdrmvideosink name=drm-sink sync=false set-mode=1
         """
 
         self._pipeline: Gst.Element = Gst.parse_launch(pipeline_desc)
@@ -67,14 +66,19 @@ class LiveVideoProcess:
         bus.add_signal_watch()
         bus.connect("message", self._bus_call, self._loop)
 
-        self.pipeline_thread = run_pipeline_and_wait_for_start(self._pipeline, bus, self._loop)
+        self.pipeline_thread = threading.Thread(target=self._pipeline_thread, daemon=True)
+        self.pipeline_thread.start()
 
-        save_gst_pipeline_png(self._pipeline, "live_video_process_pipeline")
+    def _pipeline_thread(self):
+        logger.info("Starting pipeline")
+        self._pipeline.set_state(Gst.State.PLAYING)
+        try:
+            self._loop.run()
+        except:
+            pass
 
-        # Set up IPC
-        self._ipc_client = create_rocam_ipc_client(LIVE_VIDEO_SOCKET_PATH)
-        logger.info("Connected to IPC server.")
-        threading.Thread(target=self._ipc_command_listener, daemon=True).start()
+        logger.info("Pipeline stopped")
+        self._pipeline.set_state(Gst.State.NULL)
 
     def _block_eos_probe(self, pad, info, user_data):
         """Block EOS events from shmsrc to prevent pipeline shutdown."""
@@ -128,6 +132,15 @@ class LiveVideoProcess:
         if t == Gst.MessageType.EOS:
             logger.info("End-of-stream")
             loop.quit()
+        elif t == Gst.MessageType.STATE_CHANGED:
+            old, new, pending = message.parse_state_changed()
+            if message.src == self._pipeline and new == Gst.State.PLAYING:
+                logger.info("Pipeline is now PLAYING")
+                save_gst_pipeline_png(self._pipeline, "live_video_process_pipeline")
+                # Set up IPC
+                self._ipc_client = create_rocam_ipc_client(LIVE_VIDEO_SOCKET_PATH)
+                logger.info("Connected to IPC server.")
+                threading.Thread(target=self._ipc_command_listener, daemon=True).start()
         elif t == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
             logger.warning(f"{err}: {debug}")

@@ -23,7 +23,7 @@ gi.require_version("Gst", "1.0")
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
 from gi.repository import GLib, Gst  # pyright: ignore[reportMissingModuleSource]
 
-logger = logging.getLogger("cv_process")
+logger = logging.getLogger(__name__)
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -33,9 +33,11 @@ CV_SOCKET_PATH = "/tmp/rocam-cv"
 
 class CVProcess:
     def __init__(self):
+        if os.path.exists(VIDEO_SOCKET_PATH):
+            os.remove(VIDEO_SOCKET_PATH)
+        
         Gst.init(None)
 
-        self._pipeline: Gst.Element | None = None
         self._ipc_client = None
         self._recording_lock = threading.Lock()
         self._log_file = None
@@ -58,7 +60,7 @@ class CVProcess:
             tee name=t
             
             t. !
-            queue max-size-buffers=1 leaky=1 !
+            queue max-size-buffers=3 min-threshold-buffers=2 leaky=1 !
             nvvideoconvert !
             video/x-raw,format=RGBA !
             glupload !
@@ -67,7 +69,7 @@ class CVProcess:
             video/x-raw,format=RGBA !
             textoverlay name=osd valignment=top halignment=left font-desc="Sans, 12" draw-outline=0 draw-shadow=0 color=0xFFFF0000 !
             video/x-raw,format=RGBA !
-            queue max-size-buffers=1 leaky=1 !
+            queue max-size-buffers=2 leaky=1 !
             shmsink wait-for-connection=1 socket-path={VIDEO_SOCKET_PATH} shm-size=20000000 buffer-time=50000000
 
             t. !
@@ -87,13 +89,7 @@ class CVProcess:
             appsink name=preview-sink emit-signals=true
         """
 
-        self._pipeline = Gst.parse_launch(pipeline_desc)
-
-        self._loop = GLib.MainLoop()
-        bus = self._pipeline.get_bus()
-        assert bus
-        bus.add_signal_watch()
-        bus.connect("message", self._bus_call, self._loop)
+        self._pipeline: Gst.Element = Gst.parse_launch(pipeline_desc)
 
         infer = self._pipeline.get_by_name("infer")  # pyright: ignore[reportAttributeAccessIssue]
         assert infer
@@ -109,7 +105,7 @@ class CVProcess:
         assert self._shader
         shader_sink_pad = self._shader.get_static_pad("sink")
         assert shader_sink_pad
-        shader_sink_pad.add_probe(Gst.PadProbeType.BUFFER | Gst.PadProbeType.BLOCK, self._shader_probe, 0)
+        shader_sink_pad.add_probe(Gst.PadProbeType.BUFFER, self._shader_probe, 0)
         self._shader.set_property(
             "fragment", open(os.path.join(os.path.dirname(__file__), "shader.frag")).read()
         )
@@ -123,14 +119,25 @@ class CVProcess:
         self._osd = self._pipeline.get_by_name("osd")  # pyright: ignore[reportAttributeAccessIssue]
         assert self._osd
 
-        # Start pipeline and wait for it to reach PLAYING state
-        self.pipeline_thread = run_pipeline_and_wait_for_start(self._pipeline, bus, self._loop)
+        self._loop = GLib.MainLoop()
+        bus = self._pipeline.get_bus()
+        assert bus
+        bus.add_signal_watch()
+        bus.connect("message", self._bus_call, self._loop)
 
-        # Pipeline is now PLAYING, do post-startup setup
-        save_gst_pipeline_png(self._pipeline, "cv_process_pipeline")
-        self._ipc_client = create_rocam_ipc_client(CV_SOCKET_PATH)
-        logger.info("Connected to IPC server.")
-        threading.Thread(target=self._ipc_command_listener, daemon=True).start()
+        self.pipeline_thread = threading.Thread(target=self._pipeline_thread, daemon=True)
+        self.pipeline_thread.start()
+
+    def _pipeline_thread(self):
+        logger.info("Starting pipeline")
+        self._pipeline.set_state(Gst.State.PLAYING)
+        try:
+            self._loop.run()
+        except:
+            pass
+
+        logger.info("Pipeline stopped")
+        self._pipeline.set_state(Gst.State.NULL)
 
     def _inference_stop_probe(self, pad, info, u_data):
         gst_buffer = info.get_buffer()
@@ -389,6 +396,14 @@ class CVProcess:
                 self._log_file.close()
                 self._log_file = None
             loop.quit()
+        elif t == Gst.MessageType.STATE_CHANGED:
+            old, new, pending = message.parse_state_changed()
+            if message.src == self._pipeline and new == Gst.State.PLAYING:
+                logger.info("Pipeline is now PLAYING")
+                save_gst_pipeline_png(self._pipeline, "cv_process_pipeline")
+                self._ipc_client = create_rocam_ipc_client(CV_SOCKET_PATH)
+                logger.info("Connected to IPC server.")
+                threading.Thread(target=self._ipc_command_listener, daemon=True).start()
         elif t == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
             logger.warning("%s: %s" % (err, debug))

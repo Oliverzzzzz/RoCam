@@ -1,81 +1,107 @@
 import logging
 
-from common.ipc import BoundingBox, CVData
-from control_process.cv import VideoPipeline
+from common.ipc import BoundingBox, CVData, OSDData, PreviewData
+from common.utils import ip4_addresses
+from control_process.cv_process_management import CVProcessManagement
+from control_process.live_video_process_management import LiveVideoProcessManagement
 from control_process.gimbal import GimbalSerial
-from control_process.preview import MjpegFrameReceiver
 from control_process.tracking import Tracking
 import base64
-import time
-from dataclasses import dataclass
+
+from cv_process.main import HEIGHT, WIDTH
 
 
 
 logger = logging.getLogger(__name__)
 
-@dataclass
-class InternalBoundingBox:
-    bbox: BoundingBox
-    pts_s: float
-    received_time: float
 
 class BoundingBoxCollection:
-    _internal_bboxes: list[InternalBoundingBox]
+    _cv_data_list: list[CVData]
 
     def __init__(self):
-        self._internal_bboxes = []
+        self._cv_data_list = []
 
     def received_data(self, data: CVData):
         if not data.bounding_box:
             return
-        now = time.time()
 
-        if self._internal_bboxes:
-            last_bbox = self._internal_bboxes[-1]
-            if data.pts_s == last_bbox.pts_s:
-                if data.bounding_box.conf > last_bbox.bbox.conf:
-                    self._internal_bboxes[-1].bbox = data.bounding_box
-            else:
-                self._internal_bboxes.append(InternalBoundingBox(bbox=data.bounding_box, received_time=now, pts_s=data.pts_s))
-        else:
-            self._internal_bboxes.append(InternalBoundingBox(bbox=data.bounding_box, received_time=now, pts_s=data.pts_s))
+        self._cv_data_list.append(data)
 
-        if len(self._internal_bboxes) > 10:
-            self._internal_bboxes.pop(0)
+        if len(self._cv_data_list) > 10:
+            self._cv_data_list.pop(0)
 
-    def get_bbox(self, timestamp: float | None) -> BoundingBox | None:
-        if not self._internal_bboxes:
+    def get_bbox(self, pts_ns: int) -> BoundingBox | None:
+        if not self._cv_data_list:
             return None
 
-        if timestamp is None:
-            return self._internal_bboxes[-1].bbox
-
-        # Find the most recent bbox with received_time <= timestamp
-        for internal_bbox in reversed(self._internal_bboxes):
-            if internal_bbox.received_time <= timestamp:
-                if timestamp - internal_bbox.received_time >= 1/30:
-                    return None
-                return internal_bbox.bbox
-
+        # Find the CVData with the same pts_ns
+        for cv_data in self._cv_data_list:
+            if cv_data.pts_ns == pts_ns:
+                return cv_data.bounding_box
         return None
+
+    def get_latest_bbox(self) -> BoundingBox | None:
+        if not self._cv_data_list:
+            return None
+        return self._cv_data_list[-1].bounding_box
+
 
 class StateManagement:
     def __init__(self):
+        # FIXME: need to refresh periodically
+        self._device_ip_addresses = ip4_addresses()
+
         self._armed = False
+        self._last_preview_frame: PreviewData | None = None
 
         self._gimbal = GimbalSerial(port="/dev/ttyTHS1", baudrate=115200, timeout=0.1)
         self._gimbal.move_deg(0,0)
         self._tracking = Tracking(gimbal=self._gimbal, width=1080, height=1920, k_p=0.003)
 
-        self._preview_receiver = MjpegFrameReceiver()
         self._bboxes = BoundingBoxCollection()
-        self._cv_pipeline = VideoPipeline(lambda v: self._on_detection(v))
+        self._live_video_pipeline = LiveVideoProcessManagement()
+        self._cv_pipeline = CVProcessManagement(self._on_cvdata, self._on_preview, self._live_video_pipeline.on_cv_process_start)
 
-    def _on_detection(self, data: CVData):
+    def _on_cvdata(self, data: CVData):
         self._bboxes.received_data(data)
+
+        bbox = self._bboxes.get_latest_bbox()
+
+        if bbox:
+            cx = bbox.left + bbox.width / 2.0
+            cy = bbox.top + bbox.height / 2.0
+
+            tx = 0.5 - cx
+            ty = 0.5 - cy
+            s = max(bbox.width * WIDTH, bbox.height * HEIGHT)
+        else:
+            tx = 0.0
+            ty = 0.0
+            s = 1.0
+
+        osd_data = OSDData(
+            pts_ns=data.pts_ns,
+            translate_x=tx,
+            translate_y=ty,
+            scale=s,
+            average_fps=data.fps,
+            gimbal_tilt_deg=0.0,
+            gimbal_pan_deg=0.0,
+            gimbal_focal_length_mm=0.0,
+            device_ip_addresses=self._device_ip_addresses,
+            timestamp_ms=0,
+            tracking_state="idle",
+            longitude=0.0,
+            latitude=0.0,
+        )
+
+        self._cv_pipeline.send_osd_data(osd_data)
 
         if self._armed and data.bounding_box:
             self._tracking.on_detection(data.bounding_box.center())
+
+    def _on_preview(self, data: PreviewData):
+        self._last_preview_frame = data
 
     def arm(self):
         self._armed = True
@@ -86,12 +112,11 @@ class StateManagement:
         # self._cv_pipeline.armed = False
 
     def status(self):
-        latest_preview_frame, latest_preview_frame_time = self._preview_receiver.get_latest_frame()
+        latest_preview_frame = None
         bbox = None
-        if latest_preview_frame is not None:
-            latest_preview_frame = base64.b64encode(latest_preview_frame).decode("ascii")
-            # preview is delayed by 3 frames
-            bbox = self._bboxes.get_bbox(latest_preview_frame_time - 3 / 60)
+        if self._last_preview_frame is not None:
+            latest_preview_frame = base64.b64encode(self._last_preview_frame.frame).decode("ascii")
+            bbox = self._bboxes.get_bbox(self._last_preview_frame.pts_ns)
 
         try:
             tilt, pan = self._gimbal.measure_deg()

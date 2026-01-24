@@ -21,7 +21,7 @@ if __name__ == "__main__":
         from cv_process.main import run_cv_process
 
         run_cv_process()
-    elif sys.argv[1] == "live_video":
+    elif sys.argv[1] == "live-video":
         logger.info("Starting live video process.....")
         from live_video_process.main import run_live_video_process
 
