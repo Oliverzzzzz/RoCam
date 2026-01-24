@@ -13,17 +13,19 @@ if __name__ == "__main__":
 
     if len(sys.argv) == 1:
         logger.info("Starting control process.....")
-        from control_process.main import start_control_process
+        from control_process.main import run_control_process
 
-        start_control_process()
+        run_control_process()
     elif sys.argv[1] == "cv":
         logger.info("Starting cv process.....")
-        from cv_process.main import start_cv_process
+        from cv_process.main import run_cv_process
 
-        start_cv_process()
+        run_cv_process()
     elif sys.argv[1] == "live_video":
         logger.info("Starting live video process.....")
-        pass
+        from live_video_process.main import run_live_video_process
+
+        run_live_video_process()
     elif sys.argv[1] == "transcode":
         logger.info("Starting transcode process.....")
         pass

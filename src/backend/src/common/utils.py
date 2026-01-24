@@ -1,11 +1,15 @@
+from concurrent.futures import Future
 import os
 import subprocess
 import threading
 import netifaces
+import logging
 import gi
 
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst  # noqa: E402
+from gi.repository import GLib, Gst  # noqa: E402
+
+logger = logging.getLogger("common.utils")
 
 def set_scheduler_fifo(priority: int):
     """
@@ -75,3 +79,40 @@ def save_gst_pipeline_png(pipeline: Gst.Element, pipeline_name: str):
         os.remove(f"{pipeline_name}.dot")
     
     threading.Thread(target=generate_png_and_cleanup, daemon=True).start()
+
+def run_pipeline_and_wait_for_start(pipeline: Gst.Element, bus: Gst.Bus, loop: GLib.MainLoop):
+    pipeline_start_future = Future()
+
+    def bus_call(_bus, message, _loop):
+        t = message.type
+        if t == Gst.MessageType.STATE_CHANGED:
+            _, new, __ = message.parse_state_changed()
+            if (
+                message.src == pipeline
+                and new == Gst.State.PLAYING
+            ):
+                if not pipeline_start_future.done():
+                    pipeline_start_future.set_result(True)
+        return True
+
+    bus.connect("message", bus_call, loop)
+
+    def run_pipeline():
+        logger.info("Starting pipeline")
+        pipeline.set_state(Gst.State.PLAYING)
+        try:
+            loop.run()
+        except Exception as e:
+            if not pipeline_start_future.done():
+                pipeline_start_future.set_exception(e)
+            else:
+                logger.error(f"Pipeline exception: {e}")
+
+        logger.info("Pipeline stopped")
+        pipeline.set_state(Gst.State.NULL)
+
+    thread = threading.Thread(target=run_pipeline, daemon=True)
+    thread.start()
+
+    pipeline_start_future.result()
+    return thread

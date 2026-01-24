@@ -8,7 +8,7 @@ from control_process.state_management import StateManagement
 
 logger = logging.getLogger(__name__)
 
-def start_control_process():
+def run_control_process():
     set_scheduler_fifo(50)
 
     state_management = StateManagement()
