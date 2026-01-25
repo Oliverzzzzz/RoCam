@@ -8,7 +8,7 @@ import logging
 import gi
 
 gi.require_version("Gst", "1.0")
-from gi.repository import GLib, Gst  # noqa: E402
+from gi.repository import GLib, Gst  # pyright: ignore[reportMissingModuleSource]  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

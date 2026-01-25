@@ -16,7 +16,7 @@ from cv_process.main import (
 
 gi.require_version("Gst", "1.0")
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
-from gi.repository import Gst  # pyright: ignore[reportMissingModuleSource]
+from gi.repository import Gst  # pyright: ignore[reportMissingModuleSource]  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

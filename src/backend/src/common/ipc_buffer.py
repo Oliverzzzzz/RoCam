@@ -12,7 +12,7 @@ def cleanup_shared_memory(name):
         shm = shared_memory.SharedMemory(name=name, create=False)
         shm.close()
         shm.unlink()
-    except:
+    except Exception:
         pass
 
 class IPCBufferSender:
@@ -47,7 +47,7 @@ class IPCBufferSender:
             print(f"[Sender] Created shared memory: {name} ({total_size} bytes)")
         
         # Unregister so Python doesn't auto-cleanup
-        unregister(self.shm._name, 'shared_memory')
+        unregister(self.shm._name, 'shared_memory')  # pyright: ignore[reportAttributeAccessIssue]
         
         self.lock = mp.Lock()
     
@@ -125,7 +125,7 @@ class IPCBufferReceiver:
                 time.sleep(0.1)
         
         # Unregister so Python doesn't auto-cleanup
-        unregister(self.shm._name, 'shared_memory')
+        unregister(self.shm._name, 'shared_memory')  # pyright: ignore[reportAttributeAccessIssue]
         
         self.lock = mp.Lock()
     
