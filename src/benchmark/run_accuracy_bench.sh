@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-#rm -rf /tmp/rocam_bench_fixedjpg /tmp/rocam_bench_debug
+
 # ---- Defaults (edit here if you want) ----
-DATA_YAML="${DATA_YAML:-testdata/data_15000/data.yaml}"
+DATA_YAML="${DATA_YAML:-/mnt/data/testdata/data_15000/data.yaml}"
 SPLIT="${SPLIT:-val}"
 ENGINE="${ENGINE:-model_b1_gpu0_fp16.engine}"
 PGIE_CONFIG="${PGIE_CONFIG:-pgie_config.txt}"
@@ -43,6 +43,7 @@ ARGS=(
   --image-id-mode "${IMAGE_ID_MODE}"
   --conf "${CONF}"
   --nms-iou "${NMS_IOU}"
+#  --limit 1200
   --topk "${TOPK}"
   --debug-vis "${DEBUG_VIS}"
 )
