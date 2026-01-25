@@ -71,7 +71,6 @@ class StateManagement:
         self._bboxes.received_data(data)
 
         bbox = self._bboxes.get_latest_bbox()
-        bbox = None
 
         if bbox:
             cx = bbox.left + bbox.width / 2.0
