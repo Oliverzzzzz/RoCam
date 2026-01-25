@@ -99,38 +99,48 @@ def load_data_yaml(path: Path) -> Dict[str, Any]:
         return out
 
 # ---------------- pgie config patch ----------------
+# MINIMAL CHANGE: 强制写入 scaling-compute-hw=1 + 可选 model-engine-file
 def write_temp_pgie_config(orig_cfg: Path, engine_path: Optional[Path]) -> Path:
     text = orig_cfg.read_text(encoding="utf-8", errors="ignore").splitlines()
+
+    desired: Dict[str, str] = {"scaling-compute-hw": "1"}  # force GPU preproc to avoid VIC random crash
+    if engine_path is not None:
+        desired["model-engine-file"] = str(engine_path)
+
     out: List[str] = []
     in_prop = False
-    replaced = False
+    seen = set()
 
-    for_engine = engine_path is not None
+    kv_re = re.compile(r"^\s*([^=]+?)\s*=\s*(.+?)\s*$")
 
     for line in text:
         s = line.strip()
+
         if s.startswith("[") and s.endswith("]"):
             in_prop = (s.lower() == "[property]")
             out.append(line)
             continue
 
-        if in_prop and re.match(r"^\s*model-engine-file\s*=", line):
-            if for_engine:
-                out.append(f"model-engine-file={engine_path}")
-                replaced = True
-            else:
-                out.append(line)
-            continue
+        if in_prop:
+            m = kv_re.match(line)
+            if m:
+                k = m.group(1).strip()
+                if k in desired:
+                    out.append(f"{k}={desired[k]}")
+                    seen.add(k)
+                    continue
 
         out.append(line)
 
-    if for_engine and not replaced:
+    missing = [k for k in desired.keys() if k not in seen]
+    if missing:
         final: List[str] = []
         inserted = False
         for line in out:
             final.append(line)
-            if not inserted and line.strip().lower() == "[property]":
-                final.append(f"model-engine-file={engine_path}")
+            if (not inserted) and line.strip().lower() == "[property]":
+                for k in missing:
+                    final.append(f"{k}={desired[k]}")
                 inserted = True
         out = final
 
@@ -178,7 +188,6 @@ def stage_images(images_dir: Path, staging_dir: Path, mode: str, limit: Optional
 
     staged_files = sorted(staging_dir.glob("*.jpg"))
     if len(staged_files) == len(imgs):
-        # reuse only if staged jpg really matches WIDTHxHEIGHT
         ok = True
         for k in [0, len(staged_files)//2, len(staged_files)-1]:
             if k < 0 or k >= len(staged_files):
@@ -202,7 +211,6 @@ def stage_images(images_dir: Path, staging_dir: Path, mode: str, limit: Optional
         else:
             logger.warning("staging dir exists but size check failed -> rebuilding staging...")
 
-    # rebuild
     for old in staging_dir.glob("*"):
         try:
             old.unlink()
@@ -264,7 +272,6 @@ def parse_yolo_label_file(label_path: Path) -> List[Tuple[int, float, float, flo
 
 def yolo_to_staged_xywh(cls: int, x: float, y: float, w: float, h: float, st: StageInfo) -> Optional[Tuple[int, float, float, float, float]]:
     ow, oh = st.orig_w, st.orig_h
-    # most YOLO txt are normalized
     normalized = (0.0 <= x <= 1.5 and 0.0 <= y <= 1.5 and 0.0 <= w <= 1.5 and 0.0 <= h <= 1.5)
     if normalized:
         cx = x * ow
@@ -285,7 +292,6 @@ def yolo_to_staged_xywh(cls: int, x: float, y: float, w: float, h: float, st: St
     if bw_s <= 0 or bh_s <= 0:
         return None
 
-    # clip
     if left_s >= WIDTH or top_s >= HEIGHT:
         return None
     if left_s + bw_s <= 0 or top_s + bh_s <= 0:
@@ -375,7 +381,6 @@ def draw_debug_overlays(
         except Exception:
             continue
 
-        # draw GT (green) and preds (red)
         try:
             import cv2  # type: ignore
             for bbox in by_img_gt.get(i, []):
@@ -388,7 +393,6 @@ def draw_debug_overlays(
                 cv2.putText(bgr, f"{s:.2f}", (int(x), max(0, int(y) - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
             cv2.imwrite(str(out_dir / f"{i:06d}.jpg"), bgr)
         except Exception:
-            # if no cv2 drawing available, just save raw staged
             _write_jpg(out_dir / f"{i:06d}.jpg", bgr, quality=95)
 
 # ---------------- GStreamer globals ----------------
@@ -398,11 +402,18 @@ frame_counter = 0
 seq_counter = 0
 args_global = None
 
+# MINIMAL CHANGE: 用于判定“崩了但还在算 mAP”的情况
+had_error = False
+had_error_msg = ""
+
 def bus_call(bus, message, loop):
+    global had_error, had_error_msg
     t = message.type
     if t == Gst.MessageType.ERROR:
         err, dbg = message.parse_error()
-        logger.error(f"GStreamer ERROR: {err}\n{dbg}")
+        had_error = True
+        had_error_msg = f"{err}\n{dbg}"
+        logger.error(f"GStreamer ERROR: {had_error_msg}")
         loop.quit()
     elif t == Gst.MessageType.EOS:
         sys.stdout.write("End-of-stream\n")
@@ -429,7 +440,6 @@ def infer_probe(pad, info, u_data):
         else:
             image_id = int(frame_meta.frame_num)
 
-        # batch-size=1 normally, but keep safe
         l_obj = frame_meta.obj_meta_list
         while l_obj is not None:
             try:
@@ -440,28 +450,24 @@ def infer_probe(pad, info, u_data):
             score = float(obj.confidence)
             if score >= float(args_global.conf):
                 if args_global.bbox_source == "detector":
-                    # DeepStream-aligned: detector org bbox
                     bb = obj.detector_bbox_info.org_bbox_coords
                     left = float(bb.left)
                     top = float(bb.top)
                     w = float(bb.width)
                     h = float(bb.height)
                 else:
-                    # display rect bbox
                     rp = obj.rect_params
                     left = float(rp.left)
                     top = float(rp.top)
                     w = float(rp.width)
                     h = float(rp.height)
 
-                # clip to staged frame
                 left = max(0.0, min(float(WIDTH - 1), left))
                 top = max(0.0, min(float(HEIGHT - 1), top))
                 w = max(0.0, min(float(WIDTH) - left, w))
                 h = max(0.0, min(float(HEIGHT) - top, h))
 
                 if w > 1e-3 and h > 1e-3:
-                    # COCO category_id starts from 1
                     cls_id = int(getattr(obj, "class_id", 0))
                     detections_raw.append({
                         "image_id": image_id,
@@ -489,14 +495,14 @@ def infer_probe(pad, info, u_data):
     return Gst.PadProbeReturn.OK
 
 def build_minimal_pipeline_desc(staged_pattern: Path, count: int, pgie_cfg: Path, fps: int) -> str:
-    # Important: fix caps width/height + jpegparse to avoid unfixed caps error
+    # MINIMAL CHANGE: nvvideoconvert compute-hw=1 (force GPU path)
     return f"""
         multifilesrc location={staged_pattern} start-index=0 stop-index={count-1} do-timestamp=true !
         image/jpeg,width={WIDTH},height={HEIGHT},framerate={fps}/1 !
         jpegparse !
         jpegdec !
         videoconvert !
-        nvvideoconvert !
+        nvvideoconvert compute-hw=1 !
         video/x-raw(memory:NVMM),format=NV12,width={WIDTH},height={HEIGHT},framerate={fps}/1 !
         mux.sink_0
 
@@ -506,7 +512,7 @@ def build_minimal_pipeline_desc(staged_pattern: Path, count: int, pgie_cfg: Path
     """
 
 def main():
-    global pipeline, detections_raw, frame_counter, seq_counter, args_global
+    global pipeline, detections_raw, frame_counter, seq_counter, args_global, had_error, had_error_msg
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="pgie_config.txt", help="DeepStream pgie config path")
@@ -535,6 +541,10 @@ def main():
     args = ap.parse_args()
     args_global = args
 
+    # reset error status each run
+    had_error = False
+    had_error_msg = ""
+
     data_yaml = Path(args.data_yaml).expanduser().resolve()
     data = load_data_yaml(data_yaml)
 
@@ -548,7 +558,6 @@ def main():
     root = data_yaml.parent
     split_key = args.split
 
-    # images dir
     if args.images_dir:
         images_dir = Path(args.images_dir).expanduser().resolve()
     else:
@@ -557,11 +566,9 @@ def main():
             images_dir = (root / "images" / split_key).resolve()
         else:
             images_dir = (root / str(split_path)).expanduser().resolve()
-            # handle when yaml points to dataset root
             if (images_dir / "images" / split_key).is_dir():
                 images_dir = (images_dir / "images" / split_key).resolve()
 
-    # labels dir
     if args.labels_dir:
         labels_dir = Path(args.labels_dir).expanduser().resolve()
     else:
@@ -573,13 +580,11 @@ def main():
     logger.info(f"Images dir: {images_dir}")
     logger.info(f"Labels dir: {labels_dir}")
 
-    # stage images to WIDTHxHEIGHT
     staging_dir = Path(args.staging_dir).resolve()
     stage_infos, pattern = stage_images(images_dir, staging_dir, args.stage_mode, args.limit)
     count = len(stage_infos)
     logger.info(f"Total images to eval: {count}")
 
-    # dump stage csv (optional)
     if args.dump_stage_csv:
         import csv
         p = Path(args.dump_stage_csv).expanduser().resolve()
@@ -591,7 +596,6 @@ def main():
                 w.writerow([i, str(st.orig_path), st.orig_w, st.orig_h, st.sx, st.sy, st.pad_x, st.pad_y, str(st.staged_path)])
         logger.info(f"Dumped stage csv: {p}")
 
-    # build COCO GT in staged coordinate system (WIDTHxHEIGHT)
     categories = [{"id": i + 1, "name": str(n)} for i, n in enumerate(names)]
     coco_gt: Dict[str, Any] = {"images": [], "annotations": [], "categories": categories}
     ann_id = 1
@@ -601,7 +605,6 @@ def main():
         label_path = labels_dir / f"{st.orig_path.stem}.txt"
         rows = parse_yolo_label_file(label_path)
         for (cls, x, y, w, h) in rows:
-            # safety for single-class datasets
             if len(names) == 1:
                 cls = 0
             mapped = yolo_to_staged_xywh(cls, x, y, w, h, st)
@@ -621,13 +624,11 @@ def main():
     gt_json = Path("/tmp/rocam_gt_coco.json")
     gt_json.write_text(json.dumps(coco_gt), encoding="utf-8")
 
-    # patch pgie config to force engine
     orig_cfg = Path(args.config).expanduser().resolve()
     engine_path = Path(args.engine).expanduser().resolve() if args.engine else None
     tmp_cfg = write_temp_pgie_config(orig_cfg, engine_path)
     logger.info(f"Using temp config: {tmp_cfg} (engine forced to {engine_path})")
 
-    # build pipeline
     Gst.init(None)
     pipeline_desc = build_minimal_pipeline_desc(pattern, count, tmp_cfg, args.fps)
     pipeline = Gst.parse_launch(pipeline_desc)
@@ -655,9 +656,15 @@ def main():
     finally:
         pipeline.set_state(Gst.State.NULL)
 
+    # MINIMAL CHANGE: 如果崩了 / 没跑满，直接判定无效退出，避免“半截 mAP”
+    if had_error or frame_counter != count:
+        logger.error(f"Run invalid: frames_processed={frame_counter}, expected={count}")
+        if had_error_msg:
+            logger.error(f"Last error:\n{had_error_msg}")
+        return 2
+
     logger.info(f"Collected detections: {len(detections_raw)} (after conf>={args.conf:.4f})")
 
-    # postprocess to match DeepStream config knobs
     dets_pp = postprocess_by_image(
         dets=detections_raw,
         top1=bool(args.top1),
@@ -666,7 +673,6 @@ def main():
     )
     logger.info(f"Detections after postprocess: {len(dets_pp)} (top1={args.top1}, topk={args.topk}, nms_iou={args.nms_iou})")
 
-    # debug overlays
     if args.debug_vis and int(args.debug_vis) > 0:
         out_dir = Path("/tmp/rocam_bench_debug")
         draw_debug_overlays(stage_infos, dets_pp, coco_gt, out_dir, int(args.debug_vis))
@@ -676,7 +682,6 @@ def main():
         Path(args.dump_json).expanduser().resolve().write_text(json.dumps(dets_pp), encoding="utf-8")
         logger.info(f"Dumped detections json: {args.dump_json}")
 
-    # COCO eval
     coco = COCO(str(gt_json))
     if len(dets_pp) == 0:
         logger.error("No detections produced. mAP=0.")
