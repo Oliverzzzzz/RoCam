@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@heroui/button";
 import {
   IconChevronLeft,
@@ -16,6 +16,10 @@ export default function ControlPage() {
   const { apiClient, status, error } = useRocam();
   const [streamContainerRef, { width, height }] = useMeasure<HTMLDivElement>();
 
+  // added: simple UI state for start/stop buttons
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+
   useEffect(() => {
     if (error) {
       console.error(error);
@@ -23,6 +27,30 @@ export default function ControlPage() {
   }, [error]);
 
   const bbox = status?.bbox;
+
+  const handleStartRecording = async () => {
+    if (!apiClient || isStarting) return;
+    setIsStarting(true);
+    try {
+      await apiClient.startRecording();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const handleStopRecording = async () => {
+    if (!apiClient || isStopping) return;
+    setIsStopping(true);
+    try {
+      await apiClient.stopRecording();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsStopping(false);
+    }
+  };
 
   return (
     <DefaultLayout className="flex items-stretch">
@@ -92,7 +120,7 @@ export default function ControlPage() {
         </div>
 
         <div className="bg-gray-100 rounded-lg p-4">
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
             <Button
               color="danger"
               radius="sm"
@@ -109,7 +137,27 @@ export default function ControlPage() {
             >
               Disarm
             </Button>
+
+            {/* added: recording buttons */}
+            <Button
+              radius="sm"
+              variant="solid"
+              isDisabled={!apiClient || isStarting}
+              onPress={handleStartRecording}
+            >
+              {isStarting ? "Starting..." : "Start Recording"}
+            </Button>
+            <Button
+              color="danger"
+              radius="sm"
+              variant="bordered"
+              isDisabled={!apiClient || isStopping}
+              onPress={handleStopRecording}
+            >
+              {isStopping ? "Stopping..." : "Stop Recording"}
+            </Button>
           </div>
+
           <div className="grid gap-2 mt-4 grid-cols-3 grid-rows-3 w-fit">
             <div />
             <Button
