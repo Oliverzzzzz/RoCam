@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
+#rm -rf /tmp/rocam_bench_fixedjpg /tmp/rocam_bench_debug
 # ---- Defaults (edit here if you want) ----
 DATA_YAML="${DATA_YAML:-testdata/data_15000/data.yaml}"
 SPLIT="${SPLIT:-val}"
