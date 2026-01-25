@@ -7,7 +7,7 @@ from dataclasses import asdict
 
 import logging
 from common.ipc_buffer import IPCBufferSender
-from common.utils import run_pipeline_and_wait_for_start, save_gst_pipeline_png, set_scheduler_fifo
+from common.utils import run_pipeline_and_wait_for_start, set_scheduler_fifo
 from common.ipc import (
     OSDData,
     create_rocam_ipc_client,
@@ -33,10 +33,13 @@ LIVE_STREAM_FRAME_SIZE = WIDTH * HEIGHT * 4
 LIVE_STREAM_QUEUE_DEPTH = 3
 CV_SOCKET_PATH = "/tmp/rocam-cv"
 
+
 class CVProcess:
     def __init__(self):
-        self._livestream_frames_sender = IPCBufferSender(LIVE_STREAM_SHM_NAME, LIVE_STREAM_QUEUE_DEPTH, LIVE_STREAM_FRAME_SIZE)
-        
+        self._livestream_frames_sender = IPCBufferSender(
+            LIVE_STREAM_SHM_NAME, LIVE_STREAM_QUEUE_DEPTH, LIVE_STREAM_FRAME_SIZE
+        )
+
         Gst.init(None)
 
         self._ipc_client = None
@@ -96,7 +99,9 @@ class CVProcess:
         assert infer
         infer_source_pad = infer.get_static_pad("src")
         assert infer_source_pad
-        infer_source_pad.add_probe(Gst.PadProbeType.BUFFER, self._inference_stop_probe, 0)
+        infer_source_pad.add_probe(
+            Gst.PadProbeType.BUFFER, self._inference_stop_probe, 0
+        )
 
         preview_sink = self._pipeline.get_by_name("preview-sink")  # pyright: ignore[reportAttributeAccessIssue]
         assert preview_sink
@@ -112,7 +117,8 @@ class CVProcess:
         assert shader_sink_pad
         shader_sink_pad.add_probe(Gst.PadProbeType.BUFFER, self._shader_probe, 0)
         self._shader.set_property(
-            "fragment", open(os.path.join(os.path.dirname(__file__), "shader.frag")).read()
+            "fragment",
+            open(os.path.join(os.path.dirname(__file__), "shader.frag")).read(),
         )
         self._shader.set_property(
             "uniforms",
@@ -124,13 +130,13 @@ class CVProcess:
         self._osd = self._pipeline.get_by_name("osd")  # pyright: ignore[reportAttributeAccessIssue]
         assert self._osd
 
-        self.pipeline_thread = run_pipeline_and_wait_for_start(self._pipeline, self._bus_call)
+        self.pipeline_thread = run_pipeline_and_wait_for_start(
+            "cv_process_pipeline", self._pipeline, self._bus_call
+        )
 
-        save_gst_pipeline_png(self._pipeline, "cv_process_pipeline")
         self._ipc_client = create_rocam_ipc_client(CV_SOCKET_PATH)
         logger.info("Connected to IPC server.")
         threading.Thread(target=self._ipc_command_listener, daemon=True).start()
-
 
     def _inference_stop_probe(self, pad, info, u_data):
         gst_buffer = info.get_buffer()
@@ -234,7 +240,9 @@ class CVProcess:
         try:
             if self._ipc_client:
                 try:
-                    self._ipc_client.send(PreviewData(pts_ns=pts_ns, frame=map_info.data))
+                    self._ipc_client.send(
+                        PreviewData(pts_ns=pts_ns, frame=map_info.data)
+                    )
                 except Exception as e:
                     logger.error(f"Failed to send PreviewData: {e}")
                     exit(1)
@@ -242,7 +250,7 @@ class CVProcess:
             buffer.unmap(map_info)
 
         return Gst.FlowReturn.OK
-        
+
     def _livestream_sink_callback(self, sink):
         sample = sink.emit("pull-sample")
         if not sample:
@@ -281,7 +289,7 @@ class CVProcess:
                 return
 
             logger.info(f"Starting recording to {video_path}")
-            
+
             # Open log file for JSONL writing
             self._log_file = open(log_path, "w")
 
@@ -324,7 +332,7 @@ class CVProcess:
                 return
 
             logger.info("Stopping recording")
-            
+
             # Close log file
             if self._log_file:
                 self._log_file.close()
