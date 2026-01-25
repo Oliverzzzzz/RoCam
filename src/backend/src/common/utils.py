@@ -2,6 +2,7 @@ from concurrent.futures import Future
 import os
 import subprocess
 import threading
+from typing import Any, Callable
 import netifaces
 import logging
 import gi
@@ -80,24 +81,29 @@ def save_gst_pipeline_png(pipeline: Gst.Element, pipeline_name: str):
     
     threading.Thread(target=generate_png_and_cleanup, daemon=True).start()
 
-def run_pipeline_and_wait_for_start(pipeline: Gst.Element, bus: Gst.Bus, loop: GLib.MainLoop):
-    # pipeline_start_future = Future()
+def run_pipeline_and_wait_for_start(pipeline: Gst.Element, bus_call_handler: Callable[..., Any]):
+    loop = GLib.MainLoop()
+    bus = pipeline.get_bus()
+    assert bus
+    bus.add_signal_watch()
+    bus.connect("message", bus_call_handler, loop)
 
-    # def bus_call(_bus, message, _loop):
-    #     t = message.type
-    #     if t == Gst.MessageType.STATE_CHANGED:
-    #         _, new, __ = message.parse_state_changed()
-    #         logger.info(f">>>>> Bus message: {message.src}, new: {new} {message.src == pipeline} {new == Gst.State.PLAYING}")
-    #         if (
-    #             message.src == pipeline
-    #             and new == Gst.State.PLAYING
-    #         ):
+    pipeline_start_future = Future()
+
+    def internal_bus_call(_bus, message, _loop):
+        t = message.type
+        if t == Gst.MessageType.STATE_CHANGED:
+            _, new, __ = message.parse_state_changed()
+            if (
+                message.src == pipeline
+                and new == Gst.State.PLAYING
+            ):
                 
-    #             if not pipeline_start_future.done():
-    #                 pipeline_start_future.set_result(True)
-    #     return True
+                if not pipeline_start_future.done():
+                    pipeline_start_future.set_result(True)
+        return True
 
-    # bus.connect("message", bus_call, loop)
+    bus.connect("message", internal_bus_call, loop)
 
     def run_pipeline():
         logger.info("Starting pipeline")
@@ -106,10 +112,10 @@ def run_pipeline_and_wait_for_start(pipeline: Gst.Element, bus: Gst.Bus, loop: G
             loop.run()
         except Exception as e:
             pass
-            # if not pipeline_start_future.done():
-            #     pipeline_start_future.set_exception(e)
-            # else:
-            #     logger.error(f"Pipeline exception: {e}")
+            if not pipeline_start_future.done():
+                pipeline_start_future.set_exception(e)
+            else:
+                logger.error(f"Pipeline exception: {e}")
 
         logger.info("Pipeline stopped")
         pipeline.set_state(Gst.State.NULL)
@@ -117,9 +123,7 @@ def run_pipeline_and_wait_for_start(pipeline: Gst.Element, bus: Gst.Bus, loop: G
     thread = threading.Thread(target=run_pipeline, daemon=True)
     thread.start()
 
-    # pipeline_start_future.result()
-
-    import time
-    time.sleep(3)
+    pipeline_start_future.result()
+    logger.info("Pipeline started")
 
     return thread

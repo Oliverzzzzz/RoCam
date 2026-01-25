@@ -6,6 +6,7 @@ import threading
 from dataclasses import asdict
 
 import logging
+from common.ipc_buffer import IPCBufferSender
 from common.utils import run_pipeline_and_wait_for_start, save_gst_pipeline_png, set_scheduler_fifo
 from common.ipc import (
     OSDData,
@@ -21,20 +22,20 @@ import gi
 
 gi.require_version("Gst", "1.0")
 os.environ["GST_DEBUG_DUMP_DOT_DIR"] = "./"
-from gi.repository import GLib, Gst  # pyright: ignore[reportMissingModuleSource]
+from gi.repository import Gst  # pyright: ignore[reportMissingModuleSource]
 
 logger = logging.getLogger(__name__)
 
 WIDTH = 1920
 HEIGHT = 1080
-VIDEO_SOCKET_PATH = "/tmp/rocam-video"
+LIVE_STREAM_SHM_NAME = "rocam-livestream"
+LIVE_STREAM_FRAME_SIZE = WIDTH * HEIGHT * 4
+LIVE_STREAM_QUEUE_DEPTH = 3
 CV_SOCKET_PATH = "/tmp/rocam-cv"
-
 
 class CVProcess:
     def __init__(self):
-        if os.path.exists(VIDEO_SOCKET_PATH):
-            os.remove(VIDEO_SOCKET_PATH)
+        self._livestream_frames_sender = IPCBufferSender(LIVE_STREAM_SHM_NAME, LIVE_STREAM_QUEUE_DEPTH, LIVE_STREAM_FRAME_SIZE)
         
         Gst.init(None)
 
@@ -70,7 +71,7 @@ class CVProcess:
             textoverlay name=osd valignment=top halignment=left font-desc="Sans, 12" draw-outline=0 draw-shadow=0 color=0xFFFF0000 !
             video/x-raw,format=RGBA !
             queue max-size-buffers=2 leaky=1 !
-            shmsink wait-for-connection=1 socket-path={VIDEO_SOCKET_PATH} shm-size=20000000 buffer-time=50000000
+            appsink name=livestream-sink emit-signals=true sync=false
 
             t. !
             queue leaky=1 max-size-buffers=30 !
@@ -86,7 +87,7 @@ class CVProcess:
             videorate !
             video/x-raw(memory:NVMM),framerate=30/1 !
             nvjpegenc quality=70 !
-            appsink name=preview-sink emit-signals=true
+            appsink name=preview-sink emit-signals=true sync=false
         """
 
         self._pipeline: Gst.Element = Gst.parse_launch(pipeline_desc)
@@ -100,6 +101,10 @@ class CVProcess:
         preview_sink = self._pipeline.get_by_name("preview-sink")  # pyright: ignore[reportAttributeAccessIssue]
         assert preview_sink
         preview_sink.connect("new-sample", self._preview_sink_callback)
+
+        livestream_sink = self._pipeline.get_by_name("livestream-sink")  # pyright: ignore[reportAttributeAccessIssue]
+        assert livestream_sink
+        livestream_sink.connect("new-sample", self._livestream_sink_callback)
 
         self._shader = self._pipeline.get_by_name("shader")  # pyright: ignore[reportAttributeAccessIssue]
         assert self._shader
@@ -119,25 +124,13 @@ class CVProcess:
         self._osd = self._pipeline.get_by_name("osd")  # pyright: ignore[reportAttributeAccessIssue]
         assert self._osd
 
-        self._loop = GLib.MainLoop()
-        bus = self._pipeline.get_bus()
-        assert bus
-        bus.add_signal_watch()
-        bus.connect("message", self._bus_call, self._loop)
+        self.pipeline_thread = run_pipeline_and_wait_for_start(self._pipeline, self._bus_call)
 
-        self.pipeline_thread = threading.Thread(target=self._pipeline_thread, daemon=True)
-        self.pipeline_thread.start()
+        save_gst_pipeline_png(self._pipeline, "cv_process_pipeline")
+        self._ipc_client = create_rocam_ipc_client(CV_SOCKET_PATH)
+        logger.info("Connected to IPC server.")
+        threading.Thread(target=self._ipc_command_listener, daemon=True).start()
 
-    def _pipeline_thread(self):
-        logger.info("Starting pipeline")
-        self._pipeline.set_state(Gst.State.PLAYING)
-        try:
-            self._loop.run()
-        except:
-            pass
-
-        logger.info("Pipeline stopped")
-        self._pipeline.set_state(Gst.State.NULL)
 
     def _inference_stop_probe(self, pad, info, u_data):
         gst_buffer = info.get_buffer()
@@ -241,10 +234,30 @@ class CVProcess:
         try:
             if self._ipc_client:
                 try:
-                    self._ipc_client.send(PreviewData(pts_ns=pts_ns, frame=bytes(map_info.data)))
+                    self._ipc_client.send(PreviewData(pts_ns=pts_ns, frame=map_info.data))
                 except Exception as e:
                     logger.error(f"Failed to send PreviewData: {e}")
                     exit(1)
+        finally:
+            buffer.unmap(map_info)
+
+        return Gst.FlowReturn.OK
+        
+    def _livestream_sink_callback(self, sink):
+        sample = sink.emit("pull-sample")
+        if not sample:
+            return Gst.FlowReturn.ERROR
+
+        buffer = sample.get_buffer()
+        if not buffer:
+            return Gst.FlowReturn.ERROR
+
+        success, map_info = buffer.map(Gst.MapFlags.READ)
+        if not success:
+            return Gst.FlowReturn.ERROR
+
+        try:
+            self._livestream_frames_sender.send(map_info.data)
         finally:
             buffer.unmap(map_info)
 
@@ -396,14 +409,6 @@ class CVProcess:
                 self._log_file.close()
                 self._log_file = None
             loop.quit()
-        elif t == Gst.MessageType.STATE_CHANGED:
-            old, new, pending = message.parse_state_changed()
-            if message.src == self._pipeline and new == Gst.State.PLAYING:
-                logger.info("Pipeline is now PLAYING")
-                save_gst_pipeline_png(self._pipeline, "cv_process_pipeline")
-                self._ipc_client = create_rocam_ipc_client(CV_SOCKET_PATH)
-                logger.info("Connected to IPC server.")
-                threading.Thread(target=self._ipc_command_listener, daemon=True).start()
         elif t == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
             logger.warning("%s: %s" % (err, debug))

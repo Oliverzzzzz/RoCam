@@ -21,11 +21,11 @@ if __name__ == "__main__":
         from cv_process.main import run_cv_process
 
         run_cv_process()
-    elif sys.argv[1] == "live-video":
-        logger.info("Starting live video process.....")
-        from live_video_process.main import run_live_video_process
+    elif sys.argv[1] == "livestream":
+        logger.info("Starting livestream process.....")
+        from livestream_process.main import run_livestream_process
 
-        run_live_video_process()
+        run_livestream_process()
     elif sys.argv[1] == "transcode":
         logger.info("Starting transcode process.....")
         pass

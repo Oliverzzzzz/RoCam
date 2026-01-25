@@ -1,14 +1,15 @@
 import logging
-
+import time
 from common.ipc import BoundingBox, CVData, OSDData, PreviewData
+from common.ipc_buffer import cleanup_shared_memory
 from common.utils import ip4_addresses
 from control_process.cv_process_management import CVProcessManagement
-from control_process.live_video_process_management import LiveVideoProcessManagement
+from control_process.livestream_process_management import LivestreamProcessManagement
 from control_process.gimbal import GimbalSerial
 from control_process.tracking import Tracking
 import base64
 
-from cv_process.main import HEIGHT, WIDTH
+from cv_process.main import HEIGHT, LIVE_STREAM_SHM_NAME, WIDTH
 
 
 
@@ -59,13 +60,18 @@ class StateManagement:
         self._tracking = Tracking(gimbal=self._gimbal, width=1080, height=1920, k_p=0.003)
 
         self._bboxes = BoundingBoxCollection()
-        self._live_video_pipeline = LiveVideoProcessManagement()
-        self._cv_pipeline = CVProcessManagement(self._on_cvdata, self._on_preview, self._live_video_pipeline.on_cv_process_start)
+
+        cleanup_shared_memory(LIVE_STREAM_SHM_NAME)
+        # Need to start live stream process before cv process, due to nvidia driver bug
+        self._livestream_process = LivestreamProcessManagement()
+        time.sleep(1)
+        self._cv_process = CVProcessManagement(self._on_cvdata, self._on_preview)
 
     def _on_cvdata(self, data: CVData):
         self._bboxes.received_data(data)
 
         bbox = self._bboxes.get_latest_bbox()
+        bbox = None
 
         if bbox:
             cx = bbox.left + bbox.width / 2.0
@@ -95,7 +101,7 @@ class StateManagement:
             latitude=0.0,
         )
 
-        self._cv_pipeline.send_osd_data(osd_data)
+        self._cv_process.send_osd_data(osd_data)
 
         if self._armed and data.bounding_box:
             self._tracking.on_detection(data.bounding_box.center())
