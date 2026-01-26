@@ -4,6 +4,8 @@ import { Button } from "@heroui/button";
 import DefaultLayout from "@/layouts/default";
 import { useRocam } from "@/network/rocamProvider";
 import type { Recording } from "@/network/api";
+import { MOCK_RECORDINGS } from "./recordings.mock";
+
 
 export default function RecordingsPage() {
   const { apiClient } = useRocam();
@@ -23,22 +25,34 @@ export default function RecordingsPage() {
     [recordings],
   );
 
-  async function loadRecordings() {
-    if (!apiClient) return;
-    try {
-      const data = await apiClient.listRecordings();
-      setRecordings(data.recordings);
-      setErrorMessage(null);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to load recordings.";
-      setErrorMessage(msg);
+    async function loadRecordings() {
+    if (!apiClient) {
+        setRecordings(MOCK_RECORDINGS);
+        return;
     }
-  }
 
-  useEffect(() => {
-    if (!apiClient) return;
+    try {
+        const data = await apiClient.listRecordings();
+        setRecordings(data.recordings);
+        setErrorMessage(null);
+    } catch {
+        setRecordings(MOCK_RECORDINGS);
+        setErrorMessage(null); // optional
+    }
+    }
+
+
+    useEffect(() => {
+    // If you want mock data to show when backend/client isn't available:
+    if (!apiClient) {
+        setRecordings(MOCK_RECORDINGS);
+        setErrorMessage(null); // optional
+        return;
+    }
+
     loadRecordings();
-  }, [apiClient]);
+    }, [apiClient]);
+
 
   const startEditing = (r: Recording) => {
     setEditingId(r.id);
