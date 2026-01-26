@@ -22,7 +22,7 @@ export default function ControlPage() {
 
   useEffect(() => {
     if (error) {
-      console.error(error);
+      // Error is handled by the UI
     }
   }, [error]);
 
@@ -33,8 +33,8 @@ export default function ControlPage() {
     setIsStarting(true);
     try {
       await apiClient.startRecording();
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Error is handled by the UI
     } finally {
       setIsStarting(false);
     }
@@ -45,8 +45,8 @@ export default function ControlPage() {
     setIsStopping(true);
     try {
       await apiClient.stopRecording();
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Error is handled by the UI
     } finally {
       setIsStopping(false);
     }
@@ -61,6 +61,7 @@ export default function ControlPage() {
         >
           <p>Live Stream Loading.....</p>
           <img
+            alt="Camera Preview"
             className="absolute rotate-90 rounded-lg"
             src={
               status?.preview
@@ -68,7 +69,6 @@ export default function ControlPage() {
                 : undefined
             }
             style={{ width: height, height: width }}
-            alt="Camera Preview"
           />
           <div className="absolute" style={{ width, height }}>
             {bbox && (
@@ -140,18 +140,18 @@ export default function ControlPage() {
 
             {/* added: recording buttons */}
             <Button
+              isDisabled={!apiClient || isStarting}
               radius="sm"
               variant="solid"
-              isDisabled={!apiClient || isStarting}
               onPress={handleStartRecording}
             >
               {isStarting ? "Starting..." : "Start Recording"}
             </Button>
             <Button
               color="danger"
+              isDisabled={!apiClient || isStopping}
               radius="sm"
               variant="bordered"
-              isDisabled={!apiClient || isStopping}
               onPress={handleStopRecording}
             >
               {isStopping ? "Stopping..." : "Stop Recording"}

@@ -73,10 +73,9 @@ export class ApiClient {
 
       try {
         await client.getStatus();
-        console.log(`Connected to API at ${baseUrl}`);
 
         return client;
-      } catch (error) {
+      } catch {
         // Continue to next URL if this one fails
         continue;
       }
@@ -114,6 +113,7 @@ export class ApiClient {
 
     if (!response.ok) {
       const message = data?.error || response.statusText || "Request failed";
+
       throw new ApiError(response.status, message);
     }
 
