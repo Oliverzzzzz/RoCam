@@ -268,15 +268,24 @@ export default function RecordingsPage() {
 
         {/* PLAYER MODAL */}
         {playing && apiClient && (
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
           <div
             aria-modal="true"
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
             role="dialog"
             onClick={handleClosePlayer}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                handleClosePlayer();
+              }
+            }}
           >
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
             <div
               className="bg-white rounded-lg w-full max-w-3xl p-4"
+              role="document"
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="min-w-0">
@@ -298,7 +307,9 @@ export default function RecordingsPage() {
                 controls
                 className="w-full rounded"
                 src={apiClient.downloadRecordingUrl(playing.id)}
-              />
+              >
+                <track kind="captions" />
+              </video>
             </div>
           </div>
         )}
