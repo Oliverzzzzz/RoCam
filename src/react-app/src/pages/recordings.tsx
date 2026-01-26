@@ -303,13 +303,12 @@ export default function RecordingsPage() {
                 </Button>
               </div>
 
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               <video
                 controls
                 className="w-full rounded"
                 src={apiClient.downloadRecordingUrl(playing.id)}
-              >
-                <track kind="captions" />
-              </video>
+              />
             </div>
           </div>
         )}
