@@ -1,11 +1,12 @@
+import type { Recording } from "@/network/api";
+
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@heroui/button";
 
-import DefaultLayout from "@/layouts/default";
-import { useRocam } from "@/network/rocamProvider";
-import type { Recording } from "@/network/api";
 import { MOCK_RECORDINGS } from "./recordings.mock";
 
+import DefaultLayout from "@/layouts/default";
+import { useRocam } from "@/network/rocamProvider";
 
 export default function RecordingsPage() {
   const { apiClient } = useRocam();
@@ -25,34 +26,35 @@ export default function RecordingsPage() {
     [recordings],
   );
 
-    async function loadRecordings() {
+  async function loadRecordings() {
     if (!apiClient) {
-        setRecordings(MOCK_RECORDINGS);
-        return;
+      setRecordings(MOCK_RECORDINGS);
+
+      return;
     }
 
     try {
-        const data = await apiClient.listRecordings();
-        setRecordings(data.recordings);
-        setErrorMessage(null);
+      const data = await apiClient.listRecordings();
+
+      setRecordings(data.recordings);
+      setErrorMessage(null);
     } catch {
-        setRecordings(MOCK_RECORDINGS);
-        setErrorMessage(null); // optional
+      setRecordings(MOCK_RECORDINGS);
+      setErrorMessage(null); // optional
     }
-    }
+  }
 
-
-    useEffect(() => {
+  useEffect(() => {
     // If you want mock data to show when backend/client isn't available:
     if (!apiClient) {
-        setRecordings(MOCK_RECORDINGS);
-        setErrorMessage(null); // optional
-        return;
+      setRecordings(MOCK_RECORDINGS);
+      setErrorMessage(null); // optional
+
+      return;
     }
 
     loadRecordings();
-    }, [apiClient]);
-
+  }, [apiClient]);
 
   const startEditing = (r: Recording) => {
     setEditingId(r.id);
@@ -83,7 +85,9 @@ export default function RecordingsPage() {
       cancelEditing();
       setErrorMessage(null);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to rename recording.";
+      const msg =
+        e instanceof Error ? e.message : "Failed to rename recording.";
+
       setErrorMessage(msg);
     } finally {
       setSavingId(null);
@@ -101,7 +105,9 @@ export default function RecordingsPage() {
       setRecordings((cur) => cur.filter((x) => x.id !== r.id));
       setErrorMessage(null);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to delete recording.";
+      const msg =
+        e instanceof Error ? e.message : "Failed to delete recording.";
+
       setErrorMessage(msg);
     } finally {
       setDeletingId(null);
@@ -137,9 +143,9 @@ export default function RecordingsPage() {
             </div>
 
             <Button
+              isDisabled={!apiClient}
               radius="sm"
               variant="bordered"
-              isDisabled={!apiClient}
               onPress={loadRecordings}
             >
               Refresh
@@ -175,10 +181,10 @@ export default function RecordingsPage() {
 
                     <div className="flex items-center gap-2 flex-wrap justify-end">
                       <Button
+                        isDisabled={!apiClient}
                         radius="sm"
                         size="sm"
                         variant="solid"
-                        isDisabled={!apiClient}
                         onPress={() => handlePlay(r)}
                       >
                         Play
@@ -188,15 +194,20 @@ export default function RecordingsPage() {
                         <a
                           className="inline-flex"
                           href={apiClient.downloadRecordingUrl(r.id)}
-                          target="_blank"
                           rel="noreferrer"
+                          target="_blank"
                         >
                           <Button radius="sm" size="sm" variant="bordered">
                             Download
                           </Button>
                         </a>
                       ) : (
-                        <Button radius="sm" size="sm" variant="bordered" isDisabled>
+                        <Button
+                          isDisabled
+                          radius="sm"
+                          size="sm"
+                          variant="bordered"
+                        >
                           Download
                         </Button>
                       )}
@@ -204,10 +215,10 @@ export default function RecordingsPage() {
                       {editingId === r.id ? (
                         <>
                           <Button
+                            isDisabled={savingId === r.id}
                             radius="sm"
                             size="sm"
                             variant="solid"
-                            isDisabled={savingId === r.id}
                             onPress={() => handleSave(r)}
                           >
                             {savingId === r.id ? "Saving..." : "Save"}
@@ -233,10 +244,10 @@ export default function RecordingsPage() {
                           </Button>
                           <Button
                             color="danger"
+                            isDisabled={deletingId === r.id}
                             radius="sm"
                             size="sm"
                             variant="bordered"
-                            isDisabled={deletingId === r.id}
                             onPress={() => handleDelete(r)}
                           >
                             {deletingId === r.id ? "Deleting..." : "Delete"}
@@ -258,9 +269,9 @@ export default function RecordingsPage() {
         {/* PLAYER MODAL */}
         {playing && apiClient && (
           <div
+            aria-modal="true"
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
             role="dialog"
-            aria-modal="true"
             onClick={handleClosePlayer}
           >
             <div
@@ -274,14 +285,18 @@ export default function RecordingsPage() {
                     {formatDate(playing.createdAt)}
                   </p>
                 </div>
-                <Button radius="sm" variant="bordered" onPress={handleClosePlayer}>
+                <Button
+                  radius="sm"
+                  variant="bordered"
+                  onPress={handleClosePlayer}
+                >
                   Close
                 </Button>
               </div>
 
               <video
-                className="w-full rounded"
                 controls
+                className="w-full rounded"
                 src={apiClient.downloadRecordingUrl(playing.id)}
               />
             </div>
@@ -294,6 +309,7 @@ export default function RecordingsPage() {
 
 function formatDate(iso: string) {
   const d = new Date(iso);
+
   return isNaN(d.getTime()) ? iso : d.toLocaleString();
 }
 
@@ -302,6 +318,7 @@ function formatDuration(seconds: number) {
   if (seconds < 60) return `${seconds.toFixed(1)}s`;
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
+
   return `${mins}m ${secs}s`;
 }
 
@@ -310,9 +327,11 @@ function formatBytes(bytes: number) {
   const units = ["B", "KB", "MB", "GB"];
   let b = bytes;
   let i = 0;
+
   while (b >= 1024 && i < units.length - 1) {
     b /= 1024;
     i++;
   }
+
   return `${b.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }

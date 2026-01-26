@@ -61,6 +61,7 @@ export default function ControlPage() {
         >
           <p>Live Stream Loading.....</p>
           <img
+            alt="Camera Preview"
             className="absolute rotate-90 rounded-lg"
             src={
               status?.preview
@@ -68,7 +69,6 @@ export default function ControlPage() {
                 : undefined
             }
             style={{ width: height, height: width }}
-            alt="Camera Preview"
           />
           <div className="absolute" style={{ width, height }}>
             {bbox && (
@@ -140,18 +140,18 @@ export default function ControlPage() {
 
             {/* added: recording buttons */}
             <Button
+              isDisabled={!apiClient || isStarting}
               radius="sm"
               variant="solid"
-              isDisabled={!apiClient || isStarting}
               onPress={handleStartRecording}
             >
               {isStarting ? "Starting..." : "Start Recording"}
             </Button>
             <Button
               color="danger"
+              isDisabled={!apiClient || isStopping}
               radius="sm"
               variant="bordered"
-              isDisabled={!apiClient || isStopping}
               onPress={handleStopRecording}
             >
               {isStopping ? "Stopping..." : "Stop Recording"}

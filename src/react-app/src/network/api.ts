@@ -114,6 +114,7 @@ export class ApiClient {
 
     if (!response.ok) {
       const message = data?.error || response.statusText || "Request failed";
+
       throw new ApiError(response.status, message);
     }
 
