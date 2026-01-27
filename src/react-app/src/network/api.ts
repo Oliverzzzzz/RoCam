@@ -66,7 +66,7 @@ export class ApiClient {
    * @throws Error if none of the base URLs are accessible
    */
   static async createAutomatic(): Promise<ApiClient> {
-    const baseUrls = ["", "http://localhost:5000", "http://100.115.14.44"];
+    const baseUrls = ["", "http://localhost:5000", "http://100.117.52.117"];
 
     for (const baseUrl of baseUrls) {
       const client = new ApiClient(baseUrl);
@@ -108,45 +108,14 @@ export class ApiClient {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const text = await response.text();
-    const data = text ? (JSON.parse(text) as { error?: string }) : null;
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const message = data?.error || response.statusText || "Request failed";
-
+      const message = (data as { error?: string })?.error || response.statusText || "Request failed";
       throw new ApiError(response.status, message);
     }
 
-    if (!text) {
-      return {} as T;
-    }
-
     return data as T;
-  }
-
-  /**
-   * Makes a POST request to the API
-   */
-  private async post<T>(
-    endpoint: string,
-    body?: Record<string, unknown>,
-  ): Promise<T> {
-    return this.requestJson<T>("POST", endpoint, body);
-  }
-
-  private async get<T>(endpoint: string): Promise<T> {
-    return this.requestJson<T>("GET", endpoint);
-  }
-
-  private async patch<T>(
-    endpoint: string,
-    body?: Record<string, unknown>,
-  ): Promise<T> {
-    return this.requestJson<T>("PATCH", endpoint, body);
-  }
-
-  private async delete<T>(endpoint: string): Promise<T> {
-    return this.requestJson<T>("DELETE", endpoint);
   }
 
   /**
@@ -154,7 +123,7 @@ export class ApiClient {
    * @returns Promise resolving to the status object
    */
   async getStatus(): Promise<ApiResponse<StatusResponse>> {
-    return this.post<ApiResponse<StatusResponse>>("/api/status");
+    return this.requestJson<ApiResponse<StatusResponse>>("POST", "/api/status");
   }
 
   /**
@@ -167,7 +136,7 @@ export class ApiClient {
   ): Promise<ApiResponse> {
     const body = { direction };
 
-    return this.post<ApiResponse>("/api/manual_move", body);
+    return this.requestJson<ApiResponse>("POST", "/api/manual_move", body);
   }
 
   /**
@@ -179,7 +148,7 @@ export class ApiClient {
   async manualMoveTo(tilt: number, pan: number): Promise<ApiResponse> {
     const body = { tilt, pan };
 
-    return this.post<ApiResponse>("/api/manual_move_to", body);
+    return this.requestJson<ApiResponse>("POST", "/api/manual_move_to", body);
   }
 
   /**
@@ -187,7 +156,7 @@ export class ApiClient {
    * @returns Promise resolving to an empty response
    */
   async arm(): Promise<ApiResponse> {
-    return this.post<ApiResponse>("/api/arm");
+    return this.requestJson<ApiResponse>("POST", "/api/arm");
   }
 
   /**
@@ -195,36 +164,45 @@ export class ApiClient {
    * @returns Promise resolving to an empty response
    */
   async disarm(): Promise<ApiResponse> {
-    return this.post<ApiResponse>("/api/disarm");
+    return this.requestJson<ApiResponse>("POST", "/api/disarm");
   }
 
   async startRecording(): Promise<RecordingStatusResponse> {
-    return this.post<RecordingStatusResponse>("/api/recordings/start");
+    return this.requestJson<RecordingStatusResponse>(
+      "POST",
+      "/api/recordings/start",
+    );
   }
 
   async stopRecording(): Promise<RecordingStatusResponse> {
-    return this.post<RecordingStatusResponse>("/api/recordings/stop");
+    return this.requestJson<RecordingStatusResponse>(
+      "POST",
+      "/api/recordings/stop",
+    );
   }
 
   async listRecordings(): Promise<RecordingListResponse> {
-    return this.get<RecordingListResponse>("/api/recordings");
-  }
-
-  async getRecording(recordingId: string): Promise<RecordingResponse> {
-    return this.get<RecordingResponse>(`/api/recordings/${recordingId}`);
+    return this.requestJson<RecordingListResponse>("GET", "/api/recordings");
   }
 
   async renameRecording(
     recordingId: string,
-    filename: string,
+    newName: string,
   ): Promise<ApiResponse> {
-    return this.patch<ApiResponse>(`/api/recordings/${recordingId}`, {
-      filename,
-    });
+    return this.requestJson<ApiResponse>(
+      "PATCH",
+      `/api/recordings/${recordingId}`,
+      {
+        new_name: newName,
+      },
+    );
   }
 
   async deleteRecording(recordingId: string): Promise<ApiResponse> {
-    return this.delete<ApiResponse>(`/api/recordings/${recordingId}`);
+    return this.requestJson<ApiResponse>(
+      "DELETE",
+      `/api/recordings/${recordingId}`,
+    );
   }
 }
 
