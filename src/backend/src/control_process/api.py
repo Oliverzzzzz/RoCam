@@ -10,6 +10,9 @@ from flask_cors import CORS
 logger = logging.getLogger(__name__)
 logging.getLogger("werkzeug").setLevel(logging.WARN)
 
+def _json_body():
+    return request.get_json(silent=True) or {}
+
 def run_api_gateway(state_management: StateManagement):
     set_scheduler_other()
 
@@ -49,6 +52,61 @@ def run_api_gateway(state_management: StateManagement):
     def disarm():
         state_management.disarm()
         return jsonify({})
+
+    # -------------------------
+    # Recordings endpoints (MOCK IMPLEMENTATION)
+    # -------------------------
+    MOCK_RECORDINGS = [
+        {
+            "id": "mock-1",
+            "filename": "sample_001.mp4",
+            "createdAt": "2026-01-26T10:00:00Z",
+            "durationSeconds": 12.3,
+            "sizeBytes": 15000000,
+        },
+        {
+            "id": "mock-2",
+            "filename": "sample_002.mp4",
+            "createdAt": "2026-01-26T09:00:00Z",
+            "durationSeconds": 45.0,
+            "sizeBytes": 52000000,
+        },
+    ]
+
+    @app.post("/api/recordings/start")
+    def recordings_start():
+        return jsonify({}), 200
+
+    @app.post("/api/recordings/stop")
+    def recordings_stop():
+        return jsonify({}), 200
+
+    @app.get("/api/recordings")
+    def recordings_list():
+        return jsonify({"recordings": MOCK_RECORDINGS}), 200
+
+    @app.patch("/api/recordings/<recordingId>")
+    def recordings_rename(recordingId: str):
+        data = _json_body()
+        new_name = data.get("new_name")
+
+        if not isinstance(new_name, str):
+            return jsonify({"error": "Missing new_name"}), 400
+
+        rec = next((r for r in MOCK_RECORDINGS if r["id"] == recordingId), None)
+        if rec:
+            rec["filename"] = new_name
+            return jsonify({}), 200
+        return jsonify({"error": "Recording not found"}), 404
+
+    @app.delete("/api/recordings/<recordingId>")
+    def recordings_delete(recordingId: str):
+        return jsonify({}), 200
+
+    @app.get("/api/recordings/<recordingId>/download")
+    def recordings_download(recordingId: str):
+        # Return a 404 for mock download since we don't have actual files
+        return jsonify({"error": "Mock download not available"}), 404
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")

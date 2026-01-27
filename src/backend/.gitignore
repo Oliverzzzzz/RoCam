@@ -3,3 +3,4 @@ venv
 env
 .idea
 *pipeline.png
+*.dot

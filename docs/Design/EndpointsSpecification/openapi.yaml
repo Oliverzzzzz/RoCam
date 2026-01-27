@@ -1,4 +1,4 @@
-﻿openapi: 3.0.3
+openapi: 3.0.3
 info:
   title: Vision Guided Tracker API
   version: 1.0.0
@@ -106,7 +106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RecordingStatusResponse"
+                $ref: "#/components/schemas/EmptyResponse"
 
   /api/recordings/stop:
     post:
@@ -118,7 +118,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RecordingStatusResponse"
+                $ref: "#/components/schemas/EmptyResponse"
 
   /api/recordings:
     get:
@@ -133,17 +133,27 @@ paths:
                 $ref: "#/components/schemas/RecordingListResponse"
 
   /api/recordings/{recordingId}:
-    get:
-      summary: Get recording metadata
+    patch:
+      summary: Rename a recording
       parameters:
         - $ref: "#/components/parameters/RecordingId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [new_name]
+              properties:
+                new_name:
+                  type: string
       responses:
         "200":
-          description: Recording metadata.
+          description: Recording renamed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RecordingResponse"
+                $ref: "#/components/schemas/EmptyResponse"
     delete:
       summary: Delete a recording
       parameters:
