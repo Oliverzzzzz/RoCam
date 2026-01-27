@@ -2,6 +2,16 @@ import type { Recording, ApiClient } from '@/network/api'
 
 import { useEffect, useState } from 'react'
 import { Button } from '@heroui/button'
+import { Link } from '@heroui/link'
+import { Spinner } from '@heroui/spinner'
+import { Input } from '@heroui/input'
+import {
+  IconCalendarEvent,
+  IconClockHour3,
+  IconDeviceSdCard,
+  IconDownload,
+  IconTrash,
+} from '@tabler/icons-react'
 
 import DefaultLayout from '@/layouts/default'
 import { useRocam } from '@/network/rocamProvider'
@@ -10,6 +20,7 @@ export default function RecordingsPage() {
   const { apiClient } = useRocam()
 
   const [recordings, setRecordings] = useState<Recording[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   async function loadRecordings() {
     if (!apiClient) return
@@ -20,6 +31,8 @@ export default function RecordingsPage() {
       setRecordings(data.recordings)
     } catch (e) {
       console.error('Failed to load recordings:', e)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -63,15 +76,21 @@ export default function RecordingsPage() {
     <DefaultLayout>
       <section className="flex flex-col">
         <div className="divide-y divide-gray-200 px-4">
-          {recordings.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              No recordings yet. Start one from the Control page.
-            </p>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Spinner label="Loading recordings..." />
+            </div>
+          ) : recordings.length === 0 ? (
+            <div className="flex justify-center py-12">
+              <p className="text-sm text-gray-500">
+                No recordings yet. Start one from the Control page.
+              </p>
+            </div>
           ) : (
             recordings.map((r) => (
               <RecordingItem
                 key={r.id}
-                apiClient={apiClient}
+                apiClient={apiClient!}
                 recording={r}
                 onDelete={handleDelete}
                 onRename={handleRename}
@@ -90,7 +109,7 @@ export default function RecordingsPage() {
 
 interface RecordingItemProps {
   recording: Recording
-  apiClient: ApiClient | null
+  apiClient: ApiClient
   onRename: (id: string, newName: string) => Promise<void>
   onDelete: (r: Recording) => Promise<void>
 }
@@ -101,19 +120,26 @@ function RecordingItem({
   onRename,
   onDelete,
 }: RecordingItemProps) {
-  const [isEditing, setIsEditing] = useState(false)
   const [filenameDraft, setFilenameDraft] = useState(r.filename)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Keep draft in sync if r.filename changes externally
+  useEffect(() => {
+    setFilenameDraft(r.filename)
+  }, [r.filename])
+
   const handleSave = async () => {
-    if (!filenameDraft.trim() || isSaving) return
+    const trimmed = filenameDraft.trim()
+    if (!trimmed || trimmed === r.filename || isSaving) {
+      setFilenameDraft(r.filename) // Reset if empty or unchanged
+      return
+    }
     setIsSaving(true)
     try {
-      await onRename(r.id, filenameDraft.trim())
-      setIsEditing(false)
+      await onRename(r.id, trimmed)
     } catch {
-      // Error handled by parent
+      setFilenameDraft(r.filename) // Revert on error
     } finally {
       setIsSaving(false)
     }
@@ -133,101 +159,71 @@ function RecordingItem({
 
   return (
     <div className="bg-white py-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
-          {isEditing ? (
-            <input
-              className="w-full rounded border border-gray-200 px-2 py-1 text-sm"
-              value={filenameDraft}
-              onChange={(ev) => setFilenameDraft(ev.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave()
-                if (e.key === 'Escape') {
-                  setIsEditing(false)
-                  setFilenameDraft(r.filename)
-                }
-              }}
-              autoFocus
-            />
-          ) : (
-            <p className="font-medium truncate">{r.filename}</p>
-          )}
+          <Input
+            className="w-96"
+            size="sm"
+            disabled={isSaving}
+            value={filenameDraft}
+            onValueChange={setFilenameDraft}
+            onBlur={handleSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                ;(e.target as HTMLInputElement).blur()
+              }
+              if (e.key === 'Escape') {
+                setFilenameDraft(r.filename)
+                ;(e.target as HTMLInputElement).blur()
+              }
+            }}
+          />
 
-          <p className="text-xs text-gray-500 mt-1">
-            Created: {formatDate(r.createdAt)} • Duration:{' '}
-            {formatDuration(r.durationSeconds)} • Size:{' '}
-            {formatBytes(r.sizeBytes)}
-          </p>
+          <div className="flex items-center text-xs text-gray-500 mt-2">
+            <div className="flex items-center gap-1 w-38">
+              <IconCalendarEvent size={14} />
+              {formatDate(r.createdAt)}
+            </div>
+            <div className="flex items-center gap-1 w-16">
+              <IconClockHour3 size={14} />
+              {formatDuration(r.durationSeconds)}
+            </div>
+            <div className="flex items-center gap-1">
+              <IconDeviceSdCard size={14} />
+              {formatBytes(r.sizeBytes)}
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          {apiClient ? (
-            <a
-              className="inline-flex"
-              href={apiClient.downloadRecordingUrl(r.id)}
-              rel="noreferrer"
-              target="_blank"
-            >
-              <Button radius="sm" size="sm" variant="bordered">
-                Download
-              </Button>
-            </a>
-          ) : (
-            <Button isDisabled radius="sm" size="sm" variant="bordered">
-              Download
-            </Button>
-          )}
+          <Button
+            as={Link}
+            href={apiClient.downloadRecordingUrl(r.id)}
+            rel="noreferrer"
+            target="_blank"
+            radius="sm"
+            size="sm"
+            variant="bordered"
+            startContent={<IconDownload size={20} strokeWidth={1.5} />}
+          >
+            Download
+          </Button>
 
-          {isEditing ? (
-            <>
-              <Button
-                isDisabled={isSaving}
-                radius="sm"
-                size="sm"
-                variant="solid"
-                onPress={handleSave}
-              >
-                {isSaving ? 'Saving...' : 'Save'}
-              </Button>
-              <Button
-                radius="sm"
-                size="sm"
-                variant="bordered"
-                onPress={() => {
-                  setIsEditing(false)
-                  setFilenameDraft(r.filename)
-                }}
-              >
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                radius="sm"
-                size="sm"
-                variant="bordered"
-                onPress={() => setIsEditing(true)}
-              >
-                Rename
-              </Button>
-              <Button
-                color="danger"
-                isDisabled={isDeleting}
-                radius="sm"
-                size="sm"
-                variant="bordered"
-                onPress={handleDelete}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
-            </>
-          )}
+          <Button
+            color="danger"
+            startContent={
+              isDeleting ? undefined : <IconTrash size={20} strokeWidth={1.5} />
+            }
+            isDisabled={isDeleting}
+            radius="sm"
+            size="sm"
+            variant="bordered"
+            onPress={handleDelete}
+            isLoading={isDeleting}
+          >
+            Delete
+          </Button>
         </div>
-      </div>
-
-      <div className="mt-2 text-xs text-gray-500 font-mono truncate">
-        ID: {r.id}
       </div>
     </div>
   )
@@ -239,15 +235,21 @@ function RecordingItem({
 
 function formatDate(iso: string) {
   const d = new Date(iso)
-  return isNaN(d.getTime()) ? iso : d.toLocaleString()
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function formatDuration(seconds: number) {
-  if (!Number.isFinite(seconds) || seconds < 0) return '-'
-  if (seconds < 60) return `${seconds.toFixed(1)}s`
+  if (!Number.isFinite(seconds) || seconds < 0) return '--:--'
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
-  return `${mins}m ${secs}s`
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
 function formatBytes(bytes: number) {

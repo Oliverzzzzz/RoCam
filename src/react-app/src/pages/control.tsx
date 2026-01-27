@@ -220,8 +220,8 @@ export default function ControlPage() {
   );
 }
 
-function formatDegrees(degrees: number | undefined) {
-  if (degrees === undefined) return "N/A";
+function formatDegrees(degrees: number | null | undefined) {
+  if (degrees === null || degrees === undefined) return "N/A";
 
   return `${Math.round(degrees * 10) / 10}°`;
 }
