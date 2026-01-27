@@ -3355,7 +3355,10 @@ UI events and shared state read by other UI modules.
 \section{Appendix} \label{Appendix}
 
 \subsection{Module Use Hierarchy Diagram}\label{App:ModuleHierarchy}
-The following figure shows the module use hierarchy for the system. Arrows indicate module dependencies (a module uses the modules it points to). This diagram provides a high-level view of how responsibilities are layered and helps readers navigate the detailed module specifications.
+The following figure shows the module use hierarchy for the system. Arrows
+indicate module dependencies (a module uses the modules it points to). This
+diagram provides a high-level view of how responsibilities are layered and
+helps readers navigate the detailed module specifications.
 
 \begin{figure}[H]
   \centering
@@ -3364,7 +3367,6 @@ The following figure shows the module use hierarchy for the system. Arrows indic
   \label{FigUH}
 \end{figure}
 \newpage{}
-
 
 \section*{Appendix --- Reflection}
 
@@ -3395,7 +3397,7 @@ the graduate attribute of Problem Analysis and Design.
         requirements, hazard analysis, etc), if any, needed to be changed, and why? \\[2mm]
         No other documents needed to be changed. The MIS remains consistent with the existing requirements and traceability tables (for example, each major feature has a clear module responsible for it, and the access routines map back to the required system behaviours).
 
-    \item What are the limitations of your solution? Put another way, given unlimited
+  \item What are the limitations of your solution? Put another way, given unlimited
         resources, what could you do to make the project better? (LO\_ProbSolutions) \\[2mm]
         One limitation is our recording download pipeline. In the current implementation, when the
         user requests a download, the backend does not create a new output file in advance; instead,
@@ -3404,178 +3406,181 @@ the graduate attribute of Problem Analysis and Design.
         design is simple and avoids managing persistent state or temporary files, but it introduces
         several drawbacks.\\[2mm]
 
-        First, because the output is produced as a stream, the system typically cannot provide an
-        accurate Content-Length up front. As a result, the browser cannot show reliable download
-        progress, and users cannot estimate whether a download will take seconds or minutes.\\[2mm]
+        First, because the output is produced as a stream, the system typically cannot
+        provide an accurate Content-Length up front. As a result, the browser cannot
+        show reliable download progress, and users cannot estimate whether a download
+        will take seconds or minutes.\\[2mm]
 
-        Second, the work is performed synchronously on the critical path of a user request. Rendering
-        is CPU/GPU intensive and can compete with real-time tracking workloads, causing unpredictable
-        latency and reduced responsiveness during downloads. If multiple users request downloads, the
-        backend can become overloaded since rendering time scales with the recording duration and
+        Second, the work is performed synchronously on the critical path of a user
+        request. Rendering is CPU/GPU intensive and can compete with real-time tracking
+        workloads, causing unpredictable latency and reduced responsiveness during
+        downloads. If multiple users request downloads, the backend can become
+        overloaded since rendering time scales with the recording duration and
         resolution.\\[2mm]
 
-        Third, the current approach has limited fault tolerance and resumability. If the connection
-        drops mid-download or the process crashes, the user must restart from the beginning, and the
-        system cannot reuse partial work.\\[2mm]
+        Third, the current approach has limited fault tolerance and resumability. If
+        the connection drops mid-download or the process crashes, the user must restart
+        from the beginning, and the system cannot reuse partial work.\\[2mm]
 
-        Since our tech stack covers both hardware and software, with unlimited resources, we would improve this by separating ``render'' from ``download'':
+        Since our tech stack covers both hardware and software, with unlimited
+        resources, we would improve this by separating ``render'' from ``download'':
         \begin{itemize}
-        \item (1) Asynchronous render pipeline (pre-render artifacts).
-        \begin{itemize}
-            \item Software: Introduce a job queue (e.g., a lightweight worker + persistent job state) where a
-                download request enqueues a ``render MP4'' job instead of rendering inline. Store the
-                rendered MP4 as an artifact per recording (with versioning tied to OSD settings), and expose
-                job status (queued/running/failed/done) via an API endpoint.
-            \item Hardware: Offload rendering to a dedicated worker (separate process and resource group),
-                and run it when the Jetson is idle or under a defined utilization threshold (CPU/GPU/DLA).
-                With more resources, dedicate a second compute node (another Jetson or a small edge GPU box)
-                purely for rendering to prevent contention with real-time tracking.
+          \item (1) Asynchronous render pipeline (pre-render artifacts).
+                \begin{itemize}
+                  \item Software: Introduce a job queue (e.g., a lightweight worker + persistent job
+                        state) where a download request enqueues a ``render MP4'' job instead of
+                        rendering inline. Store the rendered MP4 as an artifact per recording (with
+                        versioning tied to OSD settings), and expose job status
+                        (queued/running/failed/done) via an API endpoint.
+                  \item Hardware: Offload rendering to a dedicated worker (separate process and
+                        resource group), and run it when the Jetson is idle or under a defined
+                        utilization threshold (CPU/GPU/DLA). With more resources, dedicate a second
+                        compute node (another Jetson or a small edge GPU box) purely for rendering to
+                        prevent contention with real-time tracking.
+                \end{itemize}
+
+          \item (2) Accurate progress and ETA reporting.
+                \begin{itemize}
+                  \item Software: Track progress as ``frames processed / total frames'' (or ``segments
+                        completed'') and compute ETA using an exponential moving average of render
+                        throughput. Stream progress to the UI via WebSocket/SSE and show clear states
+                        (rendering vs transferring).
+                  \item Hardware: Use hardware-accelerated decode/encode (NVDEC/NVENC) when available
+                        to stabilize throughput, producing more predictable ETA. If budget allows, add
+                        faster storage (NVMe) to reduce I/O stalls that make progress estimates noisy.
+                \end{itemize}
+
+          \item (3) File-based downloads with known size and resumability.
+                \begin{itemize}
+                  \item Software: Serve completed MP4 artifacts as standard file transfers with known
+                        \texttt{Content-Length}, and enable HTTP range requests for resume. Optionally
+                        split output into fixed-duration segments during rendering, then mux at the
+                        end, so partial results can be reused after failures.
+                  \item Hardware: Increase storage capacity to keep rendered artifacts (and optional
+                        segments) without forcing aggressive cleanup. If needed, add a small NAS or
+                        external SSD for artifact storage so the Jetson's local disk is not a
+                        bottleneck.
+                \end{itemize}
+
+          \item (4) Caching, deduplication, and concurrency controls.
+                \begin{itemize}
+                  \item Software: Cache artifacts keyed by (recording id, OSD configuration hash,
+                        encoder settings) so repeated requests do not re-render. Add
+                        per-user/per-system concurrency limits, priority (interactive requests first),
+                        and backpressure to protect real-time tracking. Implement cleanup policies
+                        (LRU/TTL) and metrics (queue time, render time, failures).
+                  \item Hardware: With more resources, allocate guaranteed CPU cores/GPU time slices
+                        (or run the renderer on a separate device) so caching and job spikes never
+                        degrade tracking latency. Add more RAM to reduce swapping and improve stability
+                        under concurrent workloads.
+                \end{itemize}
         \end{itemize}
 
-        \item (2) Accurate progress and ETA reporting.
-        \begin{itemize}
-            \item Software: Track progress as ``frames processed / total frames'' (or ``segments completed'')
-                and compute ETA using an exponential moving average of render throughput. Stream progress
-                to the UI via WebSocket/SSE and show clear states (rendering vs transferring).
-            \item Hardware: Use hardware-accelerated decode/encode (NVDEC/NVENC) when available to stabilize
-                throughput, producing more predictable ETA. If budget allows, add faster storage (NVMe) to
-                reduce I/O stalls that make progress estimates noisy.
-        \end{itemize}
-
-        \item (3) File-based downloads with known size and resumability.
-        \begin{itemize}
-            \item Software: Serve completed MP4 artifacts as standard file transfers with known
-                \texttt{Content-Length}, and enable HTTP range requests for resume. Optionally split output
-                into fixed-duration segments during rendering, then mux at the end, so partial results can
-                be reused after failures.
-            \item Hardware: Increase storage capacity to keep rendered artifacts (and optional segments)
-                without forcing aggressive cleanup. If needed, add a small NAS or external SSD for
-                artifact storage so the Jetson's local disk is not a bottleneck.
-        \end{itemize}
-
-        \item (4) Caching, deduplication, and concurrency controls.
-        \begin{itemize}
-            \item Software: Cache artifacts keyed by (recording id, OSD configuration hash, encoder settings)
-                so repeated requests do not re-render. Add per-user/per-system concurrency limits, priority
-                (interactive requests first), and backpressure to protect real-time tracking. Implement
-                cleanup policies (LRU/TTL) and metrics (queue time, render time, failures).
-            \item Hardware: With more resources, allocate guaranteed CPU cores/GPU time slices (or run the
-                renderer on a separate device) so caching and job spikes never degrade tracking latency.
-                Add more RAM to reduce swapping and improve stability under concurrent workloads.
-        \end{itemize}
-        \end{itemize}
-
-        These changes would improve user experience, scalability, and system stability while keeping
-        real-time tracking performance predictable.
-
+        These changes would improve user experience, scalability, and system stability
+        while keeping real-time tracking performance predictable.
 
         \begin{table}[H]
-        \centering
-        \small
-        \setlength{\tabcolsep}{3pt}
-        \renewcommand{\arraystretch}{1.1}
-        \begin{tabular}{p{2.9cm} p{3.5cm} p{3.6cm}}
+          \centering
+          \small
+          \setlength{\tabcolsep}{3pt}
+          \renewcommand{\arraystretch}{1.1}
+          \begin{tabular}{p{2.9cm} p{3.5cm} p{3.6cm}}
             \toprule
-            \textbf{Limitation} & \textbf{Impact} & \textbf{Improve} \\
+            \textbf{Limitation}     & \textbf{Impact}              & \textbf{Improve}                    \\
             \midrule
-            Unknown output size & No reliable progress & Pre-render MP4 artifacts \\
-            On-demand streaming & One request does all work & Separate render vs download \\
-            Sync on critical path & Competes with tracking & Async job queue; render when idle \\
-            Load scales with length & Long videos overload CPU/GPU & Concurrency limits; caching \\
-            No resumability & Restart after drop/crash & Stored files; HTTP range/resume \\
-            Weak fault tolerance & Partial work is lost & Retries + checkpoints (by segments) \\
+            Unknown output size     & No reliable progress         & Pre-render MP4 artifacts            \\
+            On-demand streaming     & One request does all work    & Separate render vs download         \\
+            Sync on critical path   & Competes with tracking       & Async job queue; render when idle   \\
+            Load scales with length & Long videos overload CPU/GPU & Concurrency limits; caching         \\
+            No resumability         & Restart after drop/crash     & Stored files; HTTP range/resume     \\
+            Weak fault tolerance    & Partial work is lost         & Retries + checkpoints (by segments) \\
             \bottomrule
-        \end{tabular}
+          \end{tabular}
         \end{table}
 
-
-
-
-
-    \item Give a brief overview of other design solutions you considered. What are the
+  \item Give a brief overview of other design solutions you considered. What are the
         benefits and tradeoffs of those other designs compared with the chosen design?
         From all the potential options, why did you select the documented design?
         (LO\_Explores)
         \begin{itemize}
-            \item Single-process architecture (all video, CV, API, and gimbal control in one process).
+          \item Single-process architecture (all video, CV, API, and gimbal control in one
+                process).
                 \begin{itemize}
-                    \item Benefits: simplest implementation and deployment; no IPC overhead; shared
+                  \item Benefits: simplest implementation and deployment; no IPC overhead; shared
                         in-memory data is easy (no serialization); potentially slightly lower latency
                         for passing frames and detections between components.
-                    \item Tradeoffs: poor fault isolation (a crash in the NVIDIA/video pipeline can take
+                  \item Tradeoffs: poor fault isolation (a crash in the NVIDIA/video pipeline can take
                         down gimbal control and the API); harder to keep real-time control responsive
                         under heavy video load; debugging is harder because failures cascade through
                         the same process; reliability is constrained by the least stable subsystem.
-                    \item Why we did not choose it: our prototypes showed the video stack is the most
+                  \item Why we did not choose it: our prototypes showed the video stack is the most
                         crash-prone/complex component, and we cannot risk losing control or the UI when
                         that happens. We therefore separated critical control logic from video/CV into
                         separate processes to isolate failures and keep the system recoverable.
                 \end{itemize}
 
-            \item Alternative process boundaries (CV + display in one worker process, or display driven
-                directly by the CV process rather than a dedicated Live Video process).
+          \item Alternative process boundaries (CV + display in one worker process, or display
+                driven directly by the CV process rather than a dedicated Live Video process).
                 \begin{itemize}
-                    \item Benefits: fewer processes/threads to manage; fewer IPC channels; simpler
+                  \item Benefits: fewer processes/threads to manage; fewer IPC channels; simpler
                         supervision logic; slightly less overhead.
-                    \item Tradeoffs: reduced resilience (a CV crash would also stop HDMI output); tighter
+                  \item Tradeoffs: reduced resilience (a CV crash would also stop HDMI output); tighter
                         coupling between detection and rendering; harder to maintain continuous video
                         output during CV restarts; less flexibility to change display behaviour without
                         touching CV.
-                    \item Why we did not choose it: we wanted continuous video output even if detection
+                  \item Why we did not choose it: we wanted continuous video output even if detection
                         fails, and we wanted to be able to restart CV independently. Splitting CV and
                         display keeps the operator feedback loop alive during CV recovery.
                 \end{itemize}
 
-            \item Full database for recordings (e.g., SQLite/PostgreSQL) instead of a file-system-backed
-                recording store.
+          \item Full database for recordings (e.g., SQLite/PostgreSQL) instead of a
+                file-system-backed recording store.
                 \begin{itemize}
-                    \item Benefits: stronger querying and indexing (search by time, duration, metadata);
+                  \item Benefits: stronger querying and indexing (search by time, duration, metadata);
                         transactional updates; easier concurrent access; improved integrity checks and
                         schema evolution.
-                    \item Tradeoffs: higher CPU/RAM/storage overhead on the Jetson; additional deployment
+                  \item Tradeoffs: higher CPU/RAM/storage overhead on the Jetson; additional deployment
                         and maintenance complexity; more failure modes (DB corruption/migrations);
                         operational burden that is disproportionate to our simple access patterns.
-                    \item Why we did not choose it: our workload is lightweight (list, rename, delete,
+                  \item Why we did not choose it: our workload is lightweight (list, rename, delete,
                         read logs by id), and the file-based layout already provides a natural index
                         (one directory per recording). The custom store meets requirements with lower
                         resource use and less operational risk on the target hardware.
                 \end{itemize}
 
-            \item Pre-rendered downloads (generate MP4 artifacts at record-time or as background jobs)
-                instead of on-demand rendering and streaming.
+          \item Pre-rendered downloads (generate MP4 artifacts at record-time or as background
+                jobs) instead of on-demand rendering and streaming.
                 \begin{itemize}
-                    \item Benefits: known file sizes for accurate download progress; faster downloads
+                  \item Benefits: known file sizes for accurate download progress; faster downloads
                         (simple file transfer); supports resume/range requests; less compute on the
                         critical path of a user request.
-                    \item Tradeoffs: higher storage consumption (extra rendered copies); longer time to
+                  \item Tradeoffs: higher storage consumption (extra rendered copies); longer time to
                         finalize a recording; background job scheduling and cleanup complexity; must
                         handle partial renders and failures.
-                    \item Why we did not choose it: we prioritized a simpler end-to-end pipeline and
+                  \item Why we did not choose it: we prioritized a simpler end-to-end pipeline and
                         minimized persistent artifacts during early iterations. The on-demand approach
                         reduces storage and bookkeeping, and we documented it as a known limitation
                         with a clear upgrade path if resources allow.
                 \end{itemize}
 
                 \begin{table}[H]
-                \centering
-                \small
-                \setlength{\tabcolsep}{3pt}
-                \renewcommand{\arraystretch}{1.1}
-                \begin{tabular}{p{3.0cm} p{3.6cm} p{3.6cm}}
+                  \centering
+                  \small
+                  \setlength{\tabcolsep}{3pt}
+                  \renewcommand{\arraystretch}{1.1}
+                  \begin{tabular}{p{3.0cm} p{3.6cm} p{3.6cm}}
                     \toprule
-                    \textbf{Option} & \textbf{Benefit} & \textbf{Tradeoff} \\
+                    \textbf{Option}       & \textbf{Benefit}     & \textbf{Tradeoff}         \\
                     \midrule
-                    One process & Simple, low overhead & Crash can take down all \\
-                    CV + display together & Fewer processes & CV crash stops video \\
-                    Full database & Better queries & Too heavy to run/maintain \\
-                    Pre-render downloads & Fast + resumable & More storage + complexity \\
+                    One process           & Simple, low overhead & Crash can take down all   \\
+                    CV + display together & Fewer processes      & CV crash stops video      \\
+                    Full database         & Better queries       & Too heavy to run/maintain \\
+                    Pre-render downloads  & Fast + resumable     & More storage + complexity \\
                     \bottomrule
-                \end{tabular}
+                  \end{tabular}
                 \end{table}
 
         \end{itemize}
-
-        
 
 \end{enumerate}
 
