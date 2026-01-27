@@ -75,11 +75,11 @@ def run_api_gateway(state_management: StateManagement):
 
     @app.post("/api/recordings/start")
     def recordings_start():
-        return jsonify({"recording": MOCK_RECORDINGS[0], "status": "recording"}), 200
+        return jsonify({}), 200
 
     @app.post("/api/recordings/stop")
     def recordings_stop():
-        return jsonify({"recording": MOCK_RECORDINGS[0], "status": "stopped"}), 200
+        return jsonify({}), 200
 
     @app.get("/api/recordings")
     def recordings_list():

@@ -167,15 +167,15 @@ export class ApiClient {
     return this.requestJson<ApiResponse>("POST", "/api/disarm");
   }
 
-  async startRecording(): Promise<RecordingStatusResponse> {
-    return this.requestJson<RecordingStatusResponse>(
+  async startRecording(): Promise<ApiResponse> {
+    return this.requestJson<ApiResponse>(
       "POST",
       "/api/recordings/start",
     );
   }
 
-  async stopRecording(): Promise<RecordingStatusResponse> {
-    return this.requestJson<RecordingStatusResponse>(
+  async stopRecording(): Promise<ApiResponse> {
+    return this.requestJson<ApiResponse>(
       "POST",
       "/api/recordings/stop",
     );

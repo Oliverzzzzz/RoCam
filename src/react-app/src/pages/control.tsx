@@ -13,7 +13,7 @@ import { useRocam } from "@/network/rocamProvider";
 import DefaultLayout from "@/layouts/default";
 
 export default function ControlPage() {
-  const { apiClient, status, error } = useRocam();
+  const { apiClient, status, statusPollingError } = useRocam();
   const [streamContainerRef, { width, height }] = useMeasure<HTMLDivElement>();
 
   // added: simple UI state for start/stop buttons
@@ -21,10 +21,10 @@ export default function ControlPage() {
   const [isStopping, setIsStopping] = useState(false);
 
   useEffect(() => {
-    if (error) {
-      // Error is handled by the UI
+    if (statusPollingError) {
+      console.error(statusPollingError);
     }
-  }, [error]);
+  }, [statusPollingError]);
 
   const bbox = status?.bbox;
 
@@ -34,7 +34,7 @@ export default function ControlPage() {
     try {
       await apiClient.startRecording();
     } catch {
-      // Error is handled by the UI
+      console.error("Failed to start recording");
     } finally {
       setIsStarting(false);
     }
@@ -46,7 +46,7 @@ export default function ControlPage() {
     try {
       await apiClient.stopRecording();
     } catch {
-      // Error is handled by the UI
+      console.error("Failed to stop recording");
     } finally {
       setIsStopping(false);
     }

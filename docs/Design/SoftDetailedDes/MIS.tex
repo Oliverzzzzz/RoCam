@@ -2532,14 +2532,14 @@ This module does not have any assumptions.
 \noindent POST /api/recordings/start:
 \begin{itemize}
   \item transition: Call \texttt{state\_management.start\_recording()}.
-  \item output: RecordingStatusResponse payload
+  \item output: EmptyResponse payload
   \item exception: recordingError (if recording already in progress)
 \end{itemize}
 
 \noindent POST /api/recordings/stop:
 \begin{itemize}
   \item transition: Call \texttt{state\_management.stop\_recording()}
-  \item output: RecordingStatusResponse payload
+  \item output: EmptyResponse payload
   \item exception: None
 \end{itemize}
 
