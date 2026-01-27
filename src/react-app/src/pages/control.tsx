@@ -1,56 +1,56 @@
-import { useEffect, useState } from "react";
-import { Button } from "@heroui/button";
+import { useEffect, useState } from 'react'
+import { Button } from '@heroui/button'
 import {
   IconChevronLeft,
   IconChevronRight,
   IconChevronUp,
   IconChevronDown,
   IconHome,
-} from "@tabler/icons-react";
-import { useMeasure } from "react-use";
+} from '@tabler/icons-react'
+import { useMeasure } from 'react-use'
 
-import { useRocam } from "@/network/rocamProvider";
-import DefaultLayout from "@/layouts/default";
+import { useRocam } from '@/network/rocamProvider'
+import DefaultLayout from '@/layouts/default'
 
 export default function ControlPage() {
-  const { apiClient, status, statusPollingError } = useRocam();
-  const [streamContainerRef, { width, height }] = useMeasure<HTMLDivElement>();
+  const { apiClient, status, statusPollingError } = useRocam()
+  const [streamContainerRef, { width, height }] = useMeasure<HTMLDivElement>()
 
   // added: simple UI state for start/stop buttons
-  const [isStarting, setIsStarting] = useState(false);
-  const [isStopping, setIsStopping] = useState(false);
+  const [isStarting, setIsStarting] = useState(false)
+  const [isStopping, setIsStopping] = useState(false)
 
   useEffect(() => {
     if (statusPollingError) {
-      console.error(statusPollingError);
+      console.error(statusPollingError)
     }
-  }, [statusPollingError]);
+  }, [statusPollingError])
 
-  const bbox = status?.bbox;
+  const bbox = status?.bbox
 
   const handleStartRecording = async () => {
-    if (!apiClient || isStarting) return;
-    setIsStarting(true);
+    if (!apiClient || isStarting) return
+    setIsStarting(true)
     try {
-      await apiClient.startRecording();
+      await apiClient.startRecording()
     } catch {
-      console.error("Failed to start recording");
+      console.error('Failed to start recording')
     } finally {
-      setIsStarting(false);
+      setIsStarting(false)
     }
-  };
+  }
 
   const handleStopRecording = async () => {
-    if (!apiClient || isStopping) return;
-    setIsStopping(true);
+    if (!apiClient || isStopping) return
+    setIsStopping(true)
     try {
-      await apiClient.stopRecording();
+      await apiClient.stopRecording()
     } catch {
-      console.error("Failed to stop recording");
+      console.error('Failed to stop recording')
     } finally {
-      setIsStopping(false);
+      setIsStopping(false)
     }
-  };
+  }
 
   return (
     <DefaultLayout className="flex items-stretch">
@@ -60,16 +60,14 @@ export default function ControlPage() {
           className="bg-gray-100 aspect-[9/16] rounded-lg flex items-center justify-center row-span-2"
         >
           <p>Live Stream Loading.....</p>
-          <img
-            alt="Camera Preview"
-            className="absolute rotate-90 rounded-lg"
-            src={
-              status?.preview
-                ? `data:image/jpeg;base64,${status.preview}`
-                : undefined
-            }
-            style={{ width: height, height: width }}
-          />
+          {status?.preview && (
+            <img
+              alt="Camera Preview"
+              className="absolute rotate-90 rounded-lg"
+              src={`data:image/jpeg;base64,${status.preview}`}
+              style={{ width: height, height: width }}
+            />
+          )}
           <div className="absolute" style={{ width, height }}>
             {bbox && (
               <>
@@ -145,7 +143,7 @@ export default function ControlPage() {
               variant="solid"
               onPress={handleStartRecording}
             >
-              {isStarting ? "Starting..." : "Start Recording"}
+              {isStarting ? 'Starting...' : 'Start Recording'}
             </Button>
             <Button
               color="danger"
@@ -154,7 +152,7 @@ export default function ControlPage() {
               variant="bordered"
               onPress={handleStopRecording}
             >
-              {isStopping ? "Stopping..." : "Stop Recording"}
+              {isStopping ? 'Stopping...' : 'Stop Recording'}
             </Button>
           </div>
 
@@ -166,7 +164,7 @@ export default function ControlPage() {
               radius="sm"
               size="lg"
               variant="flat"
-              onPress={() => apiClient?.manualMove("up")}
+              onPress={() => apiClient?.manualMove('up')}
             >
               <IconChevronUp />
             </Button>
@@ -177,7 +175,7 @@ export default function ControlPage() {
               radius="sm"
               size="lg"
               variant="flat"
-              onPress={() => apiClient?.manualMove("left")}
+              onPress={() => apiClient?.manualMove('left')}
             >
               <IconChevronLeft />
             </Button>
@@ -197,7 +195,7 @@ export default function ControlPage() {
               radius="sm"
               size="lg"
               variant="flat"
-              onPress={() => apiClient?.manualMove("right")}
+              onPress={() => apiClient?.manualMove('right')}
             >
               <IconChevronRight />
             </Button>
@@ -208,7 +206,7 @@ export default function ControlPage() {
               radius="sm"
               size="lg"
               variant="flat"
-              onPress={() => apiClient?.manualMove("down")}
+              onPress={() => apiClient?.manualMove('down')}
             >
               <IconChevronDown />
             </Button>
@@ -217,11 +215,11 @@ export default function ControlPage() {
         </div>
       </div>
     </DefaultLayout>
-  );
+  )
 }
 
 function formatDegrees(degrees: number | null | undefined) {
-  if (degrees === null || degrees === undefined) return "N/A";
+  if (degrees === null || degrees === undefined) return 'N/A'
 
-  return `${Math.round(degrees * 10) / 10}°`;
+  return `${Math.round(degrees * 10) / 10}°`
 }
