@@ -179,11 +179,11 @@ class recording_database:
         return os.path.join(self.base_path, recording_id)
 
     def _get_recording_metadata_path(self, recording_id):
-        return os.path.join(self.base_path, recording_id + "/meta.json")
+        return os.path.join(self.base_path, recording_id, "meta.json")
 
     def _get_recording_video_path(self, recording_id):
-        return os.path.join(self.base_path, recording_id + "/video.avi")
+        return os.path.join(self.base_path, recording_id, "video.avi")
 
     def _get_recording_log_path(self, recording_id):
-        return os.path.join(self.base_path, recording_id + "/log.txt")
+        return os.path.join(self.base_path, recording_id, "log.txt")
 
