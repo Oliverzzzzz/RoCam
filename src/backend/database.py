@@ -76,6 +76,7 @@ class recording_database:
                             p.unlink()
                     rec_dir.rmdir()
             except Exception:
+                # Ignore cleanup errors so that the original allocation failure is preserved.
                 pass
             raise RecordingError(f"allocate_recording failed: {e}") from e
     
