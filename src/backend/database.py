@@ -153,7 +153,7 @@ class recording_database:
 
         return recordings
 
-    def rename_recording(self, recording_id, new_name):
+    def rename_recording(self, recording_id: str, new_name: str) -> None:
         recording_metadata_path = self._get_recording_metadata_path(recording_id)
 
         if not os.path.exists(recording_metadata_path):
