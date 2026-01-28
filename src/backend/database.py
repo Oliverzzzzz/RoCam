@@ -159,10 +159,12 @@ class recording_database:
         if not os.path.exists(recording_metadata_path):
             raise RecordingNotFoundError(f"Metadata for recording with ID {recording_id} not found.")
 
-        with open(recording_metadata_path, "w") as f:
-            metadata = json.loads(f.read())
+        with open(recording_metadata_path, "r+", encoding="utf-8") as f:
+            metadata = json.load(f)
             metadata["name"] = new_name
-            f.write(json.dumps(metadata))
+            f.seek(0)
+            json.dump(metadata, f)
+            f.truncate()
 
     def delete_recording(self, recording_id):
         recording_path = self._get_recording_path(recording_id)
