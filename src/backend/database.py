@@ -96,7 +96,7 @@ class recording_database:
                 # Parse JSON line into dict
                 data_dict = json.loads(line)
 
-                osd_obj = json(**data_dict) # Need to replace json() with class OSDDate
+                osd_obj = data_dict
 
                 logs.append(osd_obj)
 
